@@ -7,12 +7,16 @@ use Lazy\Util\InstanceManager;
 use Lazy\Session\Flash;
 use Lazy\Http\Request;
 use Lazy\Http\Response;
+use Lazy\Util\String;
 use Lazy\View\View;
 
 class Application
 {
-    protected static $registeredErrorHandler = false;
+    protected static $root;
+    protected static $projectName;
+    protected static $mounts = [];
 
+    protected static $registeredErrorHandler = false;
     protected static $aliasMethods = [
         'session'       => 'session',
         'flash'         => 'flash',
@@ -54,6 +58,7 @@ class Application
     protected $id;
     protected $env;
     protected $path;
+    protected $baseRequestPath;
     protected $config = [];
     protected $session;
     protected $router = [];
@@ -64,7 +69,64 @@ class Application
 
     protected $beforeCallbacks = [];
 
-    public function __construct($path)
+    public static function root($path = null)
+    {
+        if (!func_num_args()) {
+            return self::$root;
+        }
+
+        self::$root = $path;
+    }
+
+    public static function project($name = null)
+    {
+        if (!func_num_args()) {
+            return self::$projectName;
+        }
+
+        self::$projectName = $name;
+    }
+
+    public static function mount($requestPath, $appDir)
+    {
+        self::$mounts[$requestPath] = $appDir;
+    }
+
+    public static function run()
+    {
+        $request = new Request();
+        $requestPath = $request->pathInfo();
+
+        if (isset(self::$mounts[$requestPath])) {
+            $baseRequestPath = $requestPath;
+            $app = self::$mounts[$requestPath];
+        } else {
+            foreach (self::$mounts as $basePath => $appName) {
+                $basePathEscaped = preg_quote($basePath, '/');
+                if (preg_match('/^' . $basePathEscaped . '\//', $requestPath)) {
+                    $baseRequestPath = $basePath;
+                    $app = $appName;
+                    break;
+                }
+            }
+        }
+
+        if (!isset($app)) {
+            $baseRequestPath = '/';
+            $app = self::$mounts['/'];
+        }
+
+        $appClassName =  String::camelize(true, $app);
+        $appPath = self::$root . '/' . $app;
+
+        require_once $appPath . '/' . $appClassName . '.php';
+        $appClassName = self::project() . '\\' . $appClassName;
+        $appInstance = new $appClassName($appPath, $baseRequestPath);
+//        $appInstance->request($request);
+        $appInstance->dispatch();
+    }
+
+    public function __construct($path, $baseRequestPath = null)
     {
         $this->id = end(explode('\\', get_called_class()));
         InstanceManager::register($this->id, $this);
@@ -77,25 +139,63 @@ class Application
         }
 
         $this->path = realpath($path);
+        $this->baseRequestPath = $baseRequestPath;
 
         # application env
         $env = getenv('APPLICATION_ENV');
         $env || $env = 'development';
         $this->env = $env;
 
-        # load config from app config
-        $configPath = $this->path . '/configs';
+        $configFiles = array();
 
         # global config
-        $config = require_once $configPath . '/app.php';
+        $globalConfigFile = self::root() . '/configs/app.php';
+        if (file_exists($globalConfigFile)) {
+            $configFiles[] = $globalConfigFile;
+        }
+
+        $globalConfigEnvFile = self::root() . '/configs/' . $this->env . '.php';
+        if (file_exists($globalConfigEnvFile)) {
+            $configFiles[] = $globalConfigEnvFile;
+        }
+
+        # load config from app config
+        $configPath = $this->path . '/configs/app.php';
+
+        if (file_exists($configPath)) {
+            $configFiles[] = $configPath;
+        }
 
         # config by env
         $envConfigFile = $configPath . '/' . $this->env . '.php';
         if (file_exists($envConfigFile)) {
-            $config = array_replace_recursive($config, require_once $envConfigFile);
+            $configFiles[] = $envConfigFile;
+        }
+
+        $config = array();
+        foreach ($configFiles as $file) {
+            $config = array_replace_recursive($config, require_once $file);
         }
 
         $this->config($config);
+
+        $includeFiles = array();
+
+        # global include files
+        $globalConfigIncludeDir = self::root() . '/configs/includes';
+        if (file_exists($globalConfigIncludeDir)) {
+            $dir = dir(($globalConfigIncludeDir));
+
+            while (false !== ($f = $dir->read())) {
+                if ('.' == $f || '..' == $f) {
+                    continue;
+                }
+
+                $includeFiles[] = $globalConfigIncludeDir  . '/' . $f;
+            }
+
+            $dir->close();
+        }
 
         # include
         $includeDir = $configPath . '/includes';
@@ -106,9 +206,13 @@ class Application
                     continue;
                 }
 
-                require_once $includeDir . '/' . $f;
+                $includeFiles[] = $includeDir  . '/' . $f;
             }
             $dir->close();
+        }
+
+        foreach ($includeFiles as $file) {
+            require_once $file;
         }
 
         $this->createAlias();
@@ -300,7 +404,7 @@ class Application
         $this->halt();
     }
 
-    public function run()
+    public function dispatch()
     {
         try {
             $this->_before();
@@ -311,6 +415,16 @@ class Application
             }
             $request = $this->request();
             $pathInfo = $request->pathInfo();
+
+            if ($this->baseRequestPath && $this->baseRequestPath != '/') {
+                $pathInfo = preg_replace('/^' . preg_quote($this->baseRequestPath, '/') . '/', '', $pathInfo);
+                if (!$pathInfo) {
+                    $pathInfo = '/';
+                }
+                $request->pathInfo($pathInfo);
+                $pathInfo = $request->pathInfo();
+            }
+
             $parts = explode('/', $pathInfo, 3);
 
             $controllerName = $parts[1];

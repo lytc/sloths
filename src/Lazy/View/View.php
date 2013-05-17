@@ -8,8 +8,10 @@ use Lazy\Util\String;
 class View
 {
     protected $path;
+    protected $layoutPath;
     protected $extension = 'php';
     protected $layout = false;
+    protected $wrapLayout;
     protected $template;
     protected $variables = [];
     protected $helpers = [];
@@ -78,20 +80,77 @@ class View
         return $this;
     }
 
+    public function layoutPath($path = null)
+    {
+        if (!func_num_args()) {
+            if (null === $this->layoutPath) {
+                return $this->path() . '/layouts';
+            }
+
+            return $this->layoutPath;
+        }
+
+        $this->layoutPath = $path;
+        return $this;
+    }
+
     public function layout($layout = null)
     {
         if (!func_num_args()) {
-            return $this->layout;
+            if ($this->layout) {
+                $layoutFile = $this->layout;
+                if (!pathinfo($layoutFile, PATHINFO_EXTENSION)) {
+                    $layoutFile .= '.' . $this->extension;
+                }
+
+                if (!file_exists($layoutFile)) {
+                    $layoutFile = $this->layoutPath() . '/' . $layoutFile;
+                }
+                return $layoutFile;
+            }
+            return;
         }
 
         $this->layout = $layout;
         return $this;
     }
 
+    public function wrapLayout($layout = null)
+    {
+        if (!func_num_args()) {
+            if ($this->wrapLayout) {
+                $layoutFile = $this->wrapLayout;
+                if (!pathinfo($layoutFile, PATHINFO_EXTENSION)) {
+                    $layoutFile .= '.' . $this->extension;
+                }
+
+                if (!file_exists($layoutFile)) {
+                    $layoutFile = $this->layoutPath() . '/' . $layoutFile;
+                }
+                return $layoutFile;
+            }
+            return;
+        }
+
+        $this->wrapLayout = $layout;
+        return $this;
+    }
+
     public function template($template = null)
     {
         if (!func_num_args()) {
-            return $this->template;
+            if ($this->template) {
+                $templateFile = $this->template;
+                if (!pathinfo($templateFile, PATHINFO_EXTENSION)) {
+                    $templateFile .= '.' . $this->extension;
+                }
+
+                if (!file_exists($templateFile)) {
+                    $templateFile = $this->path() . '/' . $templateFile;
+                }
+                return $templateFile;
+            }
+            return;
         }
 
         $this->template = $template;
@@ -146,12 +205,7 @@ class View
         !$variables || $this->variables($variables);
         !$template || $this->template($template);
 
-        $templateFile = $this->template;
-        !$this->path || $templateFile = $this->path . '/' . $templateFile;
-
-        if (!pathinfo($templateFile, PATHINFO_EXTENSION)) {
-            $templateFile .= '.' . $this->extension;
-        }
+        $templateFile = $this->template();
 
         $content = $this->_render($templateFile);
 
@@ -160,12 +214,18 @@ class View
                 return $content;
             };
 
-            $layoutFile = $this->layout;
-            if (!pathinfo($layoutFile, PATHINFO_EXTENSION)) {
-                $layoutFile .= '.' . $this->extension;
-            }
+            $layoutFile = $this->layout();
 
             $content = $this->_render($layoutFile);
+
+            $wrapLayoutFile = $this->wrapLayout();
+            if ($wrapLayoutFile) {
+                $this->helpers['content'] = function() use ($content) {
+                    return $content;
+                };
+
+                $content = $this->_render($wrapLayoutFile);
+            }
         }
         return $content;
     }

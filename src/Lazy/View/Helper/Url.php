@@ -2,9 +2,23 @@
 
 namespace Lazy\View\Helper;
 
+use Lazy\Http\Request;
+
 class Url extends AbstractHelper
 {
-    public function url($path, array $params) {
-        return $path . '?' . http_build_query($params);
+    /**
+     * @var Request
+     */
+    protected static $request;
+
+    public static function setRequest(Request $request)
+    {
+        self::$request = $request;
+    }
+
+    public function url(array $params) {
+        $path = self::$request->pathInfo();
+        $paramsGet = self::$request->paramsGet();
+        return $path . '?' . http_build_query(array_merge($paramsGet, $params));
     }
 }

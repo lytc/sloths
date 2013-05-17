@@ -13,6 +13,7 @@ class Pagination implements \Countable, \IteratorAggregate
     protected $adapter;
 
     protected static $defaultItemCountPerPage = 20;
+    protected $pageRange = 10;
     protected $itemCountPerPage;
     protected $totalPages;
     protected $currentPage = 1;
@@ -109,9 +110,13 @@ class Pagination implements \Countable, \IteratorAggregate
         $currentPage = $this->currentPage();
         $prev = $currentPage - 1;
         $next = $currentPage + 1;
+        $firstPageInRange = ceil($currentPage / $this->pageRange - 1) * $this->pageRange + 1;
+        $lastPageInRange = $firstPageInRange + $this->pageRange - 1;
 
         return [
             'totalItem'             => $this->adapter->count(),
+            'firstPageInRange'      => $firstPageInRange,
+            'lastPageInRange'       => $lastPageInRange,
             'from'                  => $this->from(),
             'to'                    => $this->to(),
             'totalPage'             => $totalPage,

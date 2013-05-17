@@ -112,6 +112,10 @@ class Request
                 $pathInfo = $this->pathInfoOverrides[$pathInfo];
             }
 
+            if ('/' !== $pathInfo) {
+                $pathInfo = preg_replace('/\/+$/', '', $pathInfo);
+            }
+
             return $pathInfo;
         }
 
