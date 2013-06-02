@@ -128,7 +128,9 @@ class Application
 
     public function __construct($path, $baseRequestPath = null)
     {
-        $this->id = end(explode('\\', get_called_class()));
+        $parts = explode('\\', get_called_class());
+        $this->id = end($parts);
+
         InstanceManager::register($this->id, $this);
 
         # convert error to error exception
@@ -174,7 +176,10 @@ class Application
 
         $config = array();
         foreach ($configFiles as $file) {
-            $config = array_replace_recursive($config, require_once $file);
+            $configPerFile = require_once $file;
+            if (is_array($configPerFile)) {
+                $config = array_replace_recursive($config, $configPerFile);
+            }
         }
 
         $this->config($config);
@@ -400,7 +405,7 @@ class Application
     public function call($method, $path)
     {
         $this->request()->method($method)->pathInfo($path);
-        $this->run();
+        $this->dispatch();
         $this->halt();
     }
 

@@ -113,6 +113,10 @@ class Pagination implements \Countable, \IteratorAggregate
         $firstPageInRange = ceil($currentPage / $this->pageRange - 1) * $this->pageRange + 1;
         $lastPageInRange = $firstPageInRange + $this->pageRange - 1;
 
+        if ($lastPageInRange > $totalPage) {
+            $lastPageInRange = $totalPage;
+        }
+
         return [
             'totalItem'             => $this->adapter->count(),
             'firstPageInRange'      => $firstPageInRange,
