@@ -100,7 +100,7 @@ class Router
                 try {
                     $result = call_user_func_array($route['callback'], $params);
                     if (is_array($result) || is_object($result)) {
-                        echo json_encode($result);
+                        return $result;
                     }
                     return true;
                 } catch (Pass $e) {

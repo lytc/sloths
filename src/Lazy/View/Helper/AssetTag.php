@@ -28,7 +28,11 @@ abstract class AssetTag extends Tag
     {
         $attributes = array_merge($this->defaultAttributes, $attributes);
         pathinfo($asset, PATHINFO_EXTENSION) || $asset .= '.' . $this->extension;
-        !$this->assetStamp || $asset .= '?' . $this->assetStamp;
+
+        if ($this->assetStamp) {
+            $asset .= (false !== strpos($asset, '?')? '&' : '?') . $this->assetStamp;
+        }
+
         $attributes[$this->assetAttribute] = $asset;
         return $this->tag($this->tag, $attributes);
     }

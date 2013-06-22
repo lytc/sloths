@@ -414,10 +414,6 @@ class Application
         try {
             $this->_before();
 
-            foreach ($this->beforeCallbacks as $callback) {
-                $callback = $callback->bindTo($this);
-                $callback();
-            }
             $request = $this->request();
             $pathInfo = $request->pathInfo();
 
@@ -440,16 +436,25 @@ class Application
 
             require_once $controllerFile;
 
+            foreach ($this->beforeCallbacks as $callback) {
+                $callback = $callback->bindTo($this);
+                $callback();
+            }
+
             $routePath = isset($parts[2])? $parts[2] : '/';
             if ('/' != $routePath) {
                 $routePath = '/' . trim($routePath, ' /');
             }
 
             ob_start();
-            if (!$this->router()->dispatch($request->method(), $routePath)) {
+            $result = $this->router()->dispatch($request->method(), $routePath);
+            $buffer = ob_get_clean();
+
+            if (false === $result) {
                 $this->notFound();
             }
-            $this->response()->body(ob_get_clean());
+
+            $this->response()->body(is_object($result) || is_array($result)? $result : $buffer);
             $this->halt($this->response());
         } catch (Halt $e) {
 

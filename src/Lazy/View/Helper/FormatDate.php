@@ -4,7 +4,12 @@ namespace Lazy\View\Helper;
 
 class FormatDate extends AbstractHelper
 {
-    protected $format = 'd/m/y';
+    protected static $format = 'd/m/y';
+
+    public static function setDefaultFormat($format)
+    {
+        static::$format = $format;
+    }
 
     public function formatDate($dateTime, $format = null)
     {
@@ -12,7 +17,7 @@ class FormatDate extends AbstractHelper
             return '';
         }
 
-        return date($format?: $this->format, strtotime($dateTime));
+        return date($format?: static::$format, strtotime($dateTime));
     }
 
     public function format($format)

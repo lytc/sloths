@@ -4,14 +4,19 @@ namespace Lazy\View\Helper;
 
 class FormatDateTime extends AbstractHelper
 {
-    protected $format = 'd/m/y h:i A';
+    protected static $format = 'd/m/y h:i A';
+
+    public static function setDefaultFormat($format)
+    {
+        static::$format = $format;
+    }
 
     public function formatDateTime($dateTime, $format = null)
     {
         if (!$dateTime || '0000-00-00' == $dateTime || '0000-00-00 00:00:00' == $dateTime) {
             return '';
         }
-        return date($format?: $this->format, strtotime($dateTime));
+        return date($format?: static::$format, strtotime($dateTime));
     }
 
     public function format($format)
