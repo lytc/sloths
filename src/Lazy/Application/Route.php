@@ -161,7 +161,7 @@ class Route
 
             if (':' == $key[0]) {
                 $params[substr($key, 1)] = (int) $matches[$index];
-            } else {
+            } elseif (isset($matches[$index])) {
                 $params[$key] = urldecode($matches[$index]);
             }
 
