@@ -1,0 +1,13 @@
+{
+    "name": "lazy/lazy",
+    "require": {
+        "doctrine/inflector": "1.0.*@dev"
+    },
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-0": {
+            "Lazy\\": "src",
+            "LazyTest\\": "tests"
+        }
+    }
+}

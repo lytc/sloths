@@ -16,9 +16,9 @@ class ViewTest extends \PHPUnit_Framework_TestCase
     public function testLayoutMethod()
     {
         $view = new View();
-        $this->assertFalse($view->layout());
+        $this->assertNull($view->layout());
         $view->layout('foo');
-        $this->assertSame('foo', $view->layout());
+        $this->assertSame('/layouts/foo.php', $view->layout());
     }
 
     public function testTemplateMethod()
@@ -26,7 +26,7 @@ class ViewTest extends \PHPUnit_Framework_TestCase
         $view = new View();
         $this->assertNull($view->template());
         $view->template('foo');
-        $this->assertSame('foo', $view->template());
+        $this->assertSame('/foo.php', $view->template());
     }
 
     public function testVariablesMethod()
@@ -65,7 +65,7 @@ class ViewTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \Lazy\View\Exception\Exception
-     * @expectedExceptionMessage View file not found: foo.php
+     * @expectedExceptionMessage View file not found: /foo.php
      */
     public function testWrongTemplateShouldThrowAnException()
     {

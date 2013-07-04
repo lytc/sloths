@@ -10,7 +10,7 @@ class View
     protected $path;
     protected $layoutPath;
     protected $extension = 'php';
-    protected $layout = false;
+    protected $layout = null;
     protected $wrapLayout;
     protected $template;
     protected $variables = [];
