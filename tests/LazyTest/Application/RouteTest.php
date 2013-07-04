@@ -59,7 +59,7 @@ class RouteTest extends \PHPUnit_Framework_TestCase
     {
         $route = new Route('GET', '/:foo?/?:bar?');
         $this->assertSame(['foo' => 'hello', 'bar' => 'world'], $route->matches('GET', '/hello/world'));
-        $this->assertSame(['foo' => 'hello', 'bar' => ''], $route->matches('GET', '/hello'));
+        $this->assertSame(['foo' => 'hello', 'bar' => null], $route->matches('GET', '/hello'));
     }
 
     public function testRegexPattern()
