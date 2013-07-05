@@ -50,8 +50,11 @@ class ViewTest extends \PHPUnit_Framework_TestCase
     public function testRenderWithLayout()
     {
         $view = new View();
-        $view->layout(__DIR__ . '/fixtures/views/layout');
-        $result = $view->render(__DIR__ . '/fixtures/views/test', ['foo' => 'bar']);
+        $view->path(__DIR__ . '/fixtures/views')
+            ->layoutPath(__DIR__ . '/fixtures/views')
+            ->layout('layout');
+
+        $result = $view->render('test', ['foo' => 'bar']);
         $this->assertSame('layoutbarbaz', $result);
     }
 

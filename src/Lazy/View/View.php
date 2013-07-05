@@ -103,9 +103,7 @@ class View
                     $layoutFile .= '.' . $this->extension;
                 }
 
-                if (!file_exists($layoutFile)) {
-                    $layoutFile = $this->layoutPath() . '/' . $layoutFile;
-                }
+                $layoutFile = $this->layoutPath() . '/' . $layoutFile;
                 return $layoutFile;
             }
             return;
@@ -124,9 +122,8 @@ class View
                     $layoutFile .= '.' . $this->extension;
                 }
 
-                if (!file_exists($layoutFile)) {
-                    $layoutFile = $this->layoutPath() . '/' . $layoutFile;
-                }
+                $layoutFile = $this->layoutPath() . '/' . $layoutFile;
+
                 return $layoutFile;
             }
             return;
@@ -145,9 +142,7 @@ class View
                     $templateFile .= '.' . $this->extension;
                 }
 
-                if (!file_exists($templateFile)) {
-                    $templateFile = $this->path() . '/' . $templateFile;
-                }
+                $templateFile = $this->path() . '/' . $templateFile;
                 return $templateFile;
             }
             return;
