@@ -7,15 +7,10 @@ use Lazy\Util\InstanceManager;
 use Lazy\Session\Flash;
 use Lazy\Http\Request;
 use Lazy\Http\Response;
-use Lazy\Util\String;
 use Lazy\View\View;
 
 class Application
 {
-    protected static $root;
-    protected static $projectName;
-    protected static $mounts = [];
-
     protected static $registeredErrorHandler = false;
     protected static $aliasMethods = [
         'session'       => 'session',
@@ -51,88 +46,22 @@ class Application
         'variables'     => 'view',
         'render'        => 'view',
         'display'       => 'view',
-
-        'notFound'      => 'this'
     ];
 
-    protected $id;
-    protected $env;
     protected $path;
-    protected $baseRequestPath;
     protected $config = [];
     protected $session;
-    protected $router = [];
-    protected $request = [];
-    protected $response = [];
-    protected $view = [];
+    protected $router;
+    protected $request;
+    protected $response;
+    protected $view;
     protected $flash;
+    protected $defaultController = 'index';
 
     protected $beforeCallbacks = [];
 
-    public static function root($path = null)
+    public function __construct($path, array $config = [])
     {
-        if (!func_num_args()) {
-            return self::$root;
-        }
-
-        self::$root = $path;
-    }
-
-    public static function project($name = null)
-    {
-        if (!func_num_args()) {
-            return self::$projectName;
-        }
-
-        self::$projectName = $name;
-    }
-
-    public static function mount($requestPath, $appDir)
-    {
-        self::$mounts[$requestPath] = $appDir;
-    }
-
-    public static function run()
-    {
-        $request = new Request();
-        $requestPath = $request->pathInfo();
-
-        if (isset(self::$mounts[$requestPath])) {
-            $baseRequestPath = $requestPath;
-            $app = self::$mounts[$requestPath];
-        } else {
-            foreach (self::$mounts as $basePath => $appName) {
-                $basePathEscaped = preg_quote($basePath, '/');
-                if (preg_match('/^' . $basePathEscaped . '\//', $requestPath)) {
-                    $baseRequestPath = $basePath;
-                    $app = $appName;
-                    break;
-                }
-            }
-        }
-
-        if (!isset($app)) {
-            $baseRequestPath = '/';
-            $app = self::$mounts['/'];
-        }
-
-        $appClassName =  String::camelize(true, $app);
-        $appPath = self::$root . '/' . $app;
-
-        require_once $appPath . '/' . $appClassName . '.php';
-        $appClassName = self::project() . '\\' . $appClassName;
-        $appInstance = new $appClassName($appPath, $baseRequestPath);
-//        $appInstance->request($request);
-        $appInstance->dispatch();
-    }
-
-    public function __construct($path, $baseRequestPath = null)
-    {
-        $parts = explode('\\', get_called_class());
-        $this->id = end($parts);
-
-        InstanceManager::register($this->id, $this);
-
         # convert error to error exception
         if (!self::$registeredErrorHandler) {
             set_error_handler(function($errNo, $errStr, $file, $line) {
@@ -141,86 +70,7 @@ class Application
         }
 
         $this->path = realpath($path);
-        $this->baseRequestPath = $baseRequestPath;
-
-        # application env
-        $env = getenv('APPLICATION_ENV');
-        $env || $env = 'development';
-        $this->env = $env;
-
-        $configFiles = array();
-
-        # global config
-        $globalConfigFile = self::root() . '/configs/app.php';
-        if (file_exists($globalConfigFile)) {
-            $configFiles[] = $globalConfigFile;
-        }
-
-        $globalConfigEnvFile = self::root() . '/configs/' . $this->env . '.php';
-        if (file_exists($globalConfigEnvFile)) {
-            $configFiles[] = $globalConfigEnvFile;
-        }
-
-        # load config from app config
-        $configPath = $this->path . '/configs/app.php';
-
-        if (file_exists($configPath)) {
-            $configFiles[] = $configPath;
-        }
-
-        # config by env
-        $envConfigFile = $configPath . '/' . $this->env . '.php';
-        if (file_exists($envConfigFile)) {
-            $configFiles[] = $envConfigFile;
-        }
-
-        $config = array();
-        foreach ($configFiles as $file) {
-            $configPerFile = require_once $file;
-            if (is_array($configPerFile)) {
-                $config = array_replace_recursive($config, $configPerFile);
-            }
-        }
-
         $this->config($config);
-
-        $includeFiles = array();
-
-        # global include files
-        $globalConfigIncludeDir = self::root() . '/configs/includes';
-        if (file_exists($globalConfigIncludeDir)) {
-            $dir = dir(($globalConfigIncludeDir));
-
-            while (false !== ($f = $dir->read())) {
-                if ('.' == $f || '..' == $f) {
-                    continue;
-                }
-
-                $includeFiles[] = $globalConfigIncludeDir  . '/' . $f;
-            }
-
-            $dir->close();
-        }
-
-        # include
-        $includeDir = $configPath . '/includes';
-        if (file_exists($includeDir)) {
-            $dir = dir($includeDir);
-            while (false !== ($f = $dir->read())) {
-                if ('.' == $f || '..' == $f) {
-                    continue;
-                }
-
-                $includeFiles[] = $includeDir  . '/' . $f;
-            }
-            $dir->close();
-        }
-
-        foreach ($includeFiles as $file) {
-            require_once $file;
-        }
-
-        $this->createAlias();
     }
 
     public function config($name = null, $value = null)
@@ -239,27 +89,7 @@ class Application
 
             default:
                 $this->config[$name] = $value;
-                if (method_exists($this, $name)) {
-                    $this->{$name}($value);
-                }
                 return $this;
-        }
-    }
-
-    public function createAlias($namespace = null)
-    {
-        if (!$namespace) {
-            $class = get_called_class();
-            $namespace = substr($class, 0, strripos($class, '\\'));
-        }
-
-        foreach (self::$aliasMethods as $method => $class) {
-            $code = "
-                namespace {$namespace};
-                function {$method}() {
-                    return call_user_func_array([\\Lazy\\Util\\InstanceManager::{$this->id}(), '{$method}'], func_get_args());
-                }";
-            eval($code);
         }
     }
 
@@ -300,7 +130,7 @@ class Application
             $status->send();
         } else if (func_num_args()){
             if (is_string($status)) {
-                $message = status;
+                $body = $status;
                 $status = null;
             }
             $this->response()->send($status, $body);
@@ -312,9 +142,7 @@ class Application
     public function router($router = null)
     {
         if (!func_num_args()) {
-            if (is_array($this->router)) {
-                $this->router = new Router($this->router);
-            }
+            $this->router || $this->router = new Router($this->config('router')?: []);
             return $this->router;
         }
 
@@ -326,9 +154,7 @@ class Application
     public function request($request = null)
     {
         if (!func_num_args()) {
-            if (is_array($this->request)) {
-                $this->request = new Request($this->request);
-            }
+            $this->request || $this->request = new Request($this->config('request')?: []);
             return $this->request;
         }
 
@@ -340,15 +166,36 @@ class Application
     public function response($response = null)
     {
         if (!func_num_args()) {
-            if (is_array($this->response)) {
-                $this->response = new Response($this->response);
-            }
+            $this->response || $this->response = new Response($this->config('response')?: []);
             return $this->response;
         }
 
         $this->response = $response;
 
         return $this;
+    }
+
+    public function view($view = null)
+    {
+        if (!func_num_args()) {
+            $this->view || $this->view = new View($this->config('view')?: []);
+            return $this->view;
+        }
+
+        $this->view = $view;
+
+        return $this;
+    }
+
+    public function flash($name = null, $value = null)
+    {
+        $this->flash || $this->flash = new Flash();
+
+        if (!func_num_args()) {
+            return $this->flash;
+        }
+
+        return call_user_func_array([$this->flash, 'data'], func_get_args());
     }
 
     public function redirect()
@@ -364,38 +211,6 @@ class Application
         return $this->redirect($this->request()->referrer());
     }
 
-    public function view($view = null)
-    {
-        if (!func_num_args()) {
-            if (is_array($this->view)) {
-                $this->view = new View($this->view);
-            }
-            return $this->view;
-        }
-
-        $this->view = $view;
-
-        return $this;
-    }
-
-    public function flash($name = null, $value = null)
-    {
-        if (!$this->flash) {
-            $this->flash = new Flash();
-        }
-
-        if (!func_num_args()) {
-            return $this->flash;
-        }
-
-        return call_user_func_array([$this->flash, 'data'], func_get_args());
-    }
-
-    protected function _before()
-    {
-
-    }
-
     public function before(\Closure $callback)
     {
         $this->beforeCallbacks[] = $callback;
@@ -409,26 +224,17 @@ class Application
         $this->halt();
     }
 
-    public function dispatch()
+    public function run()
     {
         try {
-            $this->_before();
-
             $request = $this->request();
             $pathInfo = $request->pathInfo();
-
-            if ($this->baseRequestPath && $this->baseRequestPath != '/') {
-                $pathInfo = preg_replace('/^' . preg_quote($this->baseRequestPath, '/') . '/', '', $pathInfo);
-                if (!$pathInfo) {
-                    $pathInfo = '/';
-                }
-                $request->pathInfo($pathInfo);
-                $pathInfo = $request->pathInfo();
-            }
 
             $parts = explode('/', $pathInfo, 3);
 
             $controllerName = $parts[1];
+            $controllerName || $controllerName = $this->defaultController;
+
             $controllerFile = $this->path . '/controllers/' . $controllerName  .'.php';
             if (!file_exists($controllerFile)) {
                 $this->notFound();
