@@ -182,8 +182,13 @@ class View
 
         extract($this->variables);
         ob_start();
-        include $templateFile;
-        $result = ob_get_clean();
+        try {
+            include $templateFile;
+            $result = ob_get_clean();
+        } catch (\Exception $e) {
+            ob_clean();
+            throw $e;
+        }
 
         error_reporting($errorReporting);
 

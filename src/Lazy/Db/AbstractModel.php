@@ -1138,6 +1138,7 @@ abstract class AbstractModel
 
         unset($this->data[static::getPrimaryKey()]);
         $this->dirtyData = $this->data;
+        $this->data = [];
     }
 
     // @codeCoverageIgnoreStart

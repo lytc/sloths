@@ -163,6 +163,10 @@ class Select
             $columns = preg_split('/\s*,\s+/', $columns);
         }
 
+        if (!is_array($columns)) {
+            $columns = [$columns];
+        }
+
         $this->columns = array_merge($this->columns, $columns);
 
         return $this;
@@ -399,7 +403,15 @@ class Select
         if (!$this->columns) {
             $sql[] = '*';
         } else {
-            $sql[] = implode(', ', $this->columns);
+            $columns = [];
+            foreach ($this->columns as $column) {
+                if ($column instanceof Expr) {
+                    $columns[] = $column->toString();
+                } else {
+                    $columns[] = $column;
+                }
+            }
+            $sql[] = implode(', ', $columns);
         }
 
         # from

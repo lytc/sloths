@@ -253,12 +253,12 @@ class Collection implements \Countable, \Iterator
     }
 
     /**
-     * @return AbstractModel
+     * @return AbstractModel|null
      */
     public function current()
     {
         $dataArray = $this->toArray();
-        return $this->get($dataArray[$this->position][$this->primaryKey]);
+        return $dataArray? $this->get($dataArray[$this->position][$this->primaryKey]) : null;
     }
 
     /**

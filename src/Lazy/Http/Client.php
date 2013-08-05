@@ -81,6 +81,7 @@ class Client
         }
 
         $this->baseUrl = $url;
+        return $this;
     }
 
     public function headers(array $headers = null)
