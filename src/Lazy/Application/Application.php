@@ -56,7 +56,7 @@ class Application
     protected $response;
     protected $view;
     protected $flash;
-    protected $defaultController = 'index';
+    protected $defaultRoute = 'index';
 
     protected $beforeCallbacks = [];
 
@@ -232,15 +232,15 @@ class Application
 
             $parts = explode('/', $pathInfo, 3);
 
-            $controllerName = $parts[1];
-            $controllerName || $controllerName = $this->defaultController;
+            $routeName = $parts[1];
+            $routeName || $routeName = $this->defaultRoute;
 
-            $controllerFile = $this->path . '/controllers/' . $controllerName  .'.php';
-            if (!file_exists($controllerFile)) {
+            $routeFile = $this->path . '/routes/' . $routeName  .'.php';
+            if (!file_exists($routeFile)) {
                 $this->notFound();
             }
 
-            require_once $controllerFile;
+            require_once $routeFile;
 
             foreach ($this->beforeCallbacks as $callback) {
                 $callback = $callback->bindTo($this);
