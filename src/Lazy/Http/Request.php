@@ -242,6 +242,23 @@ class Request
         return $this->isSecure()? 'https' : 'http';
     }
 
+    public function baseUrl()
+    {
+        $scheme = $this->scheme();
+        $host   = $this->host();
+        $port   = $this->serverPort();
+
+        $result = $scheme . '://' . $host;
+
+        $defaultPorts = ['http' => 80, 'https' => 443];
+
+        if ($port != $defaultPorts[$scheme]) {
+            $result .= ':' . $port;
+        }
+
+        return $result;
+    }
+
     public function isGet()
     {
         return $this->method() == 'GET';
