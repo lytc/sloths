@@ -296,4 +296,38 @@ class Connection extends PDO
 
         return substr(parent::quote($str), 1, -1);
     }
+
+    /**
+     * @var int
+     */
+    protected $activeTransactionCount = 0;
+
+    public function beginTransaction()
+    {
+        if (!$this->activeTransactionCount++) {
+            return parent::beginTransaction();
+        }
+
+        return $this->activeTransactionCount >= 0;
+    }
+
+    public function commit()
+    {
+        if (!--$this->activeTransactionCount) {
+            return parent::commit();
+        }
+
+        return $this->activeTransactionCount >= 0;
+    }
+
+    public function rollBack()
+    {
+        $result = false;
+        if ($this->activeTransactionCount >= 0) {
+            $result = parent::rollBack();
+        }
+
+        $this->activeTransactionCount = 0;
+        return $result;
+    }
 }

@@ -11,11 +11,20 @@ class View
     protected $layoutPath;
     protected $extension = 'php';
     protected $layout = null;
-    protected $wrapLayout;
     protected $template;
     protected $variables = [];
     protected $helpers = [];
     protected $config = [];
+    protected static $helperPaths = [];
+
+    public static function helperPaths(array $path = [])
+    {
+        if ($path) {
+            static::$helperPaths = array_merge(static::$helperPaths, $path);
+        }
+
+        return static::$helperPaths;
+    }
 
     public function __construct(array $config = [])
     {
@@ -37,9 +46,12 @@ class View
             $helperClassName = __NAMESPACE__ . '\\Helper\\' . $className;
 
             if (!class_exists($helperClassName)) { // find from custom helper
-                $helperFile = $this->path . '/helpers/' . $className . '.php';
-                if (file_exists($helperFile)) {
-                    require_once $helperFile;
+                $helperPaths = array_merge(static::helperPaths(), [$this->path . '/helpers']);
+                foreach ($helperPaths as $path) {
+                    $helperFile = $path . '/' . $className . '.php';
+                    if (file_exists($helperFile)) {
+                        require_once $helperFile;
+                    }
                 }
             }
 
@@ -103,33 +115,16 @@ class View
                     $layoutFile .= '.' . $this->extension;
                 }
 
-                $layoutFile = $this->layoutPath() . '/' . $layoutFile;
+                if (!file_exists($layoutFile)) {
+                    $layoutFile = $this->layoutPath() . '/' . $layoutFile;
+                }
+
                 return $layoutFile;
             }
             return;
         }
 
         $this->layout = $layout;
-        return $this;
-    }
-
-    public function wrapLayout($layout = null)
-    {
-        if (!func_num_args()) {
-            if ($this->wrapLayout) {
-                $layoutFile = $this->wrapLayout;
-                if (!pathinfo($layoutFile, PATHINFO_EXTENSION)) {
-                    $layoutFile .= '.' . $this->extension;
-                }
-
-                $layoutFile = $this->layoutPath() . '/' . $layoutFile;
-
-                return $layoutFile;
-            }
-            return;
-        }
-
-        $this->wrapLayout = $layout;
         return $this;
     }
 
@@ -142,7 +137,10 @@ class View
                     $templateFile .= '.' . $this->extension;
                 }
 
-                $templateFile = $this->path() . '/' . $templateFile;
+                if (!file_exists($templateFile)) {
+                    $templateFile = $this->path() . '/' . $templateFile;
+                }
+
                 return $templateFile;
             }
             return;
@@ -210,22 +208,14 @@ class View
         $content = $this->_render($templateFile);
 
         if ($this->layout) {
-            $this->helpers['content'] = function() use ($content) {
+            $view = clone $this;
+            $view->layout(false)
+                ->template($this->layout())
+                ->helpers['content'] = function() use ($content) {
                 return $content;
             };
 
-            $layoutFile = $this->layout();
-
-            $content = $this->_render($layoutFile);
-
-            $wrapLayoutFile = $this->wrapLayout();
-            if ($wrapLayoutFile) {
-                $this->helpers['content'] = function() use ($content) {
-                    return $content;
-                };
-
-                $content = $this->_render($wrapLayoutFile);
-            }
+            return $view->render();
         }
         return $content;
     }

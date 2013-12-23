@@ -30,10 +30,17 @@ class Module
             return $application->run();
         }
 
+        uksort($this->modules, function($a, $b) {
+            return strlen($a) < strlen($b);
+        });
+
         foreach ($this->modules as $requestBasePath => $callback) {
+            if ($requestBasePath != '/' && !substr($requestBasePath, -1) != '/') {
+                $requestBasePath = $requestBasePath . '/';
+            }
+
             if (preg_match('/^' . preg_quote($requestBasePath, '/') . '(.*)/', $requestPath, $matches)) {
                 $application = $callback();
-
                 $pathInfo = $matches[1]?: '/';
                 if ('/' != $pathInfo[0]) {
                     $pathInfo = '/' . $pathInfo;

@@ -78,10 +78,10 @@ class Insert
     }
 
     /**
-     * @param array $values
+     * @param array|Select $values
      * @return $this|array
      */
-    public function value(array $values = null)
+    public function value($values = null)
     {
         if (!func_num_args()) {
             return $this->values;
@@ -120,19 +120,25 @@ class Insert
         $sql[] = $this->table;
 
         $values = $this->values;
-        is_array(current($values)) || $values = array($values);
+        if ($values instanceof Select) {
+            $sql[] = '(' . implode(', ', $this->columns) . ')';
+            $sql[] = $values->toString();
+        } else {
+            is_array(current($values)) || $values = array($values);
 
-        # columns
-        $columns = $this->columns?: array_keys(current($values));
-        $sql[] = '(' . implode(', ', $columns) . ')';
+            # columns
+            $columns = $this->columns?: array_keys(current($values));
+            $sql[] = '(' . implode(', ', $columns) . ')';
 
-        # set
-        $vals = array();
-        foreach ($values as $value) {
-            $vals[] = '(' . implode(', ', $this->connection->quote(array_values($value))) . ')';
+            # set
+            $vals = array();
+            foreach ($values as $value) {
+                $vals[] = '(' . implode(', ', $this->connection->quote(array_values($value))) . ')';
+            }
+
+            $sql[] = 'VALUES ' . implode(', ', $vals);
         }
 
-        $sql[] = 'VALUES ' . implode(', ', $vals);
 
         return implode(' ', $sql);
     }

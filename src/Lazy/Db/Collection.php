@@ -16,7 +16,7 @@ class Collection implements \Countable, \Iterator
     protected $fallbackMethods = array(
         'select'        => array('getSqlSelect', 'column'),
         'where'         => array('getSqlSelect', 'where'),
-        'orWhere'       => array('getSqlSelect', 'where'),
+        'orWhere'       => array('getSqlSelect', 'orWhere'),
         'having'        => array('getSqlSelect', 'having'),
         'orHaving'      => array('getSqlSelect', 'orHaving'),
         'join'          => array('getSqlSelect', 'join'),

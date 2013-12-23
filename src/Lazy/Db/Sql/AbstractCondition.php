@@ -116,29 +116,21 @@ abstract class AbstractCondition
         }
 
         $index = 0;
-        return preg_replace_callback(array('/\(?(\?|\:(\w+))\)?([^\w]*)/', '/\(?(\?|\:(\w+))\)?$/'), function($matches) use(&$index, $bindParams) {
-            if (preg_match('/^\((\?|\:(\w+))\)$/', $matches[0], $m)) {
-                if($m[0] == '(?)') {
-                    $value = $bindParams[$index++];
-                    if (!is_array($value)) {
-                        $value = $bindParams;
-                    }
-                } else {
-                    $value = $bindParams[$m[2]];
+        return preg_replace_callback(array('/\(\?\)/', '/\?/', '/\:(\w+)/'), function($matches) use(&$index, $bindParams) {
+            if ($matches[0] == '(?)') {
+                $value = $bindParams[$index++];
+                if (!is_array($value)) {
+                    $value = $bindParams;
                 }
-
-                if (is_array($value)) {
-                    $value = implode(', ', $value);
-                }
-
-                return '(' . $value . ')';
+                return sprintf('(%s)', implode(', ', $value));
             }
 
-            if ($matches[1] == '?') {
-                return $bindParams[$index++] . (isset($matches[3])? $matches[3] : '');
+            if ($matches[0] == '?') {
+                return $bindParams[$index++];
             }
 
-            return $bindParams[$matches[2]] . (isset($matches[3])? $matches[3] : '');
+            $value = $bindParams[$matches[1]];
+            return is_array($value)? implode(', ', $value) : $value;
         }, $conditions);
     }
 

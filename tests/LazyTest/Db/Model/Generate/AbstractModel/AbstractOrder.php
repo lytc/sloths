@@ -11,6 +11,8 @@ namespace LazyTest\Db\Model\Generate\AbstractModel;
  */
 abstract class AbstractOrder extends AbstractAppModel
 {
+    protected static $tableName = 'orders';
+    protected static $primaryKey = 'id';
     protected static $columns = array(
         'id' => array(
             'type'      => self::TYPE_INT,

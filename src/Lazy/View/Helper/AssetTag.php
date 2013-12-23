@@ -24,10 +24,19 @@ abstract class AssetTag extends Tag
         return $this;
     }
 
-    protected function render($asset, array $attributes = [])
+    protected function render($asset, array $attributes = [], array $options = [])
     {
+        if (!isset($options['extension'])) {
+            $extension = $this->extension;
+        } else {
+            $extension = $options['extension'];
+        }
+
         $attributes = array_merge($this->defaultAttributes, $attributes);
-        pathinfo($asset, PATHINFO_EXTENSION) || $asset .= '.' . $this->extension;
+
+        if ($extension) {
+            pathinfo($asset, PATHINFO_EXTENSION) || $asset .= '.' . $extension;
+        }
 
         if ($this->assetStamp) {
             $asset .= (false !== strpos($asset, '?')? '&' : '?') . $this->assetStamp;

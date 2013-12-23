@@ -10,6 +10,8 @@ namespace LazyTest\Db\Model\Generate\AbstractModel;
  */
 abstract class AbstractUser extends AbstractAppModel
 {
+    protected static $tableName = 'users';
+    protected static $primaryKey = 'id';
     protected static $columns = array(
         'id' => array(
             'type'      => self::TYPE_INT,
