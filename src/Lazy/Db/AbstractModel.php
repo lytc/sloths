@@ -143,6 +143,15 @@ abstract class AbstractModel
      */
     const TYPE_SERIALIZABLE = 'serializable';
 
+    const CASCADE   = 'CASCADE';
+    const SET_NULL  = 'SET NULL';
+    const NO_ACTION = 'NO ACTION';
+    const RESTRICT  = 'RESTRICT';
+    protected static $autoMaintenanceConstraint = false;
+
+    const AUTO_ON_INSERT = 1;
+    const AUTO_ON_UPDATE = 2;
+    const AUTO_ON_INSERT_AND_UPDATE = 3;
     /**
      * @var array
      */
@@ -322,7 +331,13 @@ abstract class AbstractModel
         static $initializeColumnSchema;
         if (!$initializeColumnSchema) {
             $columnSchemas = array();
-            foreach (static::$columns as $colName => $schema) {
+
+            $columns = static::$columns;
+            if (isset(static::$overrideColumns)) {
+                $columns = array_replace_recursive($columns, static::$overrideColumns);
+            }
+
+            foreach ($columns as $colName => $schema) {
                 if (is_string($schema)) {
                     $schema = array('type' => $schema);
                 }
@@ -426,6 +441,49 @@ abstract class AbstractModel
         }
 
         return isset($oneToMany[$associationName])? $oneToMany[$associationName] : null;
+    }
+
+    public static function getOneToOneSchema($associationName = null)
+    {
+        if (!isset(static::$oneToOne)) {
+            return;
+        }
+
+        static $oneToOne = array();
+
+        if (!$oneToOne) {
+            $calledClass = get_called_class();
+            $parts = explode('\\', $calledClass);
+            array_pop($parts);
+            $namespace = implode('\\', $parts);
+
+            if ($namespace) {
+                $namespace .= '\\';
+            }
+
+            foreach (static::$oneToOne as $name => $schema) {
+                if (is_numeric($name)) {
+                    $name = $schema;
+                    $schema = array();
+                }
+
+                if (!isset($schema['model'])) {
+                    $schema['model'] = $namespace . $name;
+                }
+
+                if (!isset($schema['key'])) {
+                    $schema['key'] = Inflector::tableize($name) . '_id';
+                }
+
+                $oneToOne[$name] = $schema;
+            }
+        }
+
+        if (!$associationName) {
+            return $oneToOne;
+        }
+
+        return isset($oneToOne[$associationName])? $oneToOne[$associationName] : null;
     }
 
     /**
@@ -546,8 +604,9 @@ abstract class AbstractModel
         if (null === $associationSchema) {
             $oneToMany = static::getOneToManySchema()?: array();
             $manyToOne = static::getManyToOneSchema()?: array();
+            $oneToOne = static::getOneToOneSchema()?: array();
             $manyToMany = static::getManyToManySchema()?: array();
-            $associationSchema = array_merge($oneToMany, $manyToOne, $manyToMany);
+            $associationSchema = array_merge($oneToMany, $manyToOne, $oneToOne, $manyToMany);
         }
 
         if (!$name) {
@@ -698,6 +757,7 @@ abstract class AbstractModel
      */
     public static function create(array $data = array())
     {
+        unset($data[static::getPrimaryKey()]);
         return new static($data);
     }
 
@@ -774,6 +834,11 @@ abstract class AbstractModel
     protected $sqlDelete;
 
     /**
+     * @var bool
+     */
+    protected $isCloned = false;
+
+    /**
      * @param array $data
      * @param Collection $collection
      */
@@ -819,6 +884,7 @@ abstract class AbstractModel
         }
 
         $getter = 'get' . Inflector::classify($name);
+
         if (method_exists($this, $getter)) {
             return $this->{$getter}($value);
         }
@@ -939,7 +1005,7 @@ abstract class AbstractModel
 
                 $foreignKeyValue = $this->{$refKey};
 
-                $pairs = $this->collection->pair($primaryKey, $refKey);
+                $pairs = $this->collection->pair(static::getPrimaryKey(), $refKey);
                 $select = $refModel::createSqlSelect();
                 $select->where(array("$primaryKey IN(?)" => array_unique(array_values($pairs))));
 
@@ -961,11 +1027,54 @@ abstract class AbstractModel
 
                 return $return;
             } else {
-                $model = $manyToOneSchema['model']::first($this->{$manyToOneSchema['key']});
+                if ($this->{$manyToOneSchema['key']}) {
+                    $model = $manyToOneSchema['model']::first($this->{$manyToOneSchema['key']});
+                } else {
+                    $model = null;
+                }
                 $this->associationData[$name] = $model;
                 return $model;
             }
+        }
 
+        # one to one
+        $oneToOneSchema = static::getOneToOneSchema($name);
+
+        if ($oneToOneSchema) {
+            $refModel = $oneToOneSchema['model'];
+            $refKey = $oneToOneSchema['key'];
+
+            if ($this->collection) {
+                $thisId = $this->id();
+                $ids = $this->collection->column(static::getPrimaryKey());
+
+                $select = $refModel::createSqlSelect();
+                $select->where(array("$refKey IN(?)" => $ids));
+
+                $rows = $select->fetchAll(\PDO::FETCH_ASSOC);
+                $rowPairs = array();
+
+                $return = null;
+                foreach ($rows as $row) {
+                    $rowPairs[$row[$refKey]] = new $refModel($row);
+                    if ($row[$refKey] == $thisId) {
+                        $return = $rowPairs[$row[$refKey]];
+                    }
+                }
+
+                foreach ($ids as $id) {
+                    $model = $this->collection->get($id);
+                    if ($model && isset($rowPairs[$id])) {
+                        $model->set($name, $rowPairs[$id]);
+                    }
+                }
+
+                return $return;
+            } else {
+                $model = $refModel::first([$refKey => $this->{$refKey}]);
+                $this->associationData[$name] = $model;
+                return $model;
+            }
         }
 
         # many to many
@@ -1045,9 +1154,9 @@ abstract class AbstractModel
 
         if ($integrityCheck) {
             $columnSchemas = static::getColumnSchema();
-            if (isset($columnSchemas[$nameUnderscore]['auto'])) {
-                throw new Exception(sprintf('Can not set the auto column %s', $nameUnderscore));
-            }
+//            if (isset($columnSchemas[$nameUnderscore]['auto'])) {
+//                throw new Exception(sprintf('Can not set the auto column %s', $nameUnderscore));
+//            }
 
             $associationSchema = static::getAssociationSchema();
             if (!isset($columnSchemas[$nameUnderscore]) && !isset($associationSchema[$name])) {
@@ -1128,11 +1237,13 @@ abstract class AbstractModel
 
     public function __clone()
     {
+        $this->isCloned = true;
         # load all data
         $unloadColumns = array_keys(array_diff_key(static::getColumnSchema(), $this->data));
         if ($unloadColumns) {
             $select = static::createSqlSelect($unloadColumns);
             $select->where([self::getPrimaryKey() => $this->id()]);
+
             $this->data = array_merge($this->data, $select->fetch(\PDO::FETCH_ASSOC));
         }
 
@@ -1141,13 +1252,51 @@ abstract class AbstractModel
         $this->data = [];
     }
 
+    public function copy(array $overrideData = [], $deep = true)
+    {
+        $copy = clone $this;
+        $copy->fromArray($overrideData);
+        $copy->save();
+        $newId = $copy->id();
+
+        if ($deep) {
+            // copy one to many
+            $oneToManySchemas = static::getOneToManySchema();
+            if ($oneToManySchemas) {
+                foreach ($oneToManySchemas as $name => $schema) {
+                    $collection = $this->{$name};
+                    foreach ($collection as $model) {
+                        $model->copy([$schema['key'] => $newId], $deep);
+                    }
+                }
+
+            }
+
+            // copy one to one
+            $oneToOneSchemas = static::getOneToOneSchema();
+            if ($oneToOneSchemas) {
+                foreach ($oneToOneSchemas as $name => $schema) {
+                    if ($model = $this->{$name}) {
+                        $model->copy([$schema['key'] => $newId], $deep);
+                    }
+                }
+            }
+
+            // copy many to many ??
+        }
+
+        return $copy;
+    }
+
     // @codeCoverageIgnoreStart
     protected function beforeUpdate() {}
     protected function afterUpdate() {}
     protected function beforeInsert() {}
     protected function afterInsert() {}
     protected function beforeDelete() {}
-    public function afterDelete() {}
+    protected function afterDelete() {}
+    protected function beforeSave() {}
+    protected function afterSave() {}
     // @codeCoverageIgnoreEnd
 
     /**
@@ -1189,12 +1338,21 @@ abstract class AbstractModel
         return $this->sqlDelete;
     }
 
+    public function hasChange($name)
+    {
+        return array_key_exists($name, $this->dirtyData);
+    }
+
     /**
      * @return $this
      * @throws Exception
      */
     public function save()
     {
+        if (false === $this->beforeSave()) {
+            return $this;
+        }
+
         if ($this->isExists()) {
             if (false === $this->beforeUpdate()) {
                 return $this;
@@ -1204,11 +1362,32 @@ abstract class AbstractModel
                 return $this;
             }
 
+            $columnsSchema = $this->getColumnSchema();
+            foreach ($columnsSchema as $column => $schema) {
+                if (!isset($this->dirtyData[$column]) && isset($schema['auto']) && $schema['auto'] & self::AUTO_ON_UPDATE) {
+                    switch ($schema['type']) {
+                        case self::TYPE_DATETIME:
+                        case self::TYPE_DATE:
+                        case self::TYPE_TIME:
+                        case self::TYPE_YEAR:
+                            $this->dirtyData[$column] = new Expr('NOW()');
+                    }
+                }
+            }
+
             $this->getSqlUpdate()
                 ->data($this->dirtyData)
                 ->where(array(static::getPrimaryKey() => $this->id()))
                 ->exec();
 
+            foreach ($this->dirtyData as $key => $val) {
+                if (is_object($val)) {
+                    unset($this->dirtyData[$key]);
+                }
+            }
+
+            $this->data = array_merge($this->data, $this->dirtyData);
+            $this->dirtyData = [];
             $this->afterUpdate();
         } else {
             if (false === $this->beforeInsert()) {
@@ -1226,15 +1405,41 @@ abstract class AbstractModel
                 }
             }
 
+            $columnsSchema = $this->getColumnSchema();
+            foreach ($columnsSchema as $column => $schema) {
+                if (!isset($this->dirtyData[$column]) && isset($schema['auto']) && $schema['auto'] & self::AUTO_ON_INSERT) {
+                    switch ($schema['type']) {
+                        case self::TYPE_DATETIME:
+                        case self::TYPE_DATE:
+                        case self::TYPE_TIME:
+                        case self::TYPE_YEAR:
+                            $this->dirtyData[$column] = new Expr('NOW()');
+                    }
+                }
+
+                if (!isset($this->dirtyData[$column]) && isset($schema['default'])) {
+                    $this->dirtyData[$column] = $schema['default'];
+                }
+            }
+
             $this->getSqlInsert()
                 ->value($this->dirtyData)
                 ->exec();
+
+            foreach ($this->dirtyData as $key => $val) {
+                if (is_object($val)) {
+                    unset($this->dirtyData[$key]);
+                }
+            }
 
             $this->data = $this->dirtyData;
             $this->dirtyData = array();
             $this->data[static::getPrimaryKey()] = static::getConnection()->lastInsertId();
             $this->afterInsert();
         }
+
+        $this->afterSave();
+
         return $this;
     }
 
@@ -1275,18 +1480,81 @@ abstract class AbstractModel
             throw new Exception('Trying to delete a non existing row');
         }
 
-        $this->beforeDelete();
+        $connection = static::getConnection();
+        $connection->beginTransaction();
 
-        if (isset(static::$softDelete) && static::$softDelete) {
-            $field = is_string(static::$softDelete)? static::$softDelete : 'deleted';
-            $this->{$field} = 1;
-            $this->save();
-        } else {
-            $delete = $this->getSqlDelete();
-            $delete->where(array(static::getPrimaryKey() => $this->id()));
-            $delete->exec();
+        try {
+            $this->beforeDelete();
+
+            if (isset(static::$softDelete) && static::$softDelete) {
+                $field = is_string(static::$softDelete)? static::$softDelete : 'deleted';
+                $this->{$field} = 1;
+                $this->save();
+            } else {
+                $delete = $this->getSqlDelete();
+                $delete->where(array(static::getPrimaryKey() => $this->id()));
+                $delete->exec();
+
+                if (static::$autoMaintenanceConstraint) {
+                    # one to many
+                    $oneToManySchemas = static::getOneToManySchema();
+                    if ($oneToManySchemas) {
+                        foreach ($oneToManySchemas as $childrenName => $schema) {
+                            $model = $schema['model'];
+                            if (isset($schema['onDelete'])) {
+                                $key = $schema['key'];
+                                $children = $this->{$childrenName}->select([$model::getPrimaryKey(), $key]);
+
+                                switch ($schema['onDelete']) {
+                                    case self::SET_NULL:
+                                        foreach ($children as $child) {
+                                            $child->{$key} = null;
+                                            $child->save();
+                                        }
+                                        break;
+
+                                    case self::CASCADE:
+                                        foreach ($children as $child) {
+                                            $child->delete();
+                                        }
+                                        break;
+                                }
+                            }
+                        }
+                    }
+
+                    # one to one
+                    $oneToOneSchemas = static::getOneToOneSchema();
+                    if ($oneToOneSchemas) {
+                        foreach ($oneToOneSchemas as $name => $schema) {
+                            if (isset($schema['onDelete'])) {
+                                $key = $schema['key'];
+                                $model = $this->{$name};
+                                if ($model) {
+                                    switch ($schema['onDelete']) {
+                                        case self::SET_NULL:
+                                            $model->{$key} = null;
+                                            $model->save();
+                                            break;
+
+                                        case self::CASCADE:
+                                            $model->delete();
+                                            break;
+                                    }
+                                }
+
+                            }
+                        }
+                    }
+                }
+            }
+            $connection->commit();
+            $this->afterDelete();
+            return $this;
+        } catch (\Exception $e) {
+            $connection->rollBack();
+            throw $e;
         }
-        $this->afterDelete();
-        return $this;
+
     }
 }

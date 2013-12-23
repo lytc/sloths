@@ -79,4 +79,16 @@ class Mysql extends AbstractAdapter
 
         return $result;
     }
+
+    public function getPrimaryKey($table) {
+        $query = "SHOW CREATE TABLE `$table`";
+        $stmt = $this->connection->query($query);
+
+        $pattern = '/PRIMARY KEY \(`(.*)`\)/';
+
+        preg_match($pattern, $stmt->fetchColumn(1), $matches);
+        if ($matches) {
+            return $matches[1];
+        }
+    }
 }

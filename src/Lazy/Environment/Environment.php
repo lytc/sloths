@@ -7,6 +7,7 @@ use Lazy\Environment\Exception\Exception;
 class Environment
 {
     protected $data;
+    protected $body;
 
     public function __construct()
     {
@@ -18,6 +19,11 @@ class Environment
             'paramsCookie'  => $_COOKIE,
             'params'        => $_REQUEST,
         ];
+
+        if ('application/json' == $this->header('CONTENT_TYPE')) {
+            $body = $this->body()?: '{}';
+            $this->data['params'] = array_merge($this->data['params'],  json_decode($body, true));
+        }
     }
 
     public function __call($method, $args)
@@ -69,6 +75,41 @@ class Environment
         return call_user_func_array([$this, 'serverVars'], func_get_args());
     }
 
+    public function headers($name = null, $value = null)
+    {
+        switch (func_num_args()) {
+            case 0:
+                $headers = [];
+                foreach ($this->serverVars() as $name => $value) {
+                    if ('HTTP_' == substr($name, 0, 5)) {
+                        $headers[substr($name, 5)] = $value;
+                    }
+                }
+                return $headers;
+
+            case 1: return $this->serverVars('HTTP_' . $name);
+            case 2: $this->serverVars('HTTP_' . $name, $value);
+        }
+        return $this;
+    }
+
+    public function header()
+    {
+        return call_user_func_array([$this, 'headers'], func_get_args());
+    }
+
+    public function body($body = null)
+    {
+        if (!func_num_args()) {
+            if (null === $this->body) {
+                $this->body = file_get_contents('php://input');
+            }
+            return $this->body;
+        }
+
+        $this->body = (String) $body;
+    }
+
     public function paramGet()
     {
         return call_user_func_array([$this, 'paramsGet'], func_get_args());
@@ -92,5 +133,22 @@ class Environment
     public function param()
     {
         return call_user_func_array([$this, 'params'], func_get_args());
+    }
+
+    public function pickParams($names)
+    {
+        $names = trim($names);
+        $names = preg_replace('/\s+/', ' ', $names);
+        $names = explode(' ', $names);
+
+        $result = [];
+        $params = $this->params();
+        foreach ($names as $name) {
+            if (array_key_exists($name, $params)) {
+                $result[$name] = $params[$name];
+            }
+        }
+
+        return $result;
     }
 }

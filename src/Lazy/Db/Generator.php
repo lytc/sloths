@@ -43,6 +43,8 @@ class Generator
      */
     protected $schemas;
 
+    protected $generateModelClassNameFromTableNameFunc;
+
     public function __construct(Connection $connection)
     {
         $this->connection = $connection;
@@ -55,6 +57,16 @@ class Generator
         }
 
         $this->driver = new $driverClass($this->connection);
+
+        $this->generateModelClassNameFromTableNameFunc = function($tableName) {
+            return Inflector::classify(Inflector::singularize($tableName));
+        };
+    }
+
+    public function setGenerateModelClassNameFromTableNameFunc(\Closure $func)
+    {
+        $this->generateModelClassNameFromTableNameFunc = $func;
+        return $this;
     }
 
     public function setDirectory($directory)
@@ -87,6 +99,7 @@ class Generator
         $schemas = array();
         foreach ($tables as $table) {
             $schemas[$table] = array(
+                'primaryKey' => $this->driver->getPrimaryKey($table),
                 'columns' => $this->driver->listColumnSchemas($table),
                 'manyToOne' => $this->driver->listConstraints($table)
             );
@@ -188,7 +201,7 @@ class Generator
                 $classContentParts[] = "namespace $namespace\\AbstractModel;" . PHP_EOL;
             }
 
-            $modelClassName = Inflector::classify(Inflector::singularize($tableName));
+            $modelClassName = $this->getModelClassNameFromTableName($tableName);
 
             # properties columns
             $properties = array();
@@ -221,6 +234,14 @@ class Generator
 
             $classContentParts[] = "abstract class Abstract$modelClassName extends " . ($rootAbstractModelClassName? $rootAbstractModelClassName : '\Lazy\Db\AbstractModel');
             $classContentParts[] = '{';
+
+            # table name
+            $classContentParts[] = "    protected static \$tableName = '$tableName';";
+
+            # primary key
+            if ($schema['primaryKey']) {
+                $classContentParts[] = "    protected static \$primaryKey = '{$schema['primaryKey']}';";
+            }
 
             # columns
             $classContentParts[] = '    protected static $columns = array(';
@@ -309,7 +330,7 @@ class Generator
         $namespace = $this->namespace;
 
         foreach ($this->schemas as $tableName => $schema) {
-            $modelClassName = Inflector::classify(Inflector::singularize($tableName));
+            $modelClassName = $this->getModelClassNameFromTableName($tableName);
             $fileName = $this->getDirectory() . '/' . $modelClassName . '.php';
 
             if (file_exists($fileName)) {
@@ -336,5 +357,10 @@ class Generator
             $classContent = implode(PHP_EOL, $classContentParts);
             file_put_contents($fileName, $classContent);
         }
+    }
+
+    protected function getModelClassNameFromTableName($tableName)
+    {
+        return call_user_func($this->generateModelClassNameFromTableNameFunc->bindTo($this, $this), $tableName);
     }
 }

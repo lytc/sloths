@@ -51,15 +51,15 @@ class ModelInstanceTest extends TestCase
         $this->assertSame('foo', $user->createdTime);
     }
 
-    /**
-     * @expectedException \Lazy\Db\Exception
-     * @expectedExceptionMessage Can not set the auto column id
-     */
-    public function testSetColumnAutoShouldThrowAnException()
-    {
-        $user = User::first();
-        $user->id = 1;
-    }
+//    /**
+//     * @expectedException \Lazy\Db\Exception
+//     * @expectedExceptionMessage Can not set the auto column id
+//     */
+//    public function testSetColumnAutoShouldThrowAnException()
+//    {
+//        $user = User::first();
+//        $user->id = 1;
+//    }
 
     public function testMethodIsExists()
     {

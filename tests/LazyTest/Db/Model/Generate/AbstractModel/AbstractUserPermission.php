@@ -9,6 +9,7 @@ namespace LazyTest\Db\Model\Generate\AbstractModel;
  */
 abstract class AbstractUserPermission extends AbstractAppModel
 {
+    protected static $tableName = 'user_permissions';
     protected static $columns = array(
         'user_id' => array(
             'type'      => self::TYPE_INT,

@@ -9,6 +9,8 @@ class Request
 {
     protected static $aliasMethods = [
         'serverVars'    => 'env',
+        'headers'       => 'env',
+        'header'        => 'env',
         'paramsGet'     => 'env',
         'paramsPost'    => 'env',
         'paramsCookie'  => 'env',
@@ -20,12 +22,13 @@ class Request
         'paramCookie'   => 'env',
         'paramFile'     => 'env',
         'param'         => 'env',
+        'pickParams'    => 'env',
+        'body'          => 'env'
     ];
     protected $env;
     protected $pathInfoOverrides = [];
 
     public static $methodOverrideParamName = '_method';
-    protected $body;
 
     protected $config = [];
 
@@ -58,41 +61,6 @@ class Request
         }
 
         throw new Exception("Call undefined method $method");
-    }
-
-    public function body($body = null)
-    {
-        if (!func_num_args()) {
-            if (null === $this->body) {
-                $this->body = file_get_contents('php://input');
-            }
-            return $this->body;
-        }
-
-        $this->body = (String) $body;
-    }
-
-    public function headers($name = null, $value = null)
-    {
-        switch (func_num_args()) {
-            case 0:
-                $headers = [];
-                foreach ($this->serverVars() as $name => $value) {
-                    if ('HTTP_' == substr($name, 0, 5)) {
-                        $headers[substr($name, 5)] = $value;
-                    }
-                }
-                return $headers;
-
-            case 1: return $this->serverVars('HTTP_' . $name);
-            case 2: $this->serverVars('HTTP_' . $name, $value);
-        }
-        return $this;
-    }
-
-    public function header()
-    {
-        return call_user_func_array([$this, 'headers'], func_get_args());
     }
 
     public function pathInfoOverrides(array $value)
@@ -227,7 +195,9 @@ class Request
     {
         if (!func_num_args()) {
             $method = $this->serverVars('REQUEST_METHOD');
-            if ('POST' == $method && in_array($methodOverride = $this->paramPost(self::$methodOverrideParamName), ['PUT', 'DELETE'])) {
+            $methodOverride = $this->paramPost(self::$methodOverrideParamName)?: $this->header('X_HTTP_METHOD_OVERRIDE');
+
+            if ('POST' == $method && in_array($methodOverride, ['PUT', 'DELETE'])) {
                 return $methodOverride;
             }
             return $method;
@@ -240,6 +210,16 @@ class Request
     public function scheme()
     {
         return $this->isSecure()? 'https' : 'http';
+    }
+
+    public function contentType($contentType = null)
+    {
+        if (!func_num_args()) {
+            return $this->header('CONTENT_TYPE');
+        }
+
+        $this->header('CONTENT_TYPE', $contentType);
+        return $this;
     }
 
     public function baseUrl()

@@ -25,6 +25,7 @@ class Application
         'paramFile'     => 'request',
         'params'        => 'request',
         'param'         => 'request',
+        'pickParams' => 'request',
 
         'status'        => 'response',
         'headers'       => 'response',
@@ -220,7 +221,7 @@ class Application
     public function call($method, $path)
     {
         $this->request()->method($method)->pathInfo($path);
-        $this->dispatch();
+        $this->run();
         $this->halt();
     }
 
@@ -230,14 +231,40 @@ class Application
             $request = $this->request();
             $pathInfo = $request->pathInfo();
 
-            $parts = explode('/', $pathInfo, 3);
+            $parts = explode('/', $pathInfo);
+            if (isset($parts[0]) && !$parts[0]) {
+                array_shift($parts);
+            }
 
-            $routeName = $parts[1];
-            $routeName || $routeName = $this->defaultRoute;
+            $routeParts = [];
+            $routePath = '/';
+            $routeFile = null;
 
-            $routeFile = $this->path . '/routes/' . $routeName  .'.php';
-            if (!file_exists($routeFile)) {
-                $this->notFound();
+            foreach ($parts as $index => $part) {
+                $part = preg_replace_callback('/\W+/', function($matches) {
+                    if (in_array($matches[0], ['-', '_'])) {
+                        return $matches[0];
+                    }
+                    return '';
+                }, $part);
+
+                $routeParts[] = $part;
+                $file = $this->path . '/routes/' . implode('/', $routeParts) . '.php';
+                if (file_exists($file)) {
+                    $routeFile = $file;
+                    $routePath = '/' . implode('/', array_slice($parts, $index + 1));
+                }
+
+                $file = $this->path . '/routes/' . implode('/', $routeParts) . '/index.php';
+                if (file_exists($file)) {
+                    $routeFile = $file;
+                    $routePath = '/' . implode('/', array_slice($parts, $index));
+                }
+            }
+
+            if (!$routeFile) {
+                $routeFile = $this->path . '/routes/' . $this->defaultRoute . '.php';
+                $routePath = $pathInfo;
             }
 
             require_once $routeFile;
@@ -246,12 +273,6 @@ class Application
                 $callback = $callback->bindTo($this);
                 $callback();
             }
-
-            $routePath = isset($parts[2])? $parts[2] : '/';
-            if ('/' != $routePath) {
-                $routePath = '/' . trim($routePath, ' /');
-            }
-
             ob_start();
             $result = $this->router()->dispatch($request->method(), $routePath);
             $buffer = ob_get_clean();
