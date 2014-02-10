@@ -18,7 +18,7 @@ abstract class AbstractAdapter
     abstract public function listColumnSchemas($table);
     abstract public function listConstraints($table);
 
-    public function parseConstraints(array &$schemas, $namespace = '')
+    public function parseConstraints2(array &$schemas, $namespace = '')
     {
         if ($namespace) {
             $namespace .= '\\\\';
@@ -29,6 +29,7 @@ abstract class AbstractAdapter
             if (!isset($schema['manyToOne'])) {
                 continue;
             }
+
 
             $manyToOne = $schema['manyToOne'];
             foreach ($manyToOne as $foreignKey => $refTable) {
@@ -56,7 +57,7 @@ abstract class AbstractAdapter
                         continue;
                     }
 
-                    if (!isset ($manyToManyMaps[$leftTable])) {
+                    if (!isset($manyToManyMaps[$leftTable])) {
                         $manyToManyMaps[$leftTable] = array();
                     }
 
@@ -116,5 +117,115 @@ abstract class AbstractAdapter
                 $schemas[$table]['manyToMany'] = $manyToMany;
             }
         }
+    }
+
+    public function parseConstraints(array $schemas, $namespace = '')
+    {
+        if ($namespace) {
+            $namespace .= '\\\\';
+        }
+
+        $constraints = [];
+        $manyToOne = [];
+        foreach ($schemas as $table => $schema) {
+            $manyToOne[$table] = $this->listConstraints($table);
+        }
+
+        foreach ($manyToOne as $table => $schema) {
+            if (!isset($constraints[$table])) {
+                $constraints[$table] = ['manyToOne' => $schema];
+            }
+        }
+
+        foreach ($constraints as $table => $schema) {
+            foreach ($schema['manyToOne'] as $refKey => $refTable) {
+                if (!isset($constraints[$refTable])) {
+                    $constraints[$refTable] = [
+                        'oneToMany' => []
+                    ];
+                }
+
+                $constraints[$refTable]['oneToMany'][$table] = $refKey;
+            }
+        }
+
+        $manyToMany = [];
+        foreach ($constraints as $table => $schema) {
+            if ($schema['manyToOne']) {
+                foreach ($schema['manyToOne'] as $leftKey => $leftTable) {
+                    foreach ($schema['manyToOne'] as $rightKey => $rightTable) {
+                        if ($leftKey == $rightKey) {
+                            continue;
+                        }
+
+                        if (!isset($manyToMany[$leftTable])) {
+                            $manyToMany[$leftTable] = [];
+                        }
+
+                        $manyToMany[$leftTable][$rightTable] = [
+                            'leftKey' => $leftKey,
+                            'rightKey' => $rightKey,
+                            'through' => $table
+                        ];
+                    }
+                }
+            }
+        }
+
+        foreach ($manyToMany as $table => $schema) {
+            if (!isset($constraints[$table])) {
+                $constraints[$table] = [];
+            }
+
+            $constraints[$table]['manyToMany'] = $schema;
+        }
+
+        foreach ($constraints as $table => $schema) {
+            if (isset($schema['manyToOne'])) {
+                $schemas[$table]['manyToOne'] = [];
+                foreach ($schema['manyToOne'] as $refKey => $refTable) {
+                    $key = preg_replace('/_id$/', '', $refKey);
+                    $key = Inflector::classify($key);
+                    $model = $namespace . Inflector::classify(Inflector::singularize($refTable));
+                    $schemas[$table]['manyToOne'][$key] = [
+                        'model' => $model,
+                        'key'   => $refKey
+                    ];
+                }
+            }
+
+            if (isset($schema['oneToMany'])) {
+                $schemas[$table]['oneToMany'] = [];
+                foreach ($schema['oneToMany'] as $refTable => $refKey) {
+                    $key = Inflector::pluralize($refTable);
+                    $key = Inflector::classify($key);
+                    $model = $namespace . Inflector::classify(Inflector::singularize($refTable));
+                    $schemas[$table]['oneToMany'][$key] = [
+                        'model' => $model,
+                        'key'   => $refKey
+                    ];
+                }
+            }
+
+            if (isset($schema['manyToMany'])) {
+                $schemas[$table]['manyToMany'] = [];
+                foreach ($schema['manyToMany'] as $rightTable => $schema) {
+                    $key = Inflector::classify($rightTable);
+
+                    if (isset($schemas[$table]['oneToMany'][$key])) {
+                        continue;
+                    }
+
+                    $throughModel = $namespace . Inflector::classify(Inflector::singularize($schema['through']));
+                    $schemas[$table]['manyToMany'][$key] = [
+                        'leftKey' => $schema['leftKey'],
+                        'rightKey' => $schema['rightKey'],
+                        'through' => $throughModel
+                    ];
+                }
+            }
+        }
+
+        return $schemas;
     }
 }

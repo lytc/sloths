@@ -7,7 +7,13 @@ use Lazy\Pagination\Pagination;
 class Paginate extends AbstractHelper
 {
     protected $pagination;
-    protected $template = 'paginate';
+    protected static $defaultTemplate = 'paginate';
+    protected $template;
+
+    public static function setDefaultTemplate($template)
+    {
+        static::$defaultTemplate = $template;
+    }
 
     public function paginate(Pagination $pagination, $template = null)
     {
@@ -19,7 +25,7 @@ class Paginate extends AbstractHelper
     public function template($template = null)
     {
         if (!func_num_args()) {
-            return $this->template;
+            return $this->template?: static::$defaultTemplate;
         }
 
         $this->template = $template;

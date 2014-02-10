@@ -101,15 +101,16 @@ class Generator
             $schemas[$table] = array(
                 'primaryKey' => $this->driver->getPrimaryKey($table),
                 'columns' => $this->driver->listColumnSchemas($table),
-                'manyToOne' => $this->driver->listConstraints($table)
+//                'manyToOne' => $this->driver->listConstraints($table)
             );
         }
 
+//        $schemas = $this->driver->parseConstraints($schemas, $this->namespace);
 
-        $this->driver->parseConstraints($schemas, $this->namespace);
-//        echo json_encode($schemas); exit;
 
-        $this->schemas = $schemas;
+//        $this->driver->parseConstraints($schemas, $this->namespace);
+
+        $this->schemas = $this->driver->parseConstraints($schemas, $this->namespace);;
 
         # create dir
         $directory = $this->getDirectory();

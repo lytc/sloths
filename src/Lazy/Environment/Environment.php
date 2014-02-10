@@ -8,6 +8,7 @@ class Environment
 {
     protected $data;
     protected $body;
+    protected static $_body;
 
     public function __construct()
     {
@@ -17,12 +18,15 @@ class Environment
             'paramsPost'    => $_POST,
             'paramsFile'    => $_FILES,
             'paramsCookie'  => $_COOKIE,
-            'params'        => $_REQUEST,
+            'params'        => [],
         ];
+
+        $this->data['params'] = array_replace([], $_GET?: [], $_POST?: [], $_COOKIE?: []);
 
         if ('application/json' == $this->header('CONTENT_TYPE')) {
             $body = $this->body()?: '{}';
-            $this->data['params'] = array_merge($this->data['params'],  json_decode($body, true));
+            $this->params(json_decode($body, true));
+//            $this->data['params'] = array_merge($this->data['params'],  json_decode($body, true));
         }
     }
 
@@ -40,7 +44,7 @@ class Environment
             case 0: return $data;
             case 1:
                 if (is_array($name)) {
-                    $this->data[$method] = array_merge($data, $name);
+                    $this->data[$method] = array_replace($data, $name);
                     return $this;
                 }
                 if ('params' == $method) {
@@ -48,7 +52,7 @@ class Environment
                         return $data[$name];
                     }
 
-                    foreach (['paramsGet', 'paramsPost', 'paramsCookie'] as $type) {
+                    foreach (['paramsGet', 'paramsPost', 'paramsCookie', 'params'] as $type) {
                         if (isset($this->data[$type][$name])) {
                             return $this->data[$type][$name];
                         }
@@ -101,8 +105,11 @@ class Environment
     public function body($body = null)
     {
         if (!func_num_args()) {
+            if (null === self::$_body) {
+                self::$_body = file_get_contents('php://input');
+            }
             if (null === $this->body) {
-                $this->body = file_get_contents('php://input');
+                $this->body = self::$_body;
             }
             return $this->body;
         }
