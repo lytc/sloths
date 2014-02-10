@@ -22,11 +22,9 @@ class Module
     {
         $request = new Request();
         $requestPath = $request->pathInfo();
-
         if (isset($this->modules[$requestPath])) {
             $application = $this->modules[$requestPath]();
-            $request->pathInfo('/');
-            $application->request($request);
+            $application->request()->basePath(rtrim($requestPath, '/'));
             return $application->run();
         }
 
@@ -41,13 +39,8 @@ class Module
 
             if (preg_match('/^' . preg_quote($requestBasePath, '/') . '(.*)/', $requestPath, $matches)) {
                 $application = $callback();
-                $pathInfo = $matches[1]?: '/';
-                if ('/' != $pathInfo[0]) {
-                    $pathInfo = '/' . $pathInfo;
-                }
 
-                $request->pathInfo($pathInfo);
-                $application->request($request);
+                $application->request()->basePath(rtrim($requestBasePath, '/'));
                 return $application->run();
             }
         }

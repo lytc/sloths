@@ -543,6 +543,11 @@ abstract class AbstractModel
             return;
         }
 
+        $_manyToMany = static::$manyToMany;
+        if (isset(static::$manyToManyOverride)) {
+            $_manyToMany = array_replace_recursive($_manyToMany, static::$manyToManyOverride);
+        }
+
         static $manyToMany = array();
 
         if (!$manyToMany) {
@@ -555,7 +560,7 @@ abstract class AbstractModel
                 $namespace .= '\\';
             }
 
-            foreach (static::$manyToMany as $name => $schema) {
+            foreach ($_manyToMany as $name => $schema) {
                 if (is_numeric($name)) {
                     $name = $schema;
                     $schema = array();
@@ -1012,6 +1017,7 @@ abstract class AbstractModel
                 $rows = $select->fetchAll(\PDO::FETCH_BOTH);
                 $rowPairs = array();
 
+                $return = null;
                 foreach ($rows as $row) {
                     $rowPairs[$row[$primaryKey]] = new $refModel($row);
                     if ($row[$primaryKey] == $foreignKeyValue) {

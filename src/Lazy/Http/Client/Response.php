@@ -8,6 +8,7 @@ class Response
 {
     const TYPE_JSON = 'json';
     const TYPE_XML = 'xml';
+    const TYPE_QUERY_STRING = 'query_string';
 
     protected $headers;
     protected $body;
@@ -45,6 +46,11 @@ class Response
 
                 case self::TYPE_XML:
                     $this->data = json_decode(json_encode(simplexml_load_string($this->body)));
+                    break;
+
+                case self::TYPE_QUERY_STRING:
+                    parse_str($this->body, $data);
+                    $this->data = json_decode(json_encode($data));
                     break;
 
                 default:

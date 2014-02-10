@@ -17,7 +17,7 @@ class Url extends AbstractHelper
     }
 
     public function url(array $params) {
-        $path = self::$request->pathInfo();
+        $path = self::$request->getFullPathInfo();
         $paramsGet = self::$request->paramsGet();
         return $path . '?' . http_build_query(array_merge($paramsGet, $params));
     }

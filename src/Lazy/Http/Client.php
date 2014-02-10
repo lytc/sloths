@@ -3,7 +3,6 @@
 namespace Lazy\Http;
 
 use Lazy\Http\Client\Exception\Exception;
-use Lazy\Http\Client\Response;
 
 class Client
 {
@@ -162,6 +161,10 @@ class Client
         return $this;
     }
 
+    /**
+     * @return Client\Response
+     * @throws Client\Exception\Exception
+     */
     public function send()
     {
         $curl = $this->curl();

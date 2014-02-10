@@ -27,6 +27,7 @@ class Request
     ];
     protected $env;
     protected $pathInfoOverrides = [];
+    protected $basePath = '';
 
     public static $methodOverrideParamName = '_method';
 
@@ -63,28 +64,50 @@ class Request
         throw new Exception("Call undefined method $method");
     }
 
+    public function basePath($basePath = null)
+    {
+        if (!func_num_args()) {
+            return $this->basePath;
+        }
+
+        $this->basePath = $basePath;
+        return $this;
+    }
+
     public function pathInfoOverrides(array $value)
     {
         $this->pathInfoOverrides = $value;
         return $this;
     }
 
+    public function getFullPathInfo()
+    {
+        $pathInfo = $this->serverVar('PATH_INFO')?: $this->serverVar('REQUEST_URI');
+        $pathInfo || $pathInfo = '/';
+        $pathInfo = parse_url($pathInfo, PHP_URL_PATH);
+
+        if (isset($this->pathInfoOverrides[$pathInfo])) {
+            $pathInfo = $this->pathInfoOverrides[$pathInfo];
+        }
+
+        if ('/' !== $pathInfo) {
+            $pathInfo = preg_replace('/\/+$/', '', $pathInfo);
+        }
+
+        return $pathInfo;
+    }
+
     public function pathInfo($pathInfo = null)
     {
         if (!func_num_args()) {
-            $pathInfo = $this->serverVar('PATH_INFO')?: $this->serverVar('REQUEST_URI');
-            $pathInfo || $pathInfo = '/';
-            $pathInfo = parse_url($pathInfo, PHP_URL_PATH);
+            $pathInfo = $this->getFullPathInfo();
+            $basePath = $this->basePath;
 
-            if (isset($this->pathInfoOverrides[$pathInfo])) {
-                $pathInfo = $this->pathInfoOverrides[$pathInfo];
+            if ($basePath) {
+                $pathInfo = preg_replace('/^' . preg_quote($basePath, '/') . '/', '', $pathInfo);
             }
 
-            if ('/' !== $pathInfo) {
-                $pathInfo = preg_replace('/\/+$/', '', $pathInfo);
-            }
-
-            return $pathInfo;
+            return $pathInfo?: '/';
         }
 
         $this->serverVars('PATH_INFO', $pathInfo);
