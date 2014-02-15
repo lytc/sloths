@@ -6,6 +6,6 @@ class Escape extends AbstractHelper
 {
     public function escape($str)
     {
-        return htmlentities($str);
+        return htmlspecialchars($str);
     }
 }
