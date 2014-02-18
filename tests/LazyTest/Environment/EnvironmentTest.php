@@ -90,10 +90,10 @@ class EnvironmentTest extends \PHPUnit_Framework_TestCase
 
     public function testParamsMethod()
     {
-        $_REQUEST['foo'] = 'bar';
-        $_GET['bar'] = 'baz';
+        $_GET['foo'] = 'bar';
+        $_POST['bar'] = 'baz';
         $env = new Environment();
-        $this->assertSame(['foo' => 'bar'], $env->params());
+        $this->assertSame(['foo' => 'bar', 'bar' => 'baz'], $env->params());
 
         $this->assertSame('baz', $env->param('bar'));
 

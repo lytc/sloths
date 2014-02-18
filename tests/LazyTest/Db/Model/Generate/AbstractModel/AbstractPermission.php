@@ -37,10 +37,9 @@ abstract class AbstractPermission extends AbstractAppModel
 
     protected static $manyToMany = array(
         'Users' => array(
-            'model'     => 'LazyTest\Db\Model\Generate\\User',
-            'through'   => 'LazyTest\Db\Model\Generate\\UserPermission',
             'leftKey'   => 'permission_id',
             'rightKey'  => 'user_id',
+            'through'   => 'LazyTest\Db\Model\Generate\\UserPermission',
         ),
     );
 

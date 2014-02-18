@@ -37,10 +37,9 @@ abstract class AbstractProduct extends AbstractAppModel
 
     protected static $manyToMany = array(
         'Users' => array(
-            'model'     => 'LazyTest\Db\Model\Generate\\User',
-            'through'   => 'LazyTest\Db\Model\Generate\\Order',
             'leftKey'   => 'product_id',
             'rightKey'  => 'user_id',
+            'through'   => 'LazyTest\Db\Model\Generate\\Order',
         ),
     );
 

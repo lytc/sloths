@@ -53,6 +53,6 @@ class CapturePart
 
     public function __toString()
     {
-        return implode(PHP_EOL, $this->items);
+        return implode('', $this->items);
     }
 }
