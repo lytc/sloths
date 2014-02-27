@@ -59,7 +59,7 @@ class Migration
         try {
             foreach ($migrations as $version => $info) {
                 # check if is already run
-                $stmt = $this->connection->query("SELECT version FROM migrations ORDER BY version DESC LIMIT 1");
+                $stmt = $this->connection->query("SELECT version FROM migrations WHERE version='{$version}' LIMIT 1");
                 $row = $stmt->fetch(\PDO::FETCH_ASSOC);
 
                 if ($row) {
@@ -85,6 +85,10 @@ class Migration
             $this->connection->rollBack();
 
             throw $e;
+        }
+
+        if (!$migrationRuns) {
+            echo 'No migration to run!';
         }
     }
 }
