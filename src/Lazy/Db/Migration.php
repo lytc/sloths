@@ -72,17 +72,16 @@ class Migration
                 $migrationRuns[] = $migrationClass;
 
                 $this->connection->exec("INSERT INTO migrations(version) VALUES ('{$version}')");
-                //
-                $this->connection->commit();
 
                 echo sprintf("-- %s\n", $info['file']);
             }
+            $this->connection->commit();
         } catch (\Exception $e) {
+            $this->connection->rollBack();
+
             foreach ($migrationRuns as $migrationClass) {
                 $migrationClass->down();
             }
-
-            $this->connection->rollBack();
 
             throw $e;
         }
