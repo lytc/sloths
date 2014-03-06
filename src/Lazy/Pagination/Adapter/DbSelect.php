@@ -1,8 +1,8 @@
 <?php
 
-namespace Lite\Pagination\Adapter;
+namespace Lazy\Pagination\Adapter;
 
-use Lazy\Db\Select;
+use Lazy\Db\Sql\Select;
 
 class DbSelect implements AdapterInterface
 {
