@@ -1077,7 +1077,7 @@ abstract class AbstractModel
 
                 return $return;
             } else {
-                $model = $refModel::first([$refKey => $this->{$refKey}]);
+                $model = $refModel::first([$refKey => $this->id()]);
                 $this->associationData[$name] = $model;
                 return $model;
             }
