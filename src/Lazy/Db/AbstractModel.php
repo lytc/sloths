@@ -1011,8 +1011,19 @@ abstract class AbstractModel
                 $foreignKeyValue = $this->{$refKey};
 
                 $pairs = $this->collection->pair(static::getPrimaryKey(), $refKey);
+                $refIds = array_unique($pairs);
+                $refIds = array_diff($refIds, ['']);
+                $refIds = array_values($refIds);
+                if (!$refIds) {
+                    return null;
+                }
                 $select = $refModel::createSqlSelect();
-                $select->where(array("$primaryKey IN(?)" => array_unique(array_values($pairs))));
+
+                if (1 == count($refIds)) {
+                    $select->where(array("$primaryKey = ?" => $refIds[0]));
+                } else {
+                    $select->where(array("$primaryKey IN(?)" => [$refIds]));
+                }
 
                 $rows = $select->fetchAll(\PDO::FETCH_BOTH);
                 $rowPairs = array();
