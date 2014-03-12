@@ -12,6 +12,15 @@ use LazyTest\Db\TestCase;
  */
 class WhereTest extends TestCase
 {
+    public function testThu()
+    {
+        $where = new Where($this->connection);
+        $where->where([
+            'foo' => '/::id/edit'
+        ]);
+
+        $this->assertEquals("WHERE (foo = '/::id/edit')", $where->toString());
+    }
     public function testNothingReturnsAnEmptyString()
     {
         $where = new Where($this->connection);
