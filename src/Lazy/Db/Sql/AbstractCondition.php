@@ -116,7 +116,7 @@ abstract class AbstractCondition
         }
 
         $index = 0;
-        return preg_replace_callback(array('/\(\?\)/', '/\?/', '/\:(\w+)/'), function($matches) use(&$index, $bindParams) {
+        return preg_replace_callback('/\(\?\)|\?|\:(\w+)/', function($matches) use(&$index, $bindParams) {
             if ($matches[0] == '(?)') {
                 $value = $bindParams[$index++];
                 if (!is_array($value)) {
