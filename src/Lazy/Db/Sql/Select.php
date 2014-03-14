@@ -19,6 +19,12 @@ class Select
      * @var string
      */
     protected $table;
+
+    /**
+     * @var bool
+     */
+    protected $distinct = false;
+
     /**
      * @var array
      */
@@ -146,6 +152,16 @@ class Select
         }
 
         $this->table = $table;
+        return $this;
+    }
+
+    /**
+     * @param bool $state
+     * @return $this
+     */
+    public function distinct($state = true)
+    {
+        $this->distinct = $state;
         return $this;
     }
 
@@ -398,6 +414,10 @@ class Select
     public function toString()
     {
         $sql = array('SELECT');
+
+        if ($this->distinct) {
+            $sql[] = 'DISTINCT';
+        }
 
         # columns
         if (!$this->columns) {
