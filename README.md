@@ -5,7 +5,7 @@ Lazy - A small php 5.4+ framework
 Lazy is a PHP 5.4+ full stack framework that helps you to build quickly web application and APIs.
 
 ===
-Features
+###Features
 - Modular applications
 - Powerful router (replicated from [Sinatra](http://www.sinatrarb.com/))
 - Template rendering
@@ -19,7 +19,7 @@ Features
   + Solving N+1 problem
 
 ===
-Install
+###Install
 - Composer
 ```json
 {
@@ -30,7 +30,7 @@ Install
 ```
 
 ===
-System Requirements
+###System Requirements
 - PHP 5.4+
 - PHP PDO extension required if you use Db part
   
