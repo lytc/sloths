@@ -1,0 +1,14 @@
+{
+    "name": "lazy-example/app-module",
+    "description": "Application modular example",
+    "require": {
+        "lazy/lazy": "2.*"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "lytc",
+            "email": "prtran@gmail.com"
+        }
+    ]
+}
