@@ -23,7 +23,8 @@ class Environment
 
         $this->data['params'] = array_replace([], $_GET?: [], $_POST?: [], $_COOKIE?: []);
 
-        if ('application/json' == $this->header('CONTENT_TYPE') || 'application/json' == $this->serverVar('CONTENT_TYPE')) {
+        $contentType = $this->header('CONTENT_TYPE')?: $this->serverVar('CONTENT_TYPE');
+        if ($contentType && 'application/json' == substr($contentType, 0, 16)) {
             $body = $this->body()?: '{}';
             $this->params(json_decode($body, true));
         }
