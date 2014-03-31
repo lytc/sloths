@@ -26,6 +26,11 @@ class Select
     protected $distinct = false;
 
     /**
+     * @var bool
+     */
+    protected $withFoundRows = false;
+
+    /**
      * @var array
      */
     protected $columns = array();
@@ -58,6 +63,11 @@ class Select
      * @var Offset
      */
     protected $offset;
+
+    /**
+     * @var bool
+     */
+    protected $executed = false;
 
     /**
      * @var array
@@ -152,6 +162,12 @@ class Select
         }
 
         $this->table = $table;
+        return $this;
+    }
+
+    public function withFoundRows($state = true)
+    {
+        $this->withFoundRows = $state;
         return $this;
     }
 
@@ -379,6 +395,7 @@ class Select
      */
     public function query()
     {
+        $this->executed = true;
         return $this->getConnection()->query($this->toString());
     }
 
@@ -408,12 +425,36 @@ class Select
         return call_user_func_array(array($this->query(), 'fetchColumn'), func_get_args());
     }
 
+    public function foundRows()
+    {
+        if ($this->withFoundRows) {
+            if (!$this->executed) {
+                $limit = $this->limit;
+                $this->limit(0);
+
+                $this->query();
+                if ($limit) {
+                    $this->limit($limit);
+                }
+            }
+            return (int) $this->getConnection()->query('SELECT FOUND_ROWS()')->fetchColumn();
+        }
+
+        $select = clone $this;
+        $select->resetColumn()->resetOrder()->resetLimit()->column('COUNT(*)');
+        return (int) $select->fetchColumn();
+    }
+
     /**
      * @return string
      */
     public function toString()
     {
         $sql = array('SELECT');
+
+        if ($this->withFoundRows) {
+            $sql[] = 'SQL_CALC_FOUND_ROWS';
+        }
 
         if ($this->distinct) {
             $sql[] = 'DISTINCT';
