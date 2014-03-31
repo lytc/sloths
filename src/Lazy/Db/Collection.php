@@ -223,9 +223,7 @@ class Collection implements \Countable, \Iterator
     public function countAll()
     {
         if (null === $this->countAll) {
-            $select = clone $this->select;
-            $select->resetColumn()->resetOrder()->resetLimit()->column('COUNT(*)');
-            $this->countAll = (int) $select->fetchColumn();
+            $this->countAll = $this->getSqlSelect()->foundRows();
         }
         return $this->countAll;
     }
