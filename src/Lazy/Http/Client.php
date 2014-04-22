@@ -236,7 +236,7 @@ class Client
         }
 
         $responseClass = $this->responseClass;
-        $result = new $responseClass($body, curl_getinfo($curl, CURLINFO_HEADER_OUT));
+        $result = new $responseClass($body, curl_getinfo($curl));
         curl_close($curl);
 
         return $result;
