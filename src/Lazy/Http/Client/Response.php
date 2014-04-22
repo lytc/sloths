@@ -10,16 +10,23 @@ class Response
     const TYPE_XML = 'xml';
     const TYPE_QUERY_STRING = 'query_string';
 
+    protected $info;
     protected $headers;
     protected $body;
     protected $dataType = 'json';
     protected $data;
     protected $dataArray;
 
-    public function __construct($body, $headers = null)
+    public function __construct($body, $info = null)
     {
         $this->body = $body;
-        $this->headers = $headers;
+        $this->info = $info;
+        $this->headers = $info['request_header'];
+    }
+
+    public function getStatusCode()
+    {
+        return $this->info['http_code'];
     }
 
     public function dataType($dataType = null)
