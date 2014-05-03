@@ -127,7 +127,7 @@ abstract class AbstractWhereHaving
     {
         if (is_callable($condition['pattern'])) {
             $patternCallback = $condition['pattern'];
-            $conditionClass = static::class;
+            $conditionClass = get_called_class();
             $conditionInstance = new $conditionClass;
 
             if ($patternCallback instanceof \Closure) {
