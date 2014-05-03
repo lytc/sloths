@@ -1,1 +1,1 @@
-foo <? $this->capture('foo', 'bar') ?>
+foo <?php $this->capture('foo', 'bar') ?>
