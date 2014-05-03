@@ -1,0 +1,1 @@
+foo <?= $this->partialLoop('partial', $items) ?>

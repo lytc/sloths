@@ -1,105 +1,64 @@
 <?php
 
 namespace LazyTest\Db\Sql;
-
-use Lazy\Db\Connection;
 use Lazy\Db\Sql\Insert;
-use LazyTest\Db\TestCase;
+use Lazy\Db\Sql\Select;
 
-/**
- * @covers Lazy\Db\Sql\Insert
- */
-class InsertTest extends TestCase
+class InsertTest extends \PHPUnit_Framework_TestCase
 {
-    public function testWithSingleValue()
+    public function testColumns()
     {
-        $insert = new Insert($this->connection, 'foo');
-        $insert->value(array('foo' => 'foo', 'bar' => 1));
-        $expected = "INSERT INTO foo (foo, bar) VALUES ('foo', 1)";
+        $insert = new Insert('foo');
+        $insert->columns('foo, bar')->values(['foo', 'bar']);
+
+        $expected = "INSERT INTO foo (foo, bar) VALUES ('foo', 'bar')";
         $this->assertSame($expected, $insert->toString());
     }
 
-    public function testWithMultipleValue()
+    public function testColumnAutoGetFromValuesKey()
     {
-        $insert = new Insert($this->connection, 'foo');
-        $insert->value(array(
-            array('foo' => 'foo', 'bar' => 1),
-            array('foo' => 'foo2', 'bar' => 2),
-        ));
-        $expected = "INSERT INTO foo (foo, bar) VALUES ('foo', 1), ('foo2', 2)";
+        $insert = new Insert('foo');
+        $insert->values(['foo' => 'foo', 'bar' => 'bar']);
+
+        $expected = "INSERT INTO foo (foo, bar) VALUES ('foo', 'bar')";
         $this->assertSame($expected, $insert->toString());
     }
 
-    public function testWithColumn()
+    public function testMultipleValues()
     {
-        $insert = new Insert($this->connection, 'foo');
-        $insert->column('foo, bar')
-            ->value(array('foo', 1));
-
-        $expected = "INSERT INTO foo (foo, bar) VALUES ('foo', 1)";
-        $this->assertSame($expected, $insert->toString());
-
-        $insert = new Insert($this->connection, 'foo');
-        $insert->column('foo, bar')
-            ->value(array(array('foo', 1), array('foo2', 2)));
-
-        $expected = "INSERT INTO foo (foo, bar) VALUES ('foo', 1), ('foo2', 2)";
+        $insert = new Insert('foo');
+        $insert->values([['foo' => 'foo'], ['foo' => 'bar']]);
+        $expected = "INSERT INTO foo (foo) VALUES ('foo'), ('bar')";
         $this->assertSame($expected, $insert->toString());
     }
 
-    public function testGetConnection()
+    public function testSelect()
     {
-        $connection = $this->connection;
-        $insert = new Insert($connection);
-        $this->assertSame($connection, $insert->getConnection());
+
+        $select = new Select('bar');
+        $select->select('foo, bar');
+
+        $insert = new Insert('foo');
+        $insert->columns('foo, bar')->select($select);
+
+        $expected = "INSERT INTO foo (foo, bar) SELECT foo, bar FROM bar";
+        $this->assertSame($expected, $insert->toString());
     }
 
-    public function testInto()
+    public function testIgnore()
     {
-        $insert = new Insert($this->connection);
-        $insert->into('foo');
-        $this->assertSame('foo', $insert->into());
+        $insert = new Insert('foo');
+        $insert->ignore()->values(['foo' => 'foo']);
+
+        $expected = "INSERT IGNORE INTO foo (foo) VALUES ('foo')";
+        $this->assertSame($expected, $insert->toString());
     }
 
-    public function testColumn()
+    public function testOnDuplicateKeyUpdate()
     {
-        $insert = new Insert($this->connection);
-        $insert->column('foo, bar');
-        $this->assertSame(array('foo', 'bar'), $insert->column());
-
-        $insert->column(array('baz', 'qux'));
-        $this->assertSame(array('baz', 'qux'), $insert->column());
-    }
-
-    public function testGetValue()
-    {
-        $insert = new Insert($this->connection);
-        $values = array('foo' => 'foo', 'bar' => 'bar');
-        $insert->value($values);
-        $this->assertSame($values, $insert->value());
-    }
-
-    public function testReset()
-    {
-        $insert = new Insert($this->connection);
-        $insert->column(array('foo', 'bar'))->value(array('foo', 'bar'));
-        $insert->reset();
-        $this->assertSame(array(), $insert->column());
-        $this->assertSame(array(), $insert->value());
-    }
-
-    public function testExec()
-    {
-        $mockConnection = $this->getMockConnection(array('exec'));
-
-        $mockConnection->expects($this->once())
-            ->method('exec')
-            ->with($this->equalTo("INSERT INTO users (name) VALUES ('name')"))
-            ->will($this->returnValue(1));
-
-        $insert = new Insert($mockConnection, 'users');
-        $insert->value(array('name' => 'name'));
-
-        $this->assertSame(1, $insert->exec());
+        $insert = new Insert('foo');
+        $insert->values(['foo' => 'foo'])->onDuplicateKeyUpdate(['foo' => 'bar', 'bar' => 'baz']);
+        $expected = "INSERT INTO foo (foo) VALUES ('foo') ON DUPLICATE KEY UPDATE foo = 'bar', bar = 'baz'";
+        $this->assertSame($expected, $insert->toString());
     }
 }

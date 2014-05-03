@@ -4,14 +4,11 @@ namespace Lazy\View\Helper;
 
 class StylesheetTag extends AssetTag
 {
-    protected $tag = 'link';
-    protected $assetAttribute = 'href';
-    protected $extension = 'css';
-    protected $defaultAttributes = [
-        'rel'   => 'stylesheet'
-    ];
+    const SOURCE_ATTRIBUTE = 'href';
 
-    public function stylesheetTag() {
-        return call_user_func_array([$this, 'render'], func_get_args());
-    }
+    protected $tagName = 'link';
+
+    protected static $defaultAttributes = [
+        'rel' => 'stylesheet'
+    ];
 }

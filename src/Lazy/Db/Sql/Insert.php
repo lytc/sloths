@@ -2,111 +2,35 @@
 
 namespace Lazy\Db\Sql;
 
-use Lazy\Db\Connection;
+use Lazy\Db\Db;
 
-/**
- * Class Insert
- * @package Lazy\Db\Sql
- */
-class Insert
+class Insert extends Replace
 {
-    /**
-     * @var \Lazy\Db\Connection
-     */
-    protected $connection;
     /**
      * @var string
      */
-    protected $table;
+    protected $spec = 'INSERT';
+
     /**
      * @var array
      */
-    protected $columns = array();
-    /**
-     * @var array
-     */
-    protected $values = array();
+    protected $onDuplicateKeyUpdate;
 
     /**
-     * @param Connection $connection
-     * @param null $table
-     */
-    public function __construct(Connection $connection, $table = null)
-    {
-        $this->connection = $connection;
-        $this->into($table);
-    }
-
-    /**
-     * @return Connection
-     */
-    public function getConnection()
-    {
-        return $this->connection;
-    }
-
-    /**
-     * @param string $table
+     * @param bool $state
      * @return $this
      */
-    public function into($table = null)
+    public function ignore($state = true)
     {
-        if (!func_num_args()) {
-            return $this->table;
-        }
-
-        $this->table = $table;
-        return $this;
+        return $this->toggleOption('IGNORE', $state);
     }
 
     /**
-     * @param string|array $columns
-     * @return $this|array
+     * @param array $values
      */
-    public function column($columns = null)
+    public function onDuplicateKeyUpdate(array $values)
     {
-        if (!func_num_args()) {
-            return $this->columns;
-        }
-
-        if (is_string($columns)) {
-            $columns = preg_split('/\s*,\s+/', $columns);
-        }
-
-        $this->columns = $columns;
-        return $this;
-    }
-
-    /**
-     * @param array|Select $values
-     * @return $this|array
-     */
-    public function value($values = null)
-    {
-        if (!func_num_args()) {
-            return $this->values;
-        }
-
-        $this->values = $values;
-        return $this;
-    }
-
-    /**
-     * @return $this
-     */
-    public function reset()
-    {
-        $this->columns = array();
-        $this->values = array();
-        return $this;
-    }
-
-    /**
-     * @return int
-     */
-    public function exec()
-    {
-        return $this->connection->exec($this->toString());
+        $this->onDuplicateKeyUpdate = $values;
     }
 
     /**
@@ -114,32 +38,19 @@ class Insert
      */
     public function toString()
     {
-        $sql = array('INSERT INTO');
+        $sql = parent::toString();
 
-        # from
-        $sql[] = $this->table;
+        if ($this->onDuplicateKeyUpdate) {
+            $sql .= ' ON DUPLICATE KEY UPDATE ';
+            $set = [];
 
-        $values = $this->values;
-        if ($values instanceof Select) {
-            $sql[] = '(' . implode(', ', $this->columns) . ')';
-            $sql[] = $values->toString();
-        } else {
-            is_array(current($values)) || $values = array($values);
-
-            # columns
-            $columns = $this->columns?: array_keys(current($values));
-            $sql[] = '(' . implode(', ', $columns) . ')';
-
-            # set
-            $vals = array();
-            foreach ($values as $value) {
-                $vals[] = '(' . implode(', ', $this->connection->quote(array_values($value))) . ')';
+            foreach ($this->onDuplicateKeyUpdate as $key => $value) {
+                $set[] = $key . ' = ' . Db::quote($value);
             }
 
-            $sql[] = 'VALUES ' . implode(', ', $vals);
+            $sql .= implode(', ', $set);
         }
 
-
-        return implode(' ', $sql);
+        return $sql;
     }
 }

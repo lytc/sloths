@@ -2,318 +2,520 @@
 
 namespace Lazy\Http;
 
-use Lazy\Http\Exception\Exception;
-use Lazy\Environment\Environment;
-
 class Request
 {
-    protected static $aliasMethods = [
-        'serverVars'    => 'env',
-        'headers'       => 'env',
-        'header'        => 'env',
-        'paramsGet'     => 'env',
-        'paramsPost'    => 'env',
-        'paramsCookie'  => 'env',
-        'paramsFile'    => 'env',
-        'params'        => 'env',
-        'serverVar'     => 'env',
-        'paramGet'      => 'env',
-        'paramPost'     => 'env',
-        'paramCookie'   => 'env',
-        'paramFile'     => 'env',
-        'param'         => 'env',
-        'pickParams'    => 'env',
-        'body'          => 'env'
-    ];
-    protected $env;
-    protected $pathInfoOverrides = [];
-    protected $basePath = '';
+    /**
+     * @var \Closure
+     */
+    protected static $defaultGetMethodCallback;
 
-    public static $methodOverrideParamName = '_method';
+    /**
+     * @var array
+     */
+    protected $superGlobals;
+    /**
+     * @var string
+     */
+    protected $path;
 
-    protected $config = [];
+    /**
+     * @var \Closure
+     */
+    protected $getMethodCallback;
 
-    public function __construct(array $config = [])
+    public function __construct(array $superGlobals = null)
     {
-        foreach ($config as $name => $value) {
-            if (method_exists($this, $name)) {
-                $this->{$name}($value);
-            } else {
-                $this->config[$name] = $value;
-            }
+        if (!$superGlobals) {
+            $superGlobals = [
+                '_SERVER'   => $_SERVER,
+                '_REQUEST'  => $_REQUEST,
+                '_GET'      => $_GET,
+                '_POST'     => $_POST,
+                '_COOKIE'   => $_COOKIE,
+                '_FILES'    => $_FILES,
+            ];
         }
+
+        foreach (['_GET', '_POST', '_COOKIE', '_FILES', '_SERVER'] as $section) {
+            isset($superGlobals[$section]) || $superGlobals[$section] = [];
+        }
+
+        if (!isset($superGlobals['_REQUEST']) || !$superGlobals['_REQUEST']) {
+            $superGlobals['_REQUEST'] = array_replace($superGlobals['_GET']?: [], $superGlobals['_POST']?: [], $superGlobals['_COOKIE']?: []);
+        }
+
+        $this->superGlobals = $superGlobals;
     }
 
-    public function env(Environment $env = null)
+    public static function setDefaultGetMethodCallback(\Closure $callback)
     {
-        if (!$env) {
-            $this->env || $this->env = new Environment($this);
-            return $this->env;
+        static::$defaultGetMethodCallback = $callback;
+    }
+
+    public static function getDefaultGetMethodCallback()
+    {
+        return static::$defaultGetMethodCallback?: function($request) {
+        $method = $originalMethod = $request->getOriginalMethod();
+        if ('POST' == $originalMethod) {
+            $method = $request->getHeader('X_HTTP_METHOD_OVERRIDE')?: ($request->getVar('_method')?: $originalMethod);
         }
 
-        $this->env = $env;
+        return $method;
+    };
+    }
+
+    protected function getSuperGlobalVar($section, $name, $default = null)
+    {
+        return isset($this->superGlobals[$section][$name])? $this->superGlobals[$section][$name] : $default;
+    }
+
+    /**
+     * @param string $name
+     * @param mixed [$default=null]
+     * @return mixed|string
+     */
+    public function getServerVar($name, $default = null)
+    {
+        return $this->getSuperGlobalVar('_SERVER', $name, $default);
+    }
+
+    /**
+     * @param $name
+     * @return mixed|string
+     */
+    public function getHeader($name)
+    {
+        return $this->getServerVar('HTTP_' . $name);
+    }
+
+    /**
+     * @return string
+     */
+    public function getPath()
+    {
+        if (null === $this->path) {
+            $path = $this->getServerVar('PATH_INFO')?: parse_url($this->getUrl(), PHP_URL_PATH);
+            $this->path = rtrim($path, '/')?: '/';
+        }
+
+        return $this->path;
+    }
+
+    public function getUrl()
+    {
+        return $this->getServerVar('REQUEST_URI');
+    }
+
+    /**
+     * @return mixed|string
+     */
+    public function getOriginalMethod()
+    {
+        return $this->getServerVar('REQUEST_METHOD');
+    }
+
+    /**
+     * @param callable $callback
+     * @return $this
+     */
+    public function setGetMethodCallback(\Closure $callback)
+    {
+        $this->getMethodCallback = $callback;
         return $this;
     }
 
-    public function __call($method, $args)
+    /**
+     * @return \Closure
+     */
+    public function getGetMethodCallback()
     {
-        if (isset(self::$aliasMethods[$method])) {
-            return call_user_func_array([$this->{self::$aliasMethods[$method]}(), $method], $args);
-        }
-
-        throw new Exception("Call undefined method $method");
+        return $this->getMethodCallback?: static::getDefaultGetMethodCallback();
     }
 
-    public function basePath($basePath = null)
+    /**
+     * @return string
+     */
+    public function getMethod()
     {
-        if (!func_num_args()) {
-            return $this->basePath;
-        }
-
-        $this->basePath = $basePath;
-        return $this;
+        $callback = $this->getGetMethodCallback();
+        return call_user_func($callback, $this);
     }
 
-    public function pathInfoOverrides(array $value)
+    /**
+     * @return string
+     */
+    public function getReferrer()
     {
-        $this->pathInfoOverrides = $value;
-        return $this;
+        return $this->getHeader('REFERER');
     }
 
-    public function getFullPathInfo()
+    /**
+     * @return string
+     */
+    public function getServerName()
     {
-        $pathInfo = $this->serverVar('PATH_INFO')?: $this->serverVar('REQUEST_URI');
-        $pathInfo || $pathInfo = '/';
-        $pathInfo = parse_url($pathInfo, PHP_URL_PATH);
-
-        if (isset($this->pathInfoOverrides[$pathInfo])) {
-            $pathInfo = $this->pathInfoOverrides[$pathInfo];
-        }
-
-        if ('/' !== $pathInfo) {
-            $pathInfo = preg_replace('/\/+$/', '', $pathInfo);
-        }
-
-        return $pathInfo;
+        return $this->getServerVar('SERVER_NAME');
     }
 
-    public function pathInfo($pathInfo = null)
+    /**
+     * @return int
+     */
+    public function getServerPort()
     {
-        if (!func_num_args()) {
-            $pathInfo = $this->getFullPathInfo();
-            $basePath = $this->basePath;
-
-            if ($basePath) {
-                $pathInfo = preg_replace('/^' . preg_quote($basePath, '/') . '/', '', $pathInfo);
-            }
-
-            return $pathInfo?: '/';
-        }
-
-        $this->serverVars('PATH_INFO', $pathInfo);
-        return $this;
+        return $this->getServerVar('SERVER_PORT');
     }
 
-    public function referrer($referrer = null)
+    /**
+     * @return string
+     */
+    public function getHost()
     {
-        if (!func_num_args()) {
-            return $this->header('REFERER');
-        }
-
-        $this->header('REFERER', $referrer);
-        return $this;
+        return $this->getHeader('HOST');
     }
 
-    public function serverName($serverName = null)
+    /**
+     * @return string
+     */
+    public function getServerIp()
     {
-        if (!func_num_args()) {
-            return $this->serverVars('SERVER_NAME');
-        }
-
-        $this->serverVars('SERVER_NAME', $serverName);
-        return $this;
+        return $this->getServerVar('SERVER_ADDR');
     }
 
-    public function serverPort($serverPort = null)
+    /**
+     * @return string
+     */
+    public function getClientIp()
     {
-        if (!func_num_args()) {
-            return $this->serverVars('SERVER_PORT');
-        }
-
-        $this->serverVars('SERVER_PORT', $serverPort);
-        return $this;
+        return $this->getServerVar('REMOTE_ADDR');
     }
 
-    public function host($host = null)
+    /**
+     * @return int
+     */
+    public function getClientPort()
     {
-        if (!func_num_args()) {
-            return $this->header('HOST');
-        }
-
-        $this->header('HOST', $host);
-        return $this;
+        return $this->getServerVar('REMOTE_PORT');
     }
 
-    public function serverIp($serverIp = null)
+    /**
+     * @return string
+     */
+    public function getUserAgent()
     {
-        if (!func_num_args()) {
-            return $this->serverVars('SERVER_ADDR');
-        }
-
-        $this->serverVars('SERVER_ADDR', $serverIp);
-        return $this;
+        return $this->getHeader('USER_AGENT');
     }
 
-    public function clientIp($clientIp = null)
+    /**
+     * @return array
+     */
+    public function getAccepts()
     {
-        if (!func_num_args()) {
-            return $this->serverVars('REMOTE_ADDR');
-        }
-
-        $this->serverVars('REMOTE_ADDR', $clientIp);
-        return $this;
+        $types = $this->getHeader('ACCEPT');
+        $types = explode(',', $types);
+        return $types;
     }
 
-    public function clientPort($clientPort = null)
-    {
-        if (!func_num_args()) {
-            return $this->serverVars('REMOTE_PORT');
-        }
-
-        $this->serverVars('REMOTE_PORT', $clientPort);
-    }
-
-    public function userAgent($userAgent = null)
-    {
-        if (!func_num_args()) {
-            return $this->header('USER_AGENT');
-        }
-
-        $this->header('USER_AGENT', $userAgent);
-        return $this;
-    }
-
-    public function accepts($types = null)
-    {
-        if (!func_num_args()) {
-            $types = $this->header('ACCEPT');
-            $types = explode(',', $types);
-            return $types;
-        }
-
-        if (is_array($types)) {
-            $types = implode(',', $types);
-        }
-
-        $this->header('ACCEPT', $types);
-        return $this;
-    }
-
+    /**
+     * @param string $type
+     * @return bool
+     */
     public function isAccept($type)
     {
-        return in_array($type, $this->accepts());
+        return in_array($type, $this->getAccepts());
     }
 
-    public function method($method = null)
+    /**
+     * @return bool
+     */
+    public function isSecure()
     {
-        if (!func_num_args()) {
-            $method = $this->serverVars('REQUEST_METHOD');
-            $methodOverride = $this->paramPost(self::$methodOverrideParamName)?: $this->header('X_HTTP_METHOD_OVERRIDE');
-
-            if ('POST' == $method && in_array($methodOverride, ['PUT', 'DELETE'])) {
-                return $methodOverride;
-            }
-            return $method;
-        }
-
-        $this->serverVars('REQUEST_METHOD', $method);
-        return $this;
+        return $this->getServerVar('HTTPS') == 'on';
     }
 
-    public function scheme()
+    /**
+     * @return string
+     */
+    public function getScheme()
     {
         return $this->isSecure()? 'https' : 'http';
     }
 
-    public function contentType($contentType = null)
+    /**
+     * @return string
+     */
+    public function getContentType()
     {
-        if (!func_num_args()) {
-            return $this->header('CONTENT_TYPE');
-        }
-
-        $this->header('CONTENT_TYPE', $contentType);
-        return $this;
+        return $this->getHeader('CONTENT_TYPE');
     }
 
-    public function baseUrl()
+    /**
+     * @param string $section
+     * @param string $name
+     * @return bool
+     */
+    public function _hasVar($section, $name)
     {
-        $scheme = $this->scheme();
-        $host   = $this->host();
-        $port   = $this->serverPort();
-
-        $result = $scheme . '://' . $host;
-
-        $defaultPorts = ['http' => 80, 'https' => 443];
-
-        if ($port != $defaultPorts[$scheme]) {
-            $result .= ':' . $port;
-        }
-
-        return $result;
+        return array_key_exists($name, $this->superGlobals[$section]);
     }
 
+    /**
+     * @param string $name
+     * @return bool
+     */
+    public function hasVar($name)
+    {
+        $vars = array_replace($this->getGetVars(), $this->getPostVars(), $this->getCookieVars(), $this->getFileVars());
+        return array_key_exists($name, $vars);
+    }
+
+    /**
+     * @param string $name
+     * @return bool
+     */
+    public function hasGetVar($name)
+    {
+        return $this->_hasVar('_GET', $name);
+    }
+
+    /**
+     * @param string $name
+     * @return bool
+     */
+    public function hasPostVar($name)
+    {
+        return $this->_hasVar('_POST', $name);
+    }
+
+    /**
+     * @param string $name
+     * @return bool
+     */
+    public function hasCookieVar($name)
+    {
+        return $this->_hasVar('_COOKIE', $name);
+    }
+
+    /**
+     * @param string $name
+     * @return bool
+     */
+    public function hasFileVar($name)
+    {
+        return $this->_hasVar('_FILES', $name);
+    }
+
+    /**
+     * @param $name
+     * @param mixed [$default=null]
+     * @return mixed
+     */
+    public function getVar($name, $default = null)
+    {
+        return $this->getSuperGlobalVar('_REQUEST', $name, $default);
+    }
+
+    /**
+     * @return array
+     */
+    public function getVars()
+    {
+        return array_merge($this->getGetVars(), $this->getPostVars(), $this->getCookieVars(), $this->getFileVars());
+    }
+
+    /**
+     * @param string $name
+     * @param mixed [$default=null]
+     * @return mixed
+     */
+    public function getGetVar($name, $default = null)
+    {
+        return $this->getSuperGlobalVar('_GET', $name, $default);
+    }
+
+    /**
+     * @return array
+     */
+    public function getGetVars()
+    {
+        return $this->superGlobals['_GET'];
+    }
+
+    /**
+     * @param string $name
+     * @param mixed [$default=null]
+     * @return mixed
+     */
+    public function getPostVar($name, $default = null)
+    {
+        return $this->getSuperGlobalVar('_POST', $name, $default);
+    }
+
+    /**
+     * @return array
+     */
+    public function getPostVars()
+    {
+        return $this->superGlobals['_POST'];
+    }
+
+    /**
+     * @param string $name
+     * @param mixed [$default=null]
+     * @return mixed
+     */
+    public function getCookieVar($name, $default = null)
+    {
+        return $this->getSuperGlobalVar('_COOKIE', $name, $default);
+    }
+
+    /**
+     * @return array
+     */
+    public function getCookieVars()
+    {
+        return $this->superGlobals['_COOKIE'];
+    }
+
+    /**
+     * @param string $name
+     * @param mixed [$default=null]
+     * @return mixed
+     */
+    public function getFileVar($name, $default = null)
+    {
+        return $this->getSuperGlobalVar('_FILES', $name, $default);
+    }
+
+    /**
+     * @return array
+     */
+    public function getFileVars()
+    {
+        return $this->superGlobals['_FILES'];
+    }
+
+    /**
+     * @param string $section
+     * @param string|array $names
+     * @return array
+     */
+    protected function _pickVars($section, $names)
+    {
+        if (is_string($names)) {
+            $names = trim($names);
+            $names = preg_split('/\s+/', $names);
+        }
+
+        $vars = $this->{'get' . $section . 'Vars'}();
+        return array_intersect_key($vars, array_combine($names, $names));
+    }
+
+    /**
+     * @param string|array $names
+     * @return array
+     */
+    public function pickVars($names)
+    {
+        return $this->_pickVars('', $names);
+    }
+
+    /**
+     * @param string|array $names
+     * @return array
+     */
+    public function pickGetVars($names)
+    {
+        return $this->_pickVars('Get', $names);
+    }
+
+    /**
+     * @param string|array $names
+     * @return array
+     */
+    public function pickPostVars($names)
+    {
+        return $this->_pickVars('Post', $names);
+    }
+
+    /**
+     * @param string|array $names
+     * @return array
+     */
+    public function pickCookieVars($names)
+    {
+        return $this->_pickVars('Cookie', $names);
+    }
+
+    /**
+     * @param string|array $names
+     * @return array
+     */
+    public function pickFileVars($names)
+    {
+        return $this->_pickVars('File', $names);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isHead()
+    {
+        return 'HEAD' == $this->getMethod();
+    }
+
+    /**
+     * @return bool
+     */
     public function isGet()
     {
-        return $this->method() == 'GET';
+        return 'GET' == $this->getMethod();
     }
 
+    /**
+     * @return bool
+     */
     public function isPost()
     {
-        return $this->method() == 'POST';
+        return 'POST' == $this->getMethod();
     }
 
+    /**
+     * @return bool
+     */
     public function isPut()
     {
-        return $this->method() == 'PUT';
+        return 'PUT' == $this->getMethod();
     }
 
-    public function isDelete()
-    {
-        return $this->method() == 'DELETE';
-    }
-
-    public function isOptions()
-    {
-        return $this->method() == 'OPTIONS';
-    }
-
-    public function isTrace()
-    {
-        return $this->method() == 'TRACE';
-    }
-
+    /**
+     * @return bool
+     */
     public function isPatch()
     {
-        return $this->method() == 'PATCH';
+        return 'PATCH' == $this->getMethod();
     }
 
-    public function isConnect()
+    /**
+     * @return bool
+     */
+    public function isDelete()
     {
-        return $this->method() == 'CONNECT';
+        return 'DELETE' == $this->getMethod();
     }
 
-    public function isPropFind()
+    /**
+     * @return bool
+     */
+    public function isOptions()
     {
-        return $this->method() == 'PROPFIND';
+        return 'OPTIONS' == $this->getMethod();
     }
 
+    /**
+     * @return bool
+     */
     public function isXhr()
     {
-        return $this->header('X_REQUESTED_WITH') == 'XMLHttpRequest';
-    }
-
-    public function isSecure()
-    {
-        return $this->serverVar('HTTPS') == 'on';
+        return 'XMLHttpRequest' == $this->getHeader('X_REQUESTED_WITH');
     }
 }

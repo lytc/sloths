@@ -1,22 +1,29 @@
 <?php
 
 namespace LazyTest\Db;
-
 use Lazy\Db\Connection;
 
-class TestCase extends \PHPUnit_Framework_TestCase
+class TestCase extends \LazyTest\TestCase
 {
-    protected $connection;
-
-    protected function setUp()
+    protected function createConnection($pdo = null)
     {
-        $this->connection = Connection::getDefaultInstance();
+        $connection = new Connection('', '', '', '', '');
+        $connection->setPdo($pdo ? : $this->mockPdo());
+        return $connection;
     }
 
-    protected function getMockConnection(array $methods)
+    public function mockConnection()
     {
-        $defaultConfig = Connection::getDefaultConfig();
-        $envConfig = $defaultConfig[Connection::getEnv()];
-        return $this->getMock('Lazy\Db\Connection', $methods, $envConfig);
+        return $this->mock('Lazy\Db\Connection', ['', '', '', '', '']);
     }
+
+    public function mockPdo()
+    {
+        return $this->mock(new PDOMock, []);
+    }
+}
+
+class PDOMock extends \PDO
+{
+    public function __construct() {}
 }

@@ -2,332 +2,363 @@
 
 namespace Lazy\Db;
 
-use PDO;
-use Lazy\Db\Exception;
+use Lazy\Db\Sql\Delete;
+use Lazy\Db\Sql\Insert;
+use Lazy\Db\Sql\Select;
+use Lazy\Db\Sql\Update;
 
-/**
- * Class Connection
- * @package Lazy\Db
- */
-class Connection extends PDO
+class Connection
 {
     /**
-     *
-     */
-    const ENV_PRODUCTION    = 'production';
-
-    /**
-     *
-     */
-    const ENV_DEVELOPMENT   = 'development';
-
-    /**
-     *
-     */
-    const ENV_TEST          = 'test';
-
-    /**
-     *
-     */
-    const IDENTIFIER_BACK_TICK = '`';
-
-    /**
-     *
-     */
-    const IDENTIFIER_DOUBLE_QUOTES = '"';
-
-    /**
      * @var string
      */
-    protected static $env = self::ENV_PRODUCTION;
-
-    /**
-     * @var array
-     */
-    protected static $defaultConfig = array();
-
-    /**
-     * @var array
-     */
-    protected static $configs = array();
-
-    /**
-     * @var Connection
-     */
-    protected static $defaultInstance;
-
-    /**
-     * @var array
-     */
-    protected static $instances = array();
-
-    /**
-     * @var string
-     */
-    protected static $quoteIdentifierSymbol = self::IDENTIFIER_BACK_TICK;
-
-    /**
-     * @param $env
-     */
-    public static function setEnv($env)
-    {
-        self::$env = $env;
-    }
-
-    /**
-     * @return string
-     */
-    public static function getEnv()
-    {
-        return self::$env;
-    }
-
-    /**
-     * @param array $config
-     */
-    public static function setDefaultConfig(array $config)
-    {
-        self::$defaultConfig = $config;
-    }
-
-    /**
-     * @return array
-     */
-    public static function getDefaultConfig()
-    {
-        return self::$defaultConfig;
-    }
-
-    /**
-     * @param string $id
-     * @param array $config
-     */
-    public static function setConfig($id, array $config)
-    {
-        self::$configs[$id] = $config;
-    }
-
-    /**
-     * @param string $id
-     * @return array|null
-     */
-    public static function getConfig($id)
-    {
-        if (isset(self::$configs[$id])) {
-            return self::$configs[$id];
-        }
-    }
-
-    /**
-     * @param string $dsn
-     * @param string $username optional
-     * @param string $password optional
-     * @param array $options optional
-     */
-    public function __construct($dsn, $username = null, $password = null, array $options = array())
-    {
-        $options[\PDO::MYSQL_ATTR_INIT_COMMAND] = "SET NAMES 'utf8'";
-        parent::__construct($dsn, $username, $password, $options);
-        $this->setAttribute(self::ATTR_ERRMODE, self::ERRMODE_EXCEPTION);
-        $this->setAttribute(self::ATTR_STATEMENT_CLASS, array(__NAMESPACE__ . '\\Statement'));
-
-    }
-
-    /**
-     * @param string $id optional
-     * @return static
-     * @throws Exception
-     */
-    protected static function _getInstance($id = null)
-    {
-        if (!$id) {
-            if (self::$defaultInstance) {
-                return self::$defaultInstance;
-            }
-        } elseif (isset(self::$instances[$id])) {
-            return self::$instances[$id];
-        }
-
-        if (!$id) {
-            $config = self::$defaultConfig;
-        } elseif (isset(self::$configs[$id])) {
-            $config = self::$configs[$id];
-        }
-
-        if (empty($config)) {
-            throw new Exception('Connection configuration was not set');
-        }
-
-        $env = self::getEnv();
-
-        if (!isset($config[$env])) {
-            throw new Exception(sprintf('Undefined configuration for environment %s', $env));
-        }
-
-        $config = $config[$env];
-
-        $username = null;
-        $password = null;
-        $options = array();
-
-        if (is_string($config)) {
-            $dsn = $config;
-        } else {
-            if (!isset($config['dsn'])) {
-                throw new Exception('Undefined configuration property dsn');
-            }
-
-            $dsn = $config['dsn'];
-
-            if (isset($config['username'])) {
-                $username = $config['username'];
-            }
-
-            if (isset($config['password'])) {
-                $password = $config['password'];
-            }
-
-            if (isset($config['options'])) {
-                $options = $config['options'];
-            }
-        }
-
-        $instance = new static($dsn, $username, $password, $options);
-
-        if (!$id) {
-            self::$defaultInstance = $instance;
-        } else {
-            self::$instances[$id] = $instance;
-        }
-
-        return $instance;
-    }
-
-    /**
-     * @return Connection
-     */
-    public static function getDefaultInstance()
-    {
-        return self::_getInstance();
-    }
-
-    /**
-     * @param $id
-     * @return Connection
-     */
-    public static function getInstance($id)
-    {
-        return self::_getInstance($id);
-    }
-
-    /**
-     * @return string
-     */
-    public static function getQuoteIdentifierSymbol()
-    {
-        return self::$quoteIdentifierSymbol;
-    }
-
-    /**
-     * @param string $symbol
-     */
-    public static function setQuoteIdentifierSymbol($symbol)
-    {
-        self::$quoteIdentifierSymbol = $symbol;
-    }
-
-    /**
-     * @param string|array $identifier
-     * @return string
-     */
-    public static function quoteIdentifier($identifier)
-    {
-        if (is_array($identifier)) {
-            foreach ($identifier as &$item) {
-                $item = self::quoteIdentifier($item);
-            }
-
-            return $identifier;
-        }
-
-        $symbol = self::getQuoteIdentifierSymbol();
-        return $symbol  .$identifier  .$symbol;
-    }
-
-    /**
-     * @param mixed $value
-     * @param string $type optional
-     * @return array|int|string
-     */
-    public function quote($value, $type = null)
-    {
-        if ($value instanceof Expr || $value instanceof Select) {
-            return $value->toString();
-        }
-
-        if (!$type) {
-            $type = gettype($value);
-        }
-
-        switch ($type) {
-            case 'boolean': return (int) !!$value;
-            case 'integer': return (int) $value;
-            case 'NULL': return 'NULL';
-            case 'array':
-                $value = (array) $value;
-                foreach ($value as &$v) {
-                    $v = $this->quote($v);
-                }
-                return $value;
-
-            default: return parent::quote($value);
-        }
-    }
-
-    /**
-     * @param mixed $str
-     * @return string
-     */
-    public function escape($str)
-    {
-        if ($str instanceof Expr || $str instanceof Select) {
-            return $str->toString();
-        }
-
-        return substr(parent::quote($str), 1, -1);
-    }
+    protected $host;
 
     /**
      * @var int
      */
-    protected $activeTransactionCount = 0;
+    protected $port;
 
+    /**
+     * @var string
+     */
+    protected $username;
+
+    /**
+     * @var string
+     */
+    protected $password;
+
+    /**
+     * @var string
+     */
+    protected $dbName;
+
+    /**
+     * @var string
+     */
+    protected $id;
+
+    /**
+     * @var
+     */
+    protected $pdo;
+
+    /**
+     * @var string
+     */
+    protected $pdoClass = '\PDO';
+
+    /**
+     * @var
+     */
+    protected $transactionCount;
+
+    /**
+     * @var array
+     */
+    protected $pdoOptions = [
+        \PDO::ATTR_CASE => \PDO::CASE_NATURAL,
+        \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+        \PDO::ATTR_ORACLE_NULLS => \PDO::NULL_NATURAL,
+        \PDO::ATTR_STRINGIFY_FETCHES => false,
+        \PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES 'utf8'"
+    ];
+
+    /**
+     * @param string $host
+     * @param int $port
+     * @param string $username
+     * @param string $password
+     * @param string $dbName
+     */
+    public function __construct($host, $port, $username, $password, $dbName)
+    {
+        $this->host = $host;
+        $this->port = $port;
+        $this->username = $username;
+        $this->password = $password;
+        $this->dbName = $dbName;
+    }
+
+    public function setPdoClass($pdoClassName)
+    {
+        $this->pdoClass = $pdoClassName;
+        return $this;
+    }
+
+    public function getHost()
+    {
+        return $this->host;
+    }
+
+    public function getPort()
+    {
+        return $this->port;
+    }
+
+    public function getUsername()
+    {
+        return $this->username;
+    }
+
+    public function getPassword()
+    {
+        return $this->password;
+    }
+
+    public function getDbName()
+    {
+        return $this->dbName;
+    }
+
+    public function __sleep()
+    {
+        return ['host', 'port', 'username', 'password', 'dbName'];
+    }
+
+    /**
+     * @param \PDO $pdo
+     * @return $this
+     */
+    public function setPdo(\PDO $pdo)
+    {
+        $this->pdo = $pdo;
+        return $this;
+    }
+
+    /**
+     * @return \PDO
+     */
+    public function getPdo()
+    {
+        if (!$this->pdo) {
+            $dns = "mysql:host={$this->host};port={$this->port};dbname={$this->dbName}";
+            $this->pdo = new $this->pdoClass($dns, $this->username, $this->password, $this->pdoOptions);
+        }
+
+        return $this->pdo;
+    }
+
+    /**
+     * @param mixed $value
+     * @param int $type
+     * @return array|int|string
+     */
+    public function quote($value, $type = \PDO::PARAM_STR)
+    {
+        $numArgs = func_num_args();
+
+        if (is_array($value)) {
+            if (2 == $numArgs) {
+                foreach ($value as &$v) {
+                    $v = $this->quote($v, $type);
+                }
+            } else {
+                foreach ($value as &$v) {
+                    $v = $this->quote($v);
+                }
+            }
+            reset($value);
+            return $value;
+        }
+
+        if ($numArgs == 2) {
+            return $this->getPdo()->quote($value, $type);
+        }
+
+        if (is_bool($value)) {
+            return $value? 1 : 0;
+        }
+
+        if (null === $value) {
+            return 'NULL';
+        }
+
+        if (is_numeric($value)) {
+            return $value;
+        }
+
+        if ($value instanceof Expr || $value instanceof Select) {
+            return $value->toString();
+        }
+
+        return $this->getPdo()->quote($value);
+    }
+
+    /**
+     * @param mixed $value
+     * @return mixed
+     */
+    public function escape($value)
+    {
+        if (is_array($value)) {
+            foreach ($value as &$val) {
+                $val = $this->escape($val);
+            }
+
+            reset($value);
+            return $value;
+        }
+
+        $quoted = $this->quote($value);
+
+        if ($quoted === $value) {
+            return $value;
+        }
+
+        if (is_string($value) && '\'' == $quoted[0]) {
+            return substr($quoted, 1, -1);
+        }
+
+        return $quoted;
+    }
+
+    /**
+     * @param $sql
+     * @return \PDOStatement
+     */
+    public function query($sql)
+    {
+        return $this->getPdo()->query($sql);
+    }
+
+    /**
+     * @param string $sql
+     * @return int
+     */
+    public function exec($sql)
+    {
+        return $this->getPdo()->exec($sql);
+    }
+
+    /**
+     * @param Insert $sql
+     * @return string
+     */
+    public function insert(Insert $sql)
+    {
+        $this->exec($sql->toString());
+        return $this->getPdo()->lastInsertId();
+    }
+
+    /**
+     * @param Update $sql
+     * @return int
+     */
+    public function update(Update $sql)
+    {
+        return $this->exec($sql->toString());
+    }
+
+    /**
+     * @param Delete $sql
+     * @return int
+     */
+    public function delete(Delete $sql)
+    {
+        return $this->exec($sql->toString());
+    }
+
+    /**
+     * @param Select $sql
+     * @return mixed
+     */
+    public function select(Select $sql)
+    {
+        return $this->query($sql->toString())->fetch(\PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * @param Select $sql
+     * @param int $fetchMode
+     * @return array
+     */
+    public function selectAll(Select $sql, $fetchMode = \PDO::FETCH_ASSOC)
+    {
+        return $this->query($sql->toString())->fetchAll($fetchMode);
+    }
+
+    /**
+     * @param Select $sql
+     * @return array
+     */
+    public function selectAllWithFoundRows(Select $sql)
+    {
+        $sql->calcFoundRows();
+        return [
+            'rows' => $this->selectAll($sql),
+            'foundRows' => $this->getPdo()->query('SELECT FOUND_ROWS()')->fetchColumn()
+        ];
+    }
+
+    /**
+     * @param Select $sql
+     * @param int [$index=0]
+     * @return string
+     */
+    public function selectColumn(Select $sql, $index = 0)
+    {
+        $stmt = $this->query($sql->toString());
+        return $stmt->fetchColumn($index);
+    }
+
+    /**
+     * @return bool
+     */
     public function beginTransaction()
     {
-        if (!$this->activeTransactionCount++) {
-            return parent::beginTransaction();
+        if (!$this->transactionCount++) {
+            return $this->getPdo()->beginTransaction();
         }
 
-        return $this->activeTransactionCount >= 0;
+        return $this->transactionCount >= 0;
     }
 
+    /**
+     * @return bool
+     */
     public function commit()
     {
-        if (!--$this->activeTransactionCount) {
-            return parent::commit();
+        if (!--$this->transactionCount) {
+            return $this->getPdo()->commit();
         }
 
-        return $this->activeTransactionCount >= 0;
+        return $this->transactionCount >= 0;
     }
 
+    /**
+     * @return bool
+     */
     public function rollBack()
     {
-        $result = false;
-        if ($this->activeTransactionCount >= 0) {
-            $result = parent::rollBack();
+        if ($this->transactionCount == 1) {
+            $this->transactionCount = 0;
+            return $this->getPdo()->rollBack();
         }
 
-        $this->activeTransactionCount = 0;
-        return $result;
+        return --$this->transactionCount;
+    }
+
+    /**
+     * @param callable $callback
+     * @return mixed
+     * @throws \Exception
+     */
+    public function transaction(callable $callback)
+    {
+        $this->beginTransaction();
+
+        try {
+            if ($callback instanceof \Closure) {
+                $callback = $callback->bindTo($this);
+            }
+            $result = call_user_func($callback, $this);
+            $this->commit();
+            return $result;
+        } catch (\Exception $e) {
+            $this->rollBack();
+            throw $e;
+        }
     }
 }
