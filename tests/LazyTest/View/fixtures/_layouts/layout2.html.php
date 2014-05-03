@@ -1,2 +1,2 @@
-<? $this->setLayout('layout1') ?>
+<?php $this->setLayout('layout1') ?>
 layout2 <?= $this->content() ?>
