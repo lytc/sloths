@@ -72,9 +72,7 @@ class Config implements \IteratorAggregate, \Countable
      */
     public function getIterator()
     {
-        foreach ($this->data as $k => $v) {
-            yield $k => $v;
-        }
+        return new \ArrayIterator($this->data);
     }
 
     /**

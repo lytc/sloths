@@ -4,6 +4,7 @@ namespace Lazy\Db\Model;
 
 use Lazy\Db\Sql\Select;
 use Lazy\Observer\ObserverTrait;
+use Lazy\Util\ArrayUtils;
 
 /**
  * @method distinct
@@ -193,9 +194,7 @@ class Collection implements \Countable, \IteratorAggregate, \JsonSerializable, \
     public function getIterator()
     {
         $this->load();
-        foreach ($this->models as $index => $model) {
-            yield $index => $model;
-        }
+        return new \ArrayIterator($this->models);
     }
 
     /**
@@ -205,7 +204,7 @@ class Collection implements \Countable, \IteratorAggregate, \JsonSerializable, \
      */
     public function column($name, $columnKey = null)
     {
-        return array_column($this->toArray(), $name, $columnKey);
+        return ArrayUtils::column($this->toArray(), $name, $columnKey);
     }
 
     /**
