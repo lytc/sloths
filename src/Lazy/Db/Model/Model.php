@@ -110,7 +110,7 @@ abstract class Model implements \JsonSerializable
         if (!isset(static::$tableName)) {
             static $tableName;
             if (!$tableName) {
-                $tableName = StringUtils::getClassNameWithoutNamespaceName(static::class);
+                $tableName = StringUtils::getClassNameWithoutNamespaceName(get_called_class());
                 $tableName = Inflector::tableize(Inflector::pluralize($tableName));
             }
             return $tableName;
@@ -212,7 +212,7 @@ abstract class Model implements \JsonSerializable
             }
         }
 
-        $collection = new static::$collectionClassName($select, static::class);
+        $collection = new static::$collectionClassName($select, get_called_class());
 
         return $collection;
     }
@@ -343,7 +343,7 @@ abstract class Model implements \JsonSerializable
                 isset($definition['model']) || $definition['model'] = $name;
                 isset($definition['foreignKey']) || $definition['foreignKey'] = Inflector::singularize(static::getTableName()) . '_id';
                 isset($definition['primaryKey']) || $definition['primaryKey'] = static::$primaryKey;
-                class_exists($definition['model']) || $definition['model'] = StringUtils::getNamespace(static::class)
+                class_exists($definition['model']) || $definition['model'] = StringUtils::getNamespace(get_called_class())
                     . '\\' . Inflector::classify(Inflector::singularize($definition['model']));
 
                 $hasMany[$name] = function() use ($name, $definition) {
@@ -385,7 +385,7 @@ abstract class Model implements \JsonSerializable
             }
 
             isset($definition['model']) || $definition['model'] = $name;
-            class_exists($definition['model']) || $definition['model'] = StringUtils::getNamespace(static::class)
+            class_exists($definition['model']) || $definition['model'] = StringUtils::getNamespace(get_called_class())
                 . '\\' . Inflector::classify(Inflector::singularize($definition['model']));
 
             isset($definition['foreignKey']) || $definition['foreignKey'] = Inflector::underscore(Inflector::singularize($name)) . '_id';
@@ -431,7 +431,7 @@ abstract class Model implements \JsonSerializable
             }
 
             isset($definition['model']) || $definition['model'] = $name;
-            class_exists($definition['model']) || $definition['model'] = StringUtils::getNamespace(static::class)
+            class_exists($definition['model']) || $definition['model'] = StringUtils::getNamespace(get_called_class())
                 . '\\' . Inflector::classify(Inflector::singularize($definition['model']));
 
             isset($definition['foreignKey']) || $definition['foreignKey'] = $definition['model']::getPrimaryKey();
@@ -474,7 +474,7 @@ abstract class Model implements \JsonSerializable
                 }
 
                 isset($definition['model']) || $definition['model'] = $name;
-                class_exists($definition['model']) || $definition['model'] = StringUtils::getNamespace(static::class)
+                class_exists($definition['model']) || $definition['model'] = StringUtils::getNamespace(get_called_class())
                     . '\\' . Inflector::classify(Inflector::singularize($definition['model']));
 
                 if (!isset($definition['throughModel'])) {
@@ -485,7 +485,7 @@ abstract class Model implements \JsonSerializable
                     $definition['throughModel'] = $leftPart > $rightPart? $leftPart . $rightPart : $rightPart . $leftPart;
                 }
 
-                class_exists($definition['throughModel']) || $definition['throughModel'] = StringUtils::getNamespace(static::class)
+                class_exists($definition['throughModel']) || $definition['throughModel'] = StringUtils::getNamespace(get_called_class())
                     . '\\' . Inflector::classify(Inflector::singularize($definition['throughModel']));
 
                 isset($definition['leftForeignKey']) || $definition['leftForeignKey'] = Inflector::singularize(static::getTableName()) . '_id';

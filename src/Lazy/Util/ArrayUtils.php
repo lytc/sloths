@@ -35,4 +35,39 @@ class ArrayUtils
 
         return true;
     }
+
+    public static function column(array $arr, $columnKey, $columnIndex = null)
+    {
+        if (null === $columnKey) {
+            if (null === $columnIndex) {
+                return $arr;
+            }
+
+            $result = [];
+            foreach ($arr as $v) {
+                if (array_key_exists($columnIndex, $v)) {
+                    $result[$v[$columnIndex]] = $v;
+                } else {
+                    $result[] = $v;
+                }
+            }
+
+            return $result;
+        }
+
+        $result = [];
+        foreach ($arr as $v) {
+            if (!array_key_exists($columnKey, $v)) {
+                continue;
+            }
+
+            if (array_key_exists($columnIndex, $v)) {
+                $result[$v[$columnIndex]] = $v[$columnKey];
+            } else {
+                $result[] = $v[$columnKey];
+            }
+        }
+
+        return $result;
+    }
 }

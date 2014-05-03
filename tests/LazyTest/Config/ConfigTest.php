@@ -32,7 +32,7 @@ class ConfigTest extends TestCase
     public function testGetIterator()
     {
         $config = new Config();
-        $this->assertInstanceOf('Generator', $config->getIterator());
+        $this->assertInstanceOf('ArrayIterator', $config->getIterator());
     }
 
     public function testMerge()
