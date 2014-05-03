@@ -2,48 +2,17 @@
 
 namespace Lazy\Db\Sql;
 
-/**
- * Class Where
- * @package Lazy\Db\Sql
- */
-class Where extends AbstractCondition
+class Where extends AbstractWhereHaving
 {
-    /**
-     * @var string
-     */
-    protected $type = 'WHERE';
+    protected $prefix = 'WHERE';
 
-    /**
-     * @param string|array $conditions
-     * @param mixed|array|args $bindPrams
-     * @return $this
-     */
-    public function where($conditions = null, $bindPrams = null)
+    public function where($conditions)
     {
-        if (!$conditions) {
-            return $this->conditions;
-        }
-
-        if (func_num_args() > 2) {
-            $bindPrams = array_slice(func_get_args(), 1);
-        }
-
-        is_array($bindPrams) || $bindPrams = array($bindPrams);
-        return $this->condition('AND', $conditions, $bindPrams);
+        return call_user_func_array([$this, 'addAndCondition'], func_get_args());
     }
 
-    /**
-     * @param string|array $conditions
-     * @param mixed|array|args $bindPrams
-     * @return $this
-     */
-    public function orWhere($conditions,  $bindPrams = null)
+    public function orWhere($conditions)
     {
-        if (func_num_args() > 2) {
-            $bindPrams = array_slice(func_get_args(), 1);
-        }
-
-        is_array($bindPrams) || $bindPrams = array($bindPrams);
-        return $this->condition('OR', $conditions, $bindPrams);
+        return call_user_func_array([$this, 'addOrCondition'], func_get_args());
     }
 }

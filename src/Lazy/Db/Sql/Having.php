@@ -2,44 +2,17 @@
 
 namespace Lazy\Db\Sql;
 
-/**
- * Class Having
- * @package Lazy\Db\Sql
- */
-class Having extends AbstractCondition
+class Having extends AbstractWhereHaving
 {
-    /**
-     * @var string
-     */
-    protected $type = 'HAVING';
+    protected $prefix = 'HAVING';
 
-    /**
-     * @param string|array $conditions
-     * @param mixed|array|args $bindPrams
-     * @return $this
-     */
-    public function having($conditions, $bindPrams = null)
+    public function having($conditions)
     {
-        if (func_num_args() > 2) {
-            $bindPrams = array_slice(func_get_args(), 1);
-        }
-
-        is_array($bindPrams) || $bindPrams = array($bindPrams);
-        return $this->condition('AND', $conditions, $bindPrams);
+        return call_user_func_array([$this, 'addAndCondition'], func_get_args());
     }
 
-    /**
-     * @param string|array $conditions
-     * @param mixed|array|args $bindPrams
-     * @return $this
-     */
-    public function orHaving($conditions,  $bindPrams = null)
+    public function orHaving($conditions)
     {
-        if (func_num_args() > 2) {
-            $bindPrams = array_slice(func_get_args(), 1);
-        }
-
-        is_array($bindPrams) || $bindPrams = array($bindPrams);
-        return $this->condition('OR', $conditions, $bindPrams);
+        return call_user_func_array([$this, 'addOrCondition'], func_get_args());
     }
 }

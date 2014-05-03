@@ -2,49 +2,79 @@
 
 namespace Lazy\View\Helper;
 
-use Lazy\Pagination\Pagination;
+use Lazy\Pagination\Paginator;
+use Lazy\Util\UrlUtils;
 
 class Paginate extends AbstractHelper
 {
-    protected $pagination;
-    protected static $defaultTemplate = 'paginate';
+    protected $paginator;
+    protected static $defaultTemplate;
     protected $template;
+    protected $pageParamName = 'page';
+    protected static $requestUrl;
 
-    public static function setDefaultTemplate($template)
+    public static function setDefaultTemplate($file)
     {
-        static::$defaultTemplate = $template;
+        static::$defaultTemplate = $file;
     }
 
-    public function paginate(Pagination $pagination, $template = null)
+    public static function getDefaultTemplate()
     {
-        $this->pagination = $pagination;
-        !$template || $this->template($template);
-        return $this;
-    }
-
-    public function template($template = null)
-    {
-        if (!func_num_args()) {
-            return $this->template?: static::$defaultTemplate;
+        if (!static::$defaultTemplate) {
+            static::$defaultTemplate = __DIR__ . '/paginate/default.php';
         }
+        return static::$defaultTemplate;
+    }
 
-        $this->template = $template;
+    public static function setRequestUrl($requestUrl)
+    {
+        static::$requestUrl = $requestUrl;
+    }
+
+    public function setTemplate($file)
+    {
+        $this->template = $file;
         return $this;
+    }
+
+    public function getTemplate()
+    {
+        return $this->template?: static::getDefaultTemplate();
+    }
+
+    public function setPageParamName($name)
+    {
+        $this->pageParamName = $name;
+        return $this;
+    }
+
+    public function getPageParamName()
+    {
+        return $this->pageParamName;
+    }
+
+    public function url($pageNumber)
+    {
+        return $this->view->url([$this->pageParamName => $pageNumber]);
+    }
+
+    public function paginate(Paginator $paginator)
+    {
+        $this->paginator = $paginator;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function render()
+    {
+        $template = $this->getTemplate();
+        return $this->view->partial($template, ['paginator' => $this->paginator, 'paginate' => $this])->render();
     }
 
     public function __toString()
     {
-        try {
-            $view = clone $this->view;
-
-            $result = $view->layout(false)
-                ->variables($this->pagination->info())
-                ->render($this->template());
-        } catch (\Exception $e) {
-            return $e->getMessage();
-        }
-
-
-        return $result;
+        return $this->render();
     }
 }

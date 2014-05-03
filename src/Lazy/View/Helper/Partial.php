@@ -2,16 +2,17 @@
 
 namespace Lazy\View\Helper;
 
-
 class Partial extends AbstractHelper
 {
-    public function partial($viewFile, $variables = [])
+    public function partial($file, $vars = [])
     {
         $view = clone $this->view;
-        $view->layout(false);
-        $view->variables($variables);
-        $view->template($viewFile);
+        $view->setLayout(false)->setFile($file);
 
-        return $view->render();
+        if ($vars) {
+            $view->addVars($vars);
+        }
+
+        return $view;
     }
 }

@@ -2,23 +2,59 @@
 
 namespace Lazy\Db\Sql;
 
-use Lazy\Db\Exception;
-use Lazy\Db\Connection;
+use Lazy\Util\Inflector;
 
-/**
- * Class Select
- * @package Lazy\Db\Sql
- */
-class Select
+class Select implements SqlInterface
 {
-    /**
-     * @var Connection
-     */
-    protected $connection;
     /**
      * @var string
      */
     protected $table;
+
+    /**
+     * @var string
+     */
+    protected $tableAlias;
+
+    /**
+     * @var string|array
+     */
+    protected $columns = [];
+
+    /**
+     * @var Where
+     */
+    protected $where;
+
+    /**
+     * @var string|array
+     */
+    protected $orderBy;
+
+    /**
+     * @var string|array
+     */
+    protected $groupBy;
+
+    /**
+     * @var Having
+     */
+    protected $having;
+
+    /**
+     * @var int
+     */
+    protected $limit;
+
+    /**
+     * @var int
+     */
+    protected $offset;
+
+    /**
+     * @var array
+     */
+    protected $joins = [];
 
     /**
      * @var bool
@@ -28,147 +64,14 @@ class Select
     /**
      * @var bool
      */
-    protected $withFoundRows = false;
-
-    /**
-     * @var array
-     */
-    protected $columns = array();
-    /**
-     * @var Join
-     */
-    protected $join;
-    /**
-     * @var Where
-     */
-    protected $where;
-    /**
-     * @var Group
-     */
-    protected $group;
-    /**
-     * @var Having
-     */
-    protected $having;
-    /**
-     * @var Order
-     */
-    protected $order;
-    /**
-     * @var Limit
-     */
-    protected $limit;
-
-    /**
-     * @var Offset
-     */
-    protected $offset;
-
-    /**
-     * @var bool
-     */
-    protected $executed = false;
-
-    /**
-     * @var array
-     */
-    protected static $aliasMethods = array(
-        'innerJoin' => 'join',
-        'leftJoin'  => 'join',
-        'rightJoin' => 'join',
-        'orWhere'   => 'where',
-        'orHaving'  => 'having',
-    );
-
-    /**
-     * @param Connection $connection
-     * @param string $table
-     */
-    public function __construct(Connection $connection, $table = null)
-    {
-        $this->connection = $connection;
-        $this->from($table);
-    }
-
-    /**
-     * @param string $method
-     * @param array $args
-     * @return $this|Select|mixed
-     * @throws Exception
-     */
-    public function __call($method, $args)
-    {
-        if (preg_match('/^reset(Join|Where|Group|Having|Order|Limit)$/', $method)) {
-            $part = strtolower(substr($method, 5));
-            !$this->{$part} || $this->{$part}->reset();
-            return $this;
-        }
-
-        if (!array_key_exists($method, self::$aliasMethods)) {
-            throw new Exception(sprintf('Call undefined method %s', $method));
-        }
-
-        $result = call_user_func_array(array($this->{self::$aliasMethods[$method]}(), $method), $args);
-        return $args? $this : $result;
-    }
-
-    public function __clone()
-    {
-        if ($this->join) {
-            $this->join = clone $this->join;
-        }
-
-        if ($this->where) {
-            $this->where = clone $this->where;
-        }
-
-        if ($this->group) {
-            $this->group = clone $this->group;
-        }
-
-        if ($this->having) {
-            $this->having = clone $this->having;
-        }
-
-        if ($this->order) {
-            $this->order = clone $this->order;
-        }
-
-        if ($this->limit) {
-            $this->limit = clone $this->limit;
-        }
-
-        if ($this->offset) {
-            $this->offset = clone $this->offset;
-        }
-    }
-
-    /**
-     * @return Connection
-     */
-    public function getConnection()
-    {
-        return $this->connection;
-    }
+    protected $calcFoundRows = false;
 
     /**
      * @param string $table
-     * @return $this
      */
-    public function from($table = null)
+    public function __construct($table = null)
     {
-        if (!func_num_args()) {
-            return $this->table;
-        }
-
-        $this->table = $table;
-        return $this;
-    }
-
-    public function withFoundRows($state = true)
-    {
-        $this->withFoundRows = $state;
-        return $this;
+        !$table || $this->from($table);
     }
 
     /**
@@ -182,267 +85,309 @@ class Select
     }
 
     /**
+     * @param bool $state
+     * @return $this
+     */
+    public function calcFoundRows($state = true)
+    {
+        $this->calcFoundRows = $state;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isCalcFoundRows()
+    {
+        return $this->calcFoundRows;
+    }
+
+    /**
+     * @param string $table
+     * @return $this
+     */
+    public function from($table)
+    {
+        $parts = preg_split('/(\s+as\s+|\s+)/', $table);
+        $this->table = $parts[0];
+        empty($parts[1]) || $this->tableAlias = $parts[1];
+        return $this;
+    }
+
+    /**
+     * @param string $prefix
      * @param string|array $columns
-     * @return $this|array
+     * @return $this
      */
-    public function column($columns = null)
+    public function select($prefix, $columns = null)
     {
-        if (!func_num_args()) {
-            return $this->columns;
+        if (!$columns) {
+            $columns = $prefix;
+            $prefix = '';
         }
-
-        if (is_string($columns)) {
-            $columns = preg_split('/\s*,\s+/', $columns);
-        }
-
-        if (!is_array($columns)) {
-            $columns = [$columns];
-        }
-
-        $this->columns = array_merge($this->columns, $columns);
-
+        $this->columns[$prefix] = $columns;
         return $this;
     }
 
     /**
-     * @param string|Join $join
-     * @return $this|Join
+     * @param string|array $orderBy
      */
-    public function join($join = null)
+    public function orderBy($orderBy)
     {
-        if ($join instanceof Join) {
-            $this->join = $join;
-            return $this;
-        }
-
-        if (!$this->join) {
-            $this->join = new Join();
-        }
-
-        if (!func_num_args()) {
-            return $this->join;
-        }
-
-        call_user_func_array(array($this->join, 'join'), func_get_args());
-        return $this;
+        $this->orderBy = $orderBy;
     }
 
     /**
-     * @param string|array|Where $where
      * @return $this|Where
      */
-    public function where($where = null)
+    public function where()
     {
-        if ($where instanceof Where) {
-            $this->where = $where;
-            return $this;
-        }
+        $this->where || $this->where = new Where();
 
-        if (!$this->where) {
-            $this->where = new Where($this->connection);
-        }
-
-        if (!func_num_args()) {
+        if (0 == func_num_args()) {
             return $this->where;
         }
 
-        call_user_func_array(array($this->where, 'where'), func_get_args());
+        call_user_func_array([$this->where, 'where'], func_get_args());
         return $this;
     }
 
     /**
-     * @param string|array|Group $group
-     * @return $this|Group
+     * @return $this|Where
      */
-    public function group($group = null)
+    public function orWhere()
     {
-        if ($group instanceof Group) {
-            $this->group = $group;
-            return $this;
+        $this->where || $this->where = new Where();
+
+        if (0 == func_num_args()) {
+            return $this->where;
         }
 
-        if (!$this->group) {
-            $this->group = new Group();
-        }
-
-        if (!func_num_args()) {
-            return $this->group;
-        }
-
-        call_user_func_array(array($this->group, 'group'), func_get_args());
+        call_user_func_array([$this->where, 'orWhere'], func_get_args());
         return $this;
     }
 
     /**
-     * @param string|array|Having $having
      * @return $this|Having
      */
-    public function having($having = null)
+    public function having()
     {
-        if ($having instanceof Having) {
-            $this->having = $having;
-            return $this;
-        }
+        $this->having || $this->having = new Having();
 
-        if (!$this->having) {
-            $this->having = new Having($this->connection);
-        }
-
-        if (!func_num_args()) {
+        if (0 == func_num_args()) {
             return $this->having;
         }
 
-        call_user_func_array(array($this->having, 'having'), func_get_args());
+        call_user_func_array([$this->having, 'having'], func_get_args());
         return $this;
     }
 
     /**
-     * @param string|array|Order $order
-     * @return $this|Order
+     * @return $this|Having
      */
-    public function order($order = null)
+    public function orHaving()
     {
-        if ($order instanceof Order) {
-            $this->order = $order;
-            return $this;
+        $this->having || $this->having = new Having();
+
+        if (0 == func_num_args()) {
+            return $this->having;
         }
 
-        if (!$this->order) {
-            $this->order = new Order();
-        }
-
-        if (!func_num_args()) {
-            return $this->order;
-        }
-
-        call_user_func_array(array($this->order, 'order'), func_get_args());
+        call_user_func_array([$this->having, 'orHaving'], func_get_args());
         return $this;
     }
 
     /**
-     * @param int|Limit $limit
-     * @return $this|Limit
+     * @param string|array $groupBy
+     * @return $this
      */
-    public function limit($limit = null)
+    public function groupBy($groupBy)
     {
-        if ($limit instanceof Limit) {
-            $this->limit = $limit;
-            return $this;
-        }
-
-        if (!$this->limit) {
-            $this->limit = new Limit();
-        }
-
-        if (!func_num_args()) {
-            return $this->limit;
-        }
-
-        call_user_func_array(array($this->limit, 'limit'), func_get_args());
+        $this->groupBy = $groupBy;
         return $this;
     }
 
     /**
-     * @param int|Limit $offset
-     * @return $this|Offset
+     * @param int $limit
+     * @param int [$offset]
+     * @return $this
      */
-    public function offset($offset = null)
+    public function limit($limit, $offset = null)
     {
-        if ($offset instanceof Offset) {
+        $this->limit = $limit;
+        if (is_numeric($offset)) {
             $this->offset = $offset;
-            return $this;
         }
 
-        if (!$this->offset) {
-            $this->offset = new Offset();
-        }
-
-        if (!func_num_args()) {
-            return $this->offset;
-        }
-
-        call_user_func_array(array($this->offset, 'offset'), func_get_args());
         return $this;
     }
 
     /**
+     * @param int $offset
      * @return $this
      */
-    public function resetColumn()
+    public function offset($offset)
     {
-        $this->columns = array();
+        $this->offset = $offset;
         return $this;
     }
 
     /**
+     * @param string $type
+     * @param string $table
+     * @param string [$condition]
      * @return $this
      */
-    public function reset()
+    protected function _join($type, $table, $condition = null)
     {
-        $this->resetColumn();
-        !$this->join || $this->join->reset();
-        !$this->where || $this->where->reset();
-        !$this->group || $this->group->reset();
-        !$this->having || $this->having->reset();
-        !$this->order || $this->order->reset();
-        !$this->limit || $this->limit->reset();
+        $this->joins[] = [
+            'type' => $type,
+            'table' => $table,
+            'condition' => $condition
+        ];
 
         return $this;
     }
 
     /**
-     * @return \PDOStatement
+     * @param string $table
+     * @param string [$condition]
+     * @return $this
      */
-    public function query()
+    public function join($table, $condition = null)
     {
-        $this->executed = true;
-        return $this->getConnection()->query($this->toString());
+        return $this->_join('INNER', $table, $condition);
     }
 
     /**
-     * @return array
+     * @param string $table
+     * @param string [$condition]
+     * @return $this
      */
-    public function fetch()
+    public function leftJoin($table, $condition = null)
     {
-        if ($stmt = $this->query()) {
-            return call_user_func_array(array($stmt, 'fetch'), func_get_args());
+        return $this->_join('LEFT', $table, $condition);
+    }
+
+    /**
+     * @param string $table
+     * @param string [$condition]
+     * @return $this
+     */
+    public function rightJoin($table, $condition = null)
+    {
+        return $this->_join('RIGHT', $table, $condition);
+    }
+
+    /**
+     * @return string
+     */
+    protected function processColumn()
+    {
+        if (!$this->columns) {
+            return ($this->tableAlias?: $this->table) . '.*';
         }
-    }
 
-    /**
-     * @return array
-     */
-    public function fetchAll()
-    {
-        return call_user_func_array(array($this->query(), 'fetchAll'), func_get_args());
-    }
+        $parts = [];
+        foreach ($this->columns as $prefix => $columns) {
+            if (is_array($columns)) {
+                foreach ($columns as $alias => $name) {
+                    if ($name instanceof Select) {
+                        $name = '(' . $name->toString() . ')';
+                    } elseif ($prefix) {
+                        $name = $prefix . '.' . $name;
+                    }
 
-    /**
-     * @return array
-     */
-    public function fetchColumn()
-    {
-        return call_user_func_array(array($this->query(), 'fetchColumn'), func_get_args());
-    }
+                    if (!is_numeric($alias)) {
+                        $name = $name . ' ' . $alias;
+                    }
 
-    public function foundRows()
-    {
-        if ($this->withFoundRows) {
-            if (!$this->executed) {
-                $limit = $this->limit;
-                $this->limit(0);
-
-                $this->query();
-                if ($limit) {
-                    $this->limit($limit);
+                    $parts[] = $name;
                 }
+            } else {
+                $parts[] = $columns;
             }
-            return (int) $this->getConnection()->query('SELECT FOUND_ROWS()')->fetchColumn();
+
         }
 
-        $select = clone $this;
-        $select->resetColumn()->resetOrder()->resetLimit()->column('COUNT(*)');
-        return (int) $select->fetchColumn();
+
+        return implode(', ', $parts);
+    }
+
+    /**
+     * @return null|string
+     */
+    protected function processOrderBy()
+    {
+        if ($this->orderBy) {
+            $result = 'ORDER BY ';
+            if (is_array($this->orderBy)) {
+                $result .= implode(', ', $this->orderBy);
+            } else {
+                $result .= $this->orderBy;
+            }
+            return $result;
+        }
+    }
+
+    /**
+     * @return null|string
+     */
+    protected function processGroupBy()
+    {
+        if ($this->groupBy) {
+            $result = 'GROUP BY ';
+            if (is_array($this->groupBy)) {
+                $result .= implode(', ', $this->groupBy);
+            } else {
+                $result .= $this->groupBy;
+            }
+            return $result;
+        }
+    }
+
+    /**
+     * @return string
+     */
+    protected function processLimit()
+    {
+        if ($this->limit === null) {
+            return;
+        }
+
+        $limit = (int) $this->limit;
+        $result = 'LIMIT ' . $limit;
+
+        if ($this->offset !== null) {
+            $result .= ' OFFSET ' . (int) $this->offset;
+        }
+
+        return $result;
+    }
+
+    protected function processJoin()
+    {
+        if (!$this->joins) {
+            return;
+        }
+
+        $spec = '%s JOIN %s ON %s';
+
+        $joins = [];
+        foreach ($this->joins as $join) {
+            $table = trim($join['table']);
+            $tableParts = preg_split('/\s+/', $table);
+            $name = isset($tableParts[1])? $tableParts[1] : $tableParts[0];
+
+            $condition = $join['condition'];
+            if (!$condition) {
+                $condition = $name . '.' . Inflector::singularize($this->table) . '_id';
+                $condition .= ' = ' . ($this->tableAlias?: $this->table) . '.id';
+            }
+            $joins[] = sprintf($spec, $join['type'], $join['table'], $condition);
+        }
+
+        return implode(' ', $joins);
     }
 
     /**
@@ -450,45 +395,43 @@ class Select
      */
     public function toString()
     {
-        $sql = array('SELECT');
-
-        if ($this->withFoundRows) {
-            $sql[] = 'SQL_CALC_FOUND_ROWS';
-        }
+        $parts = ['SELECT'];
 
         if ($this->distinct) {
-            $sql[] = 'DISTINCT';
+            $parts[] = 'DISTINCT';
         }
 
-        # columns
-        if (!$this->columns) {
-            $sql[] = '*';
-        } else {
-            $columns = [];
-            foreach ($this->columns as $column) {
-                if ($column instanceof Expr) {
-                    $columns[] = $column->toString();
-                } else {
-                    $columns[] = $column;
-                }
-            }
-            $sql[] = implode(', ', $columns);
+        if ($this->calcFoundRows) {
+            $parts[] = 'SQL_CALC_FOUND_ROWS';
         }
 
-        # from
-        $sql[] = 'FROM ' . $this->table;
+        $parts[] = $this->processColumn();
+        $parts[] = 'FROM ' . $this->table . ($this->tableAlias? ' ' . $this->tableAlias : '');
 
-        $parts = array('join', 'where', 'group', 'having', 'order', 'limit');
-        foreach ($parts as $part) {
-            if ($this->{$part} && $sqlPart = $this->{$part}->toString()) {
-                $sql[] = $sqlPart;
-
-                if ($part == 'limit' && $this->offset && $sqlOffset = $this->offset->toString()) {
-                    $sql[] = $sqlOffset;
-                }
-            }
+        if ($joinPart = $this->processJoin()) {
+            $parts[] = $joinPart;
         }
 
-        return implode(' ', $sql);
+        if ($this->where && ($wherePart = $this->where->toString())) {
+            $parts[] = $wherePart;
+        }
+
+        if ($groupPart = $this->processGroupBy()) {
+            $parts[] = $groupPart;
+        }
+
+        if ($this->having && ($havingPart = $this->having->toString())) {
+            $parts[] = $havingPart;
+        }
+
+        if ($orderByPart = $this->processOrderBy()) {
+            $parts[] = $orderByPart;
+        }
+
+        if ($limitPart = $this->processLimit()) {
+            $parts[] = $limitPart;
+        }
+
+        return implode(' ', $parts);
     }
 }

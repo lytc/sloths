@@ -1,0 +1,1 @@
+foo <?= $this->partial('partial', ['bar' => 'baz']) ?>

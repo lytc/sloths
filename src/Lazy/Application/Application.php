@@ -1,290 +1,298 @@
 <?php
+
 namespace Lazy\Application;
 
-use Lazy\Application\Exception\Exception;
-use Lazy\Application\Exception\Halt;
-use Lazy\Util\InstanceManager;
-use Lazy\Session\Flash;
+use Lazy\Application\Exception\Pass;
+use Lazy\Application\Exception\NotFound;
+use Lazy\Config\ConfigurableTrait;
 use Lazy\Http\Request;
 use Lazy\Http\Response;
+use Lazy\Routing\Route;
 use Lazy\View\View;
+use \Closure;
 
 class Application
 {
-    protected static $registeredErrorHandler = false;
-    protected static $aliasMethods = [
-        'session'       => 'session',
-        'flash'         => 'flash',
-        'paramsGet'     => 'request',
-        'paramGet'      => 'request',
-        'paramsPost'    => 'request',
-        'paramPost'     => 'request',
-        'paramsCookie'  => 'request',
-        'paramCookie'   => 'request',
-        'paramsFile'    => 'request',
-        'paramFile'     => 'request',
-        'params'        => 'request',
-        'param'         => 'request',
-        'pickParams' => 'request',
+    use ConfigurableTrait;
 
-        'status'        => 'response',
-        'headers'       => 'response',
-        'header'        => 'response',
-        'contentType'   => 'response',
-        'body'          => 'response',
-        'send'          => 'response',
-
-        'map'           => 'router',
-        'get'           => 'router',
-        'post'          => 'router',
-        'put'           => 'router',
-        'delete'        => 'router',
-        'options'       => 'router',
-        'trace'         => 'router',
-        'path'          => 'router',
-
-        'layout'        => 'view',
-        'variables'     => 'view',
-        'render'        => 'view',
-        'display'       => 'view',
-    ];
-
-    protected $path;
-    protected $config = [];
-    protected $session;
-    protected $router;
-    protected $request;
+    protected $applicationPath;
+    protected $requestBasePath;
+    protected $autoloadRouteCallback;
     protected $response;
-    protected $view;
-    protected $flash;
-    protected $defaultRoute = 'index';
+    protected $routes = [];
+    protected $services = [];
 
-    protected $beforeCallbacks = [];
+    /**
+     * @var Request
+     */
+    protected $request;
 
-    public function __construct($path, array $config = [])
+    /**
+     * @param string $requestBasePath
+     */
+    public function __construct($requestBasePath = '')
     {
-        # convert error to error exception
-        if (!self::$registeredErrorHandler) {
-            set_error_handler(function($errNo, $errStr, $file, $line) {
-                throw new \ErrorException($errStr, $errNo, 0, $file, $line);
-            });
-        }
-
-        $this->path = realpath($path);
-        $this->config($config);
+        $this->requestBasePath = $requestBasePath;
     }
 
-    public function config($name = null, $value = null)
+    /**
+     * @param string $name
+     * @param mixed $service
+     * @return $this
+     */
+    public function register($name, $service)
     {
-        switch (func_num_args()) {
-            case 0: return $this->config;
-
-            case 1:
-                if (is_array($name)) {
-                    foreach ($name as $k => $v) {
-                        $this->config($k, $v);
-                    }
-                    return $this;
-                }
-                return isset($this->config[$name])? $this->config[$name] : null;
-
-            default:
-                $this->config[$name] = $value;
-                return $this;
-        }
+        $this->services[$name] = $service;
+        return $this;
     }
 
+    public function __get($serviceName)
+    {
+        if (!isset($this->services[$serviceName])) {
+            throw new \InvalidArgumentException('Call to undefined service %s', $serviceName);
+        }
+
+        $service = $this->services[$serviceName];
+
+        if ($service instanceof Closure) {
+            $service = call_user_func($service, $this);
+            $this->services[$serviceName] = $service;
+        }
+
+        return $service;
+    }
+
+    public function setPath($path)
+    {
+        $this->applicationPath = $path;
+        return $this;
+    }
+
+    public function getPath()
+    {
+        if (!$this->applicationPath) {
+            $reflection = new \ReflectionClass(get_called_class());
+            $classFile = $reflection->getFileName();
+            $this->applicationPath = pathinfo($classFile, PATHINFO_DIRNAME);
+        }
+
+        return $this->applicationPath;
+    }
+
+    public function getRoutes()
+    {
+        return $this->routes;
+    }
+
+    /**
+     * ->with('GET /foo', function() {})
+     * ->with('GET POST /foo', function() {})
+     * ->with(['GET', 'POST'], '/foo', function() {})
+     *
+     * @param string|array $method
+     * @param string|callable [$pattern]
+     * @param callable [$callback]
+     * @return $this
+     */
+    public function map($method, $pattern, $callback = null) {
+        if (!$callback) {
+            $callback = $pattern;
+            $pattern = $method;
+            preg_match('/([\w ]+) \/(.*)/', $pattern, $matches);
+            $method = $matches[1];
+            $pattern = '/' . $matches[2];
+        }
+
+        $this->routes[] = new Route($method, $pattern, $callback);
+
+        return $this;
+    }
+
+    /**
+     * @param string $method
+     * @param array $args
+     * @return mixed
+     * @throws \BadMethodCallException
+     */
     public function __call($method, $args)
     {
-        if (isset(self::$aliasMethods[$method])) {
-            return call_user_func_array([$this->{self::$aliasMethods[$method]}(), $method], $args);
+        if (in_array($method, ['head', 'get', 'post', 'put', 'patch', 'delete', 'options', 'trace'])) {
+            array_unshift($args, strtoupper($method));
+            return call_user_func_array([$this, 'map'], $args);
         }
 
-        throw new Exception("Call undefined method `$method`");
+        throw new \BadMethodCallException(sprintf('Call to undefined method %s', $method));
     }
 
-    public function session()
+    /**
+     * @param Request $request
+     * @return $this
+     */
+    public function setRequest(Request $request)
     {
-        if (!$this->session) {
-            InstanceManager::register('session', '\Lazy\Session\Session');
-            $this->session = InstanceManager::session();
-        }
-
-        return call_user_func_array($this->session, func_get_args());
-    }
-
-    public function clean()
-    {
-        !ob_get_level() || ob_clean();
+        $this->request = $request;
         return $this;
     }
 
+    /**
+     * @return Request
+     */
+    public function getRequest()
+    {
+        if (!$this->request) {
+            $this->request = new Request();
+        }
+
+        return $this->request;
+    }
+
+    /**
+     * @param Response $response
+     * @return $this
+     */
+    public function setResponse(Response $response)
+    {
+        $this->response = $response;
+        return $this;
+    }
+
+    /**
+     * @return Response
+     */
+    public function getResponse()
+    {
+        if (!$this->response) {
+            $this->response = new Response();
+        }
+
+        return $this->response;
+    }
+
+    /**
+     * @return \Lazy\View\View
+     */
+    public function getView()
+    {
+        if (!isset($this->services['view'])) {
+            $this->services['view'] = new View();
+        }
+
+        return $this->view;
+    }
+
+    /**
+     * @param $url
+     */
+    public function redirectTo($url)
+    {
+        call_user_func_array([$this->getResponse(), 'redirect'], func_get_args());
+        return $this;
+    }
+
+    /**
+     *
+     */
+    public function redirectBack()
+    {
+        $this->getResponse()->redirect($this->getRequest()->getReferrer());
+    }
+
+    /**
+     * @param string $file
+     * @param array [$variables]
+     * @return string
+     */
+    public function render($file = null, array $variables = [])
+    {
+        return $this->getView()->render($file, $variables);
+    }
+
+    /**
+     * @throws NotFound
+     */
     public function notFound()
     {
-        $this->halt(404);
+        throw new NotFound();
     }
 
-    public function halt($status = null, $body = null)
+    /**
+     * @throws Pass
+     */
+    public function pass()
     {
-        $this->clean();
-        if ($status instanceof Response) {
-            $status->send();
-        } else if (func_num_args()){
-            if (is_string($status)) {
-                $body = $status;
-                $status = null;
+        throw new Pass();
+    }
+
+    /**
+     * @param string $dispatchPath
+     * @return string
+     */
+    protected function loadRoute($dispatchPath)
+    {
+        $routePath = $this->getPath() . '/routes';
+        $routeFile = null;
+
+        if ($dispatchPath && $dispatchPath != '/') {
+            $parts = explode('/', $dispatchPath);
+
+            if (file_exists($file = $routePath . '/' . $parts[1] . '.php')) {
+                $routeFile = $file;
+                $dispatchPath = '/' . implode('/', array_slice($parts, 2));
             }
-            $this->response()->send($status, $body);
         }
 
-        throw new Halt;
-    }
-
-    public function router($router = null)
-    {
-        if (!func_num_args()) {
-            $this->router || $this->router = new Router($this->config('router')?: []);
-            return $this->router;
+        if (!$routeFile) {
+            $routeFile = $routePath . '/index.php';
         }
 
-        $this->router = $router;
-
-        return $this;
+        if (file_exists($routeFile)) {
+            require $routeFile;
+        }
+        return $dispatchPath;
     }
 
-    public function request($request = null)
+    /**
+     * @return \Lazy\Routing\Route|null
+     */
+    public function getMatchedRoute()
     {
-        if (!func_num_args()) {
-            $this->request || $this->request = new Request($this->config('request')?: []);
-            return $this->request;
+        $requestMethod  = $this->getRequest()->getMethod();
+        $dispatchPath   = $this->getRequest()->getPath();
+
+
+        if ($requestBasePath = $this->requestBasePath) {
+            $dispatchPath = substr($dispatchPath, strlen($this->requestBasePath));
         }
 
-        $this->request = $request;
+        $dispatchPath = $this->loadRoute($dispatchPath);
 
-        return $this;
-    }
-
-    public function response($response = null)
-    {
-        if (!func_num_args()) {
-            $this->response || $this->response = new Response($this->config('response')?: []);
-            return $this->response;
-        }
-
-        $this->response = $response;
-
-        return $this;
-    }
-
-    public function view($view = null)
-    {
-        if (!func_num_args()) {
-            $this->view || $this->view = new View($this->config('view')?: []);
-            return $this->view;
-        }
-
-        $this->view = $view;
-
-        return $this;
-    }
-
-    public function flash($name = null, $value = null)
-    {
-        $this->flash || $this->flash = new Flash();
-
-        if (!func_num_args()) {
-            return $this->flash;
-        }
-
-        return call_user_func_array([$this->flash, 'data'], func_get_args());
-    }
-
-    public function redirect()
-    {
-        $response = $this->response();
-        call_user_func_array([$response, 'redirect'], func_get_args());
-        $response->send();
-        exit;
-    }
-
-    public function back()
-    {
-        return $this->redirect($this->request()->referrer());
-    }
-
-    public function before(\Closure $callback)
-    {
-        $this->beforeCallbacks[] = $callback;
-        return $this;
-    }
-
-    public function call($method, $path)
-    {
-        $this->request()->method($method)->pathInfo($path);
-        $this->run();
-        $this->halt();
-    }
-
-    public function run()
-    {
-        try {
-            $request = $this->request();
-            $pathInfo = $request->pathInfo();
-
-            $parts = explode('/', $pathInfo);
-            if (isset($parts[0]) && !$parts[0]) {
-                array_shift($parts);
+        foreach ($this->routes as $route) {
+            if (is_array($route->match($requestMethod, $dispatchPath))) {
+                return $route;
             }
+        }
+    }
 
-            $routeParts = [];
-            $routePath = '/';
-            $routeFile = null;
+    /**
+     * @param Request $request
+     * @return $this
+     */
+    public function response(Request $request = null)
+    {
+        !$request || $this->request = $request;
 
-            foreach ($parts as $index => $part) {
-                $part = preg_replace_callback('/\W+/', function($matches) {
-                    if (in_array($matches[0], ['-', '_'])) {
-                        return $matches[0];
-                    }
-                    return '';
-                }, $part);
-
-                $routeParts[] = $part;
-                $file = $this->path . '/routes/' . implode('/', $routeParts) . '.php';
-                if (file_exists($file)) {
-                    $routeFile = $file;
-                    $routePath = '/' . implode('/', array_slice($parts, $index + 1));
-                }
-
-                $file = $this->path . '/routes/' . implode('/', $routeParts) . '/index.php';
-                if (file_exists($file)) {
-                    $routeFile = $file;
-                    $routePath = '/' . implode('/', array_slice($parts, $index));
-                }
-            }
-
-            if (!$routeFile) {
-                $routeFile = $this->path . '/routes/' . $this->defaultRoute . '.php';
-                $routePath = $pathInfo;
-            }
-
-            require_once $routeFile;
-
-            foreach ($this->beforeCallbacks as $callback) {
+        $matchedRoute = $this->getMatchedRoute();
+        if ($matchedRoute) {
+            $callback = $matchedRoute->getCallback();
+            if ($callback instanceof \Closure) {
                 $callback = $callback->bindTo($this);
-                $callback();
-            }
-            ob_start();
-            $result = $this->router()->dispatch($request->method(), $routePath);
-            $buffer = ob_get_clean();
-
-            if (false === $result) {
-                $this->notFound();
             }
 
-            $this->response()->body(is_object($result) || is_array($result)? $result : $buffer);
-            $this->halt($this->response());
-        } catch (Halt $e) {
-
+            $result = call_user_func_array($callback, $matchedRoute->getParams());
+            $this->getResponse()->setBody($result)->send();
+            return $this;
         }
+
+        return $this->notFound();
     }
 }

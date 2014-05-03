@@ -4,163 +4,185 @@ namespace Lazy\Http;
 
 class Response
 {
-    protected $status = 200;
-    protected $body = '';
+    const CONTENT_TYPE_TEXT_HTML = 'text/html';
+    const CONTENT_TYPE_APPLICATION_JSON = 'application/json';
+
+    /**
+     * @var int
+     */
+    protected $statusCode = 200;
+
+    /**
+     * @var array
+     */
     protected $headers = [];
 
-    public function status($status = null)
-    {
-        if (!func_num_args()) {
-            return $this->status;
-        }
+    /**
+     * @var string|array
+     */
+    protected $body = '';
 
-        $this->status = (int) $status;
+    /**
+     * @param int $code
+     * @return $this
+     */
+    public function setStatusCode($code)
+    {
+        $this->statusCode = (int) $code;
         return $this;
     }
 
-    public function body($body = null)
+    /**
+     * @return int
+     */
+    public function getStatusCode()
     {
-        if (!func_num_args()) {
-            return $this->body;
+        return $this->statusCode;
+    }
+
+    /**
+     * @param array $headers
+     * @return $this
+     */
+    public function setHeaders(array $headers)
+    {
+        $this->headers = $headers;
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getHeaders()
+    {
+        return $this->headers;
+    }
+
+    /**
+     * @param array $headers
+     * @return $this
+     */
+    public function addHeaders(array $headers)
+    {
+        $this->headers = array_merge($this->headers, $headers);
+        return $this;
+    }
+
+    /**
+     * @param string $name
+     * @param string [$value]
+     * @return $this
+     */
+    public function setHeader($name, $value = null)
+    {
+        if (!$value) {
+            $this->headers[] = $name;
+        } else {
+            $this->headers[$name] = $value;
         }
 
+        return $this;
+    }
+
+    /**
+     * @param string $contentType
+     * @return $this
+     */
+    public function setContentType($contentType)
+    {
+        return $this->setHeader('Content-Type', $contentType);
+    }
+
+    /**
+     * @return string
+     */
+    public function getContentType()
+    {
+        return $this->getHeader('Content-Type');
+    }
+
+    /**
+     * @param string $name
+     * @return bool
+     */
+    public function hasHeader($name)
+    {
+        return isset($this->headers[$name]);
+    }
+
+    /**
+     * @param string $name
+     * @return string|null
+     */
+    public function getHeader($name)
+    {
+        return $this->hasHeader($name)? $this->headers[$name] : null;
+    }
+
+    /**
+     * @param string|array $body
+     * @return $this
+     */
+    public function setBody($body)
+    {
         $this->body = $body;
         return $this;
     }
 
-    public function headers($name = null, $value = null)
+    /**
+     * @return array|string
+     */
+    public function getBody()
     {
-        switch (func_num_args()) {
-            case 0: return $this->headers;
+        return $this->body;
+    }
 
-            case 1:
-                if (is_array($name)) {
-                    $this->headers = array_merge(['Content-Type' => 'text/html'], $name);
-                    return $this;
-                }
-                return isset($this->headers[$name])? $this->headers[$name] : null;
-
-            case 2:
-                $this->headers[$name] = $value;
-        }
-
+    /**
+     * @param string $url
+     * @return $this
+     */
+    public function redirect($url, $code = 403)
+    {
+        $this->setStatusCode($code);
+        $this->setHeader('Location', $url);
         return $this;
     }
 
-    public function header()
+    /**
+     * @return $this
+     */
+    public function send()
     {
-        return call_user_func_array([$this, 'headers'], func_get_args());
-    }
-
-    public function contentType($contentType = null)
-    {
-        if (!func_num_args()) {
-            return $this->header('Content-Type');
+        http_response_code($this->statusCode);
+        if ($redirectUrl = $this->getHeader('Location')) {
+            header('Location: ' . $redirectUrl);
+            exit;
         }
 
-        return $this->header('Content-Type', $contentType);
-    }
-
-    public function redirect($url, $status = 302)
-    {
-        $this->status($status);
-        $this->header('Location', $url);
-        return $this;
-    }
-
-    public function isInvalid()
-    {
-        return $this->status < 100 || $this->status >= 600;
-    }
-
-    public function isInformational()
-    {
-        return $this->status >= 100 && $this->status < 200;
-    }
-
-    public function isSuccessful()
-    {
-        return $this->status >= 200 && $this->status < 300;
-    }
-
-    public function isRedirection()
-    {
-        return $this->status >= 300 && $this->status < 400;
-    }
-
-    public function isClientError()
-    {
-        return $this->status >= 400 && $this->status < 500;
-    }
-
-    public function isServerError()
-    {
-        return $this->status >= 500 && $this->status < 600;
-    }
-
-    public function isOk()
-    {
-        return $this->status == 200;
-    }
-
-    public function isBadRequest()
-    {
-        return $this->status == 400;
-    }
-
-    public function isForbidden()
-    {
-        return $this->status == 403;
-    }
-
-    public function isNotFound()
-    {
-        return $this->status == 404;
-    }
-
-    public function isMethodNotAllowed()
-    {
-        return $this->status == 405;
-    }
-
-    public function isUnprocessable()
-    {
-        return $this->status == 422;
-    }
-
-    public function send($status = null, $body = null)
-    {
-        if (!is_numeric($status)) {
-            $body = $status;
-            $status = null;
-        }
-
-        if (null !== $status) {
-            $this->status($status);
-        }
-
-        if (null !== $body) {
-            $this->body($body);
-        }
-
-        if (!is_string($this->body)) {
-            $this->contentType('application/json');
-        }
-
-        http_response_code($this->status);
-
-        foreach ($this->headers as $name => $value) {
-            if (null !== $value) {
-                header("$name: $value");
-                continue;
+        $body = $this->body;
+        if (is_array($body) || is_object($body)) {
+            if (!$this->getContentType()) {
+                $this->setContentType(self::CONTENT_TYPE_APPLICATION_JSON);
             }
-            header("$name");
+            $body = json_encode($body);
+        } else {
+            if (!$this->getContentType()) {
+                $this->setContentType(self::CONTENT_TYPE_TEXT_HTML);
+            }
         }
 
-        if ($this->isRedirection()) {
-            return $this;
+        if (PHP_SAPI != 'cli') {
+            foreach ($this->headers as $key => $value) {
+                if (is_numeric($key)) {
+                    header($value);
+                } else {
+                    header("$key: $value");
+                }
+            }
         }
 
-        echo (is_string($this->body)? $this->body : json_encode($this->body));
+        echo $body;
+
+        return $this;
     }
 }

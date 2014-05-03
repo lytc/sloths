@@ -1,0 +1,1 @@
+foo <?= $this->escape($foo) ?>
