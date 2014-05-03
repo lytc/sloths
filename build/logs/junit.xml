@@ -1,0 +1,382 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="tests" tests="287" assertions="555" failures="0" errors="0" time="0.155204">
+    <testsuite name="LazyTest\Application\ApplicationTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Application/ApplicationTest.php" tests="12" assertions="24" failures="0" errors="0" time="0.019963">
+      <testcase name="testGetAndSetRequest" class="LazyTest\Application\ApplicationTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Application/ApplicationTest.php" line="12" assertions="2" time="0.003681"/>
+      <testcase name="testGetAndSetResponse" class="LazyTest\Application\ApplicationTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Application/ApplicationTest.php" line="22" assertions="2" time="0.000455"/>
+      <testcase name="testRedirectTo" class="LazyTest\Application\ApplicationTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Application/ApplicationTest.php" line="53" assertions="2" time="0.000150"/>
+      <testcase name="testRedirectBack" class="LazyTest\Application\ApplicationTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Application/ApplicationTest.php" line="61" assertions="1" time="0.000154"/>
+      <testcase name="testRender" class="LazyTest\Application\ApplicationTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Application/ApplicationTest.php" line="73" assertions="1" time="0.010788"/>
+      <testcase name="testMap" class="LazyTest\Application\ApplicationTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Application/ApplicationTest.php" line="84" assertions="8" time="0.000761"/>
+      <testcase name="test" class="LazyTest\Application\ApplicationTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Application/ApplicationTest.php" line="109" assertions="1" time="0.002489"/>
+      <testcase name="testWithRequestBasePath" class="LazyTest\Application\ApplicationTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Application/ApplicationTest.php" line="126" assertions="1" time="0.000233"/>
+      <testcase name="testLoadRoutesFromFile" class="LazyTest\Application\ApplicationTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Application/ApplicationTest.php" line="143" assertions="3" time="0.000315"/>
+      <testcase name="testNotFound" class="LazyTest\Application\ApplicationTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Application/ApplicationTest.php" line="168" assertions="1" time="0.000576"/>
+      <testcase name="testMethodPass" class="LazyTest\Application\ApplicationTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Application/ApplicationTest.php" line="186" assertions="1" time="0.000220"/>
+      <testcase name="testCallShouldThrowException" class="LazyTest\Application\ApplicationTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Application/ApplicationTest.php" line="195" assertions="1" time="0.000141"/>
+    </testsuite>
+    <testsuite name="LazyTest\Config\ConfigTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Config/ConfigTest.php" tests="10" assertions="19" failures="0" errors="0" time="0.001736">
+      <testcase name="testSetAndGet" class="LazyTest\Config\ConfigTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Config/ConfigTest.php" line="10" assertions="4" time="0.000258"/>
+      <testcase name="testCount" class="LazyTest\Config\ConfigTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Config/ConfigTest.php" line="23" assertions="2" time="0.000100"/>
+      <testcase name="testGetIterator" class="LazyTest\Config\ConfigTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Config/ConfigTest.php" line="32" assertions="1" time="0.000090"/>
+      <testcase name="testMerge" class="LazyTest\Config\ConfigTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Config/ConfigTest.php" line="38" assertions="1" time="0.000096"/>
+      <testcase name="testFromFile" class="LazyTest\Config\ConfigTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Config/ConfigTest.php" line="46" assertions="3" time="0.000470"/>
+      <testcase name="testConfigFromJsonFile" class="LazyTest\Config\ConfigTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Config/ConfigTest.php" line="58" assertions="2" time="0.000175"/>
+      <testcase name="testNested" class="LazyTest\Config\ConfigTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Config/ConfigTest.php" line="65" assertions="2" time="0.000097"/>
+      <testcase name="testReplaceRecursive" class="LazyTest\Config\ConfigTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Config/ConfigTest.php" line="77" assertions="2" time="0.000109"/>
+      <testcase name="testInvalidConfigFileTypeShouldThrowAnException" class="LazyTest\Config\ConfigTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Config/ConfigTest.php" line="99" assertions="1" time="0.000146"/>
+      <testcase name="testInvalidConfigFileShouldThrowAnException" class="LazyTest\Config\ConfigTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Config/ConfigTest.php" line="107" assertions="1" time="0.000195"/>
+    </testsuite>
+    <testsuite name="LazyTest\Db\ConnectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/ConnectionTest.php" tests="20" assertions="44" failures="0" errors="0" time="0.032358">
+      <testcase name="testGetPdoShouldReturnsTheSamePdoInstance" class="LazyTest\Db\ConnectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/ConnectionTest.php" line="16" assertions="2" time="0.000628"/>
+      <testcase name="testGetPdo" class="LazyTest\Db\ConnectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/ConnectionTest.php" line="25" assertions="1" time="0.000097"/>
+      <testcase name="testQuote" class="LazyTest\Db\ConnectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/ConnectionTest.php" line="32" assertions="8" time="0.005167"/>
+      <testcase name="testQuoteWithType" class="LazyTest\Db\ConnectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/ConnectionTest.php" line="45" assertions="2" time="0.000683"/>
+      <testcase name="testQuoteWithStringTypeShouldFallbackToPdoQuote" class="LazyTest\Db\ConnectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/ConnectionTest.php" line="58" assertions="1" time="0.000354"/>
+      <testcase name="testEscape" class="LazyTest\Db\ConnectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/ConnectionTest.php" line="66" assertions="14" time="0.000611"/>
+      <testcase name="testInsertShouldReturnsInsertedId" class="LazyTest\Db\ConnectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/ConnectionTest.php" line="93" assertions="1" time="0.003648"/>
+      <testcase name="testUpdateShouldReturnsAffectedRows" class="LazyTest\Db\ConnectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/ConnectionTest.php" line="106" assertions="1" time="0.002776"/>
+      <testcase name="testDeleteShouldReturnsAffectedRows" class="LazyTest\Db\ConnectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/ConnectionTest.php" line="118" assertions="1" time="0.002931"/>
+      <testcase name="testSelect" class="LazyTest\Db\ConnectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/ConnectionTest.php" line="130" assertions="1" time="0.004334"/>
+      <testcase name="testSelectAll" class="LazyTest\Db\ConnectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/ConnectionTest.php" line="146" assertions="1" time="0.004528"/>
+      <testcase name="testSelectAllWithFoundRows" class="LazyTest\Db\ConnectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/ConnectionTest.php" line="161" assertions="1" time="0.000733"/>
+      <testcase name="testSelectColumn" class="LazyTest\Db\ConnectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/ConnectionTest.php" line="180" assertions="2" time="0.000582"/>
+      <testcase name="testNestedTransactionWithCommit" class="LazyTest\Db\ConnectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/ConnectionTest.php" line="195" assertions="0" time="0.000321"/>
+      <testcase name="testNestedTransactionWithRollBack" class="LazyTest\Db\ConnectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/ConnectionTest.php" line="208" assertions="0" time="0.000312"/>
+      <testcase name="testNestedTransactionWithRollBackAndCommit" class="LazyTest\Db\ConnectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/ConnectionTest.php" line="221" assertions="0" time="0.000340"/>
+      <testcase name="testTransactionShouldRunAndTheScopeOfClosureCallbackShouldBeConnection" class="LazyTest\Db\ConnectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/ConnectionTest.php" line="235" assertions="1" time="0.000343"/>
+      <testcase name="testTransactionShouldAllowCallable" class="LazyTest\Db\ConnectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/ConnectionTest.php" line="251" assertions="1" time="0.003337"/>
+      <testcase name="testTransactionShouldRollbackWhenThrowAnException" class="LazyTest\Db\ConnectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/ConnectionTest.php" line="268" assertions="1" time="0.000468"/>
+      <testcase name="test__sleep" class="LazyTest\Db\ConnectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/ConnectionTest.php" line="286" assertions="5" time="0.000165"/>
+    </testsuite>
+    <testsuite name="LazyTest\Db\DbTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/DbTest.php" tests="4" assertions="14" failures="0" errors="0" time="0.000994">
+      <testcase name="testQuoteIdentifier" class="LazyTest\Db\DbTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/DbTest.php" line="9" assertions="3" time="0.000135"/>
+      <testcase name="testQuote" class="LazyTest\Db\DbTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/DbTest.php" line="16" assertions="8" time="0.000229"/>
+      <testcase name="testEscape" class="LazyTest\Db\DbTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/DbTest.php" line="28" assertions="2" time="0.000330"/>
+      <testcase name="testSetQuoter" class="LazyTest\Db\DbTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/DbTest.php" line="41" assertions="1" time="0.000300"/>
+    </testsuite>
+    <testsuite name="LazyTest\Db\Model\CollectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/CollectionTest.php" tests="15" assertions="23" failures="0" errors="0" time="0.022973">
+      <testcase name="testInstance" class="LazyTest\Db\Model\CollectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/CollectionTest.php" line="8" assertions="1" time="0.004577"/>
+      <testcase name="testGetSqlSelect" class="LazyTest\Db\Model\CollectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/CollectionTest.php" line="14" assertions="1" time="0.000191"/>
+      <testcase name="testCount" class="LazyTest\Db\Model\CollectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/CollectionTest.php" line="21" assertions="1" time="0.004579"/>
+      <testcase name="testFoundRows" class="LazyTest\Db\Model\CollectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/CollectionTest.php" line="32" assertions="2" time="0.000442"/>
+      <testcase name="testFoundRowsWithAlreadyFetched" class="LazyTest\Db\Model\CollectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/CollectionTest.php" line="50" assertions="1" time="0.000815"/>
+      <testcase name="testFoundRowsWithoutCallCalcFoundRows" class="LazyTest\Db\Model\CollectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/CollectionTest.php" line="65" assertions="1" time="0.000574"/>
+      <testcase name="testToArray" class="LazyTest\Db\Model\CollectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/CollectionTest.php" line="79" assertions="1" time="0.000746"/>
+      <testcase name="testJsonEncode" class="LazyTest\Db\Model\CollectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/CollectionTest.php" line="90" assertions="2" time="0.000433"/>
+      <testcase name="testToArrayAndToJsonShouldNotIncludeHiddenColumn" class="LazyTest\Db\Model\CollectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/CollectionTest.php" line="102" assertions="3" time="0.000392"/>
+      <testcase name="testMethodColumn" class="LazyTest\Db\Model\CollectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/CollectionTest.php" line="117" assertions="3" time="0.000395"/>
+      <testcase name="testLazyLoading" class="LazyTest\Db\Model\CollectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/CollectionTest.php" line="131" assertions="0" time="0.001433"/>
+      <testcase name="testEagerLoading" class="LazyTest\Db\Model\CollectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/CollectionTest.php" line="159" assertions="3" time="0.002843"/>
+      <testcase name="testCompositeMethods" class="LazyTest\Db\Model\CollectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/CollectionTest.php" line="198" assertions="0" time="0.005169"/>
+      <testcase name="testMassSet" class="LazyTest\Db\Model\CollectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/CollectionTest.php" line="221" assertions="3" time="0.000209"/>
+      <testcase name="testCallUndefinedMethodShouldThrowAnException" class="LazyTest\Db\Model\CollectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/CollectionTest.php" line="238" assertions="1" time="0.000175"/>
+    </testsuite>
+    <testsuite name="LazyTest\Db\Model\ModelTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/ModelTest.php" tests="21" assertions="36" failures="0" errors="0" time="0.011250">
+      <testcase name="testGetPrimaryKey" class="LazyTest\Db\Model\ModelTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/ModelTest.php" line="15" assertions="2" time="0.000439"/>
+      <testcase name="testGetTableName" class="LazyTest\Db\Model\ModelTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/ModelTest.php" line="22" assertions="2" time="0.000228"/>
+      <testcase name="testExists" class="LazyTest\Db\Model\ModelTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/ModelTest.php" line="28" assertions="2" time="0.000445"/>
+      <testcase name="testMethodId" class="LazyTest\Db\Model\ModelTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/ModelTest.php" line="37" assertions="2" time="0.000231"/>
+      <testcase name="testMethodGetAndSet" class="LazyTest\Db\Model\ModelTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/ModelTest.php" line="46" assertions="7" time="0.000310"/>
+      <testcase name="testGetNonLoadedColumn" class="LazyTest\Db\Model\ModelTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/ModelTest.php" line="65" assertions="1" time="0.000701"/>
+      <testcase name="testGetNonLoadedColumnOfNonExistingModelShouldReturnsNull" class="LazyTest\Db\Model\ModelTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/ModelTest.php" line="79" assertions="1" time="0.000241"/>
+      <testcase name="testMethodFirst" class="LazyTest\Db\Model\ModelTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/ModelTest.php" line="85" assertions="2" time="0.000534"/>
+      <testcase name="testMethodAll" class="LazyTest\Db\Model\ModelTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/ModelTest.php" line="98" assertions="1" time="0.000232"/>
+      <testcase name="testMethodCreate" class="LazyTest\Db\Model\ModelTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/ModelTest.php" line="104" assertions="1" time="0.000203"/>
+      <testcase name="testMethodSaveShouldCallInsert" class="LazyTest\Db\Model\ModelTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/ModelTest.php" line="109" assertions="1" time="0.003742"/>
+      <testcase name="testMethodSaveShouldCallUpdate" class="LazyTest\Db\Model\ModelTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/ModelTest.php" line="116" assertions="1" time="0.000906"/>
+      <testcase name="testMethodSaveInsertShouldUpdateExistingState" class="LazyTest\Db\Model\ModelTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/ModelTest.php" line="124" assertions="2" time="0.000643"/>
+      <testcase name="testMethodSaveUpdate" class="LazyTest\Db\Model\ModelTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/ModelTest.php" line="138" assertions="0" time="0.000465"/>
+      <testcase name="testMethodSaveShouldResetChangedData" class="LazyTest\Db\Model\ModelTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/ModelTest.php" line="150" assertions="2" time="0.000343"/>
+      <testcase name="testMethodSaveUpdateShouldDoNothingIfHaveNoDataChange" class="LazyTest\Db\Model\ModelTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/ModelTest.php" line="159" assertions="1" time="0.000254"/>
+      <testcase name="testMethodDeleteShouldExecuteSqlDelete" class="LazyTest\Db\Model\ModelTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/ModelTest.php" line="167" assertions="0" time="0.000408"/>
+      <testcase name="testDeleteNonExistingModelShouldThrowAnException" class="LazyTest\Db\Model\ModelTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/ModelTest.php" line="181" assertions="1" time="0.000259"/>
+      <testcase name="testToArray" class="LazyTest\Db\Model\ModelTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/ModelTest.php" line="187" assertions="1" time="0.000216"/>
+      <testcase name="testJsonSerialize" class="LazyTest\Db\Model\ModelTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/ModelTest.php" line="194" assertions="3" time="0.000230"/>
+      <testcase name="testToArrayAndJsonEncodeShouldNotIncludeHiddenColumn" class="LazyTest\Db\Model\ModelTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/ModelTest.php" line="203" assertions="3" time="0.000220"/>
+    </testsuite>
+    <testsuite name="LazyTest\Db\Model\Relation\BelongsToTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/Relation/BelongsToTest.php" tests="2" assertions="5" failures="0" errors="0" time="0.002040">
+      <testcase name="testInstance" class="LazyTest\Db\Model\Relation\BelongsToTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/Relation/BelongsToTest.php" line="10" assertions="2" time="0.000705"/>
+      <testcase name="testEagerLoadingAndLazyLoading" class="LazyTest\Db\Model\Relation\BelongsToTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/Relation/BelongsToTest.php" line="25" assertions="3" time="0.001335"/>
+    </testsuite>
+    <testsuite name="LazyTest\Db\Model\Relation\HasManyTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/Relation/HasManyTest.php" tests="2" assertions="8" failures="0" errors="0" time="0.002671">
+      <testcase name="testInstance" class="LazyTest\Db\Model\Relation\HasManyTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/Relation/HasManyTest.php" line="10" assertions="3" time="0.001208"/>
+      <testcase name="testEagerLoadAndLazyLoad" class="LazyTest\Db\Model\Relation\HasManyTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/Relation/HasManyTest.php" line="37" assertions="5" time="0.001463"/>
+    </testsuite>
+    <testsuite name="LazyTest\Db\Model\Relation\HasManyThroughTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/Relation/HasManyThroughTest.php" tests="2" assertions="8" failures="0" errors="0" time="0.002747">
+      <testcase name="testInstance" class="LazyTest\Db\Model\Relation\HasManyThroughTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/Relation/HasManyThroughTest.php" line="10" assertions="3" time="0.001497"/>
+      <testcase name="testEagerLoadingAndLazyLoading" class="LazyTest\Db\Model\Relation\HasManyThroughTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/Relation/HasManyThroughTest.php" line="38" assertions="5" time="0.001250"/>
+    </testsuite>
+    <testsuite name="Lazy\Db\Model\Relation\HasOneTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/Relation/HasOneTest.php" tests="2" assertions="9" failures="0" errors="0" time="0.002248">
+      <testcase name="testInstance" class="Lazy\Db\Model\Relation\HasOneTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/Relation/HasOneTest.php" line="10" assertions="2" time="0.000882"/>
+      <testcase name="testEagerLoadingAndLazyLoading" class="Lazy\Db\Model\Relation\HasOneTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Model/Relation/HasOneTest.php" line="27" assertions="7" time="0.001366"/>
+    </testsuite>
+    <testsuite name="LazyTest\Db\Sql\DeleteTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/DeleteTest.php" tests="4" assertions="5" failures="0" errors="0" time="0.000471">
+      <testcase name="test" class="LazyTest\Db\Sql\DeleteTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/DeleteTest.php" line="9" assertions="1" time="0.000144"/>
+      <testcase name="testIgnore" class="LazyTest\Db\Sql\DeleteTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/DeleteTest.php" line="18" assertions="1" time="0.000110"/>
+      <testcase name="testGetWhere" class="LazyTest\Db\Sql\DeleteTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/DeleteTest.php" line="27" assertions="2" time="0.000093"/>
+      <testcase name="testOrWhere" class="LazyTest\Db\Sql\DeleteTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/DeleteTest.php" line="34" assertions="1" time="0.000124"/>
+    </testsuite>
+    <testsuite name="LazyTest\Db\Sql\HavingTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/HavingTest.php" tests="1" assertions="1" failures="0" errors="0" time="0.000288">
+      <testcase name="testSimpleConditions" class="LazyTest\Db\Sql\HavingTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/HavingTest.php" line="9" assertions="1" time="0.000288"/>
+    </testsuite>
+    <testsuite name="LazyTest\Db\Sql\InsertTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/InsertTest.php" tests="6" assertions="6" failures="0" errors="0" time="0.000697">
+      <testcase name="testColumns" class="LazyTest\Db\Sql\InsertTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/InsertTest.php" line="9" assertions="1" time="0.000142"/>
+      <testcase name="testColumnAutoGetFromValuesKey" class="LazyTest\Db\Sql\InsertTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/InsertTest.php" line="18" assertions="1" time="0.000111"/>
+      <testcase name="testMultipleValues" class="LazyTest\Db\Sql\InsertTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/InsertTest.php" line="27" assertions="1" time="0.000118"/>
+      <testcase name="testSelect" class="LazyTest\Db\Sql\InsertTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/InsertTest.php" line="35" assertions="1" time="0.000105"/>
+      <testcase name="testIgnore" class="LazyTest\Db\Sql\InsertTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/InsertTest.php" line="48" assertions="1" time="0.000107"/>
+      <testcase name="testOnDuplicateKeyUpdate" class="LazyTest\Db\Sql\InsertTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/InsertTest.php" line="57" assertions="1" time="0.000114"/>
+    </testsuite>
+    <testsuite name="LazyTest\Db\Sql\ReplaceTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/ReplaceTest.php" tests="1" assertions="1" failures="0" errors="0" time="0.000120">
+      <testcase name="test" class="LazyTest\Db\Sql\ReplaceTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/ReplaceTest.php" line="8" assertions="1" time="0.000120"/>
+    </testsuite>
+    <testsuite name="LazyTest\Db\Sql\SelectTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/SelectTest.php" tests="13" assertions="28" failures="0" errors="0" time="0.001645">
+      <testcase name="testSimple" class="LazyTest\Db\Sql\SelectTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/SelectTest.php" line="8" assertions="2" time="0.000126"/>
+      <testcase name="testSelectColumn" class="LazyTest\Db\Sql\SelectTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/SelectTest.php" line="17" assertions="1" time="0.000097"/>
+      <testcase name="testSelectColumnArray" class="LazyTest\Db\Sql\SelectTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/SelectTest.php" line="26" assertions="1" time="0.000096"/>
+      <testcase name="testSubSelect" class="LazyTest\Db\Sql\SelectTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/SelectTest.php" line="35" assertions="1" time="0.000135"/>
+      <testcase name="testOrderBy" class="LazyTest\Db\Sql\SelectTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/SelectTest.php" line="47" assertions="2" time="0.000107"/>
+      <testcase name="testGroupBy" class="LazyTest\Db\Sql\SelectTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/SelectTest.php" line="60" assertions="2" time="0.000104"/>
+      <testcase name="testLimit" class="LazyTest\Db\Sql\SelectTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/SelectTest.php" line="73" assertions="3" time="0.000123"/>
+      <testcase name="testOptions" class="LazyTest\Db\Sql\SelectTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/SelectTest.php" line="88" assertions="1" time="0.000089"/>
+      <testcase name="testJoin" class="LazyTest\Db\Sql\SelectTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/SelectTest.php" line="95" assertions="3" time="0.000200"/>
+      <testcase name="testLeftJoin" class="LazyTest\Db\Sql\SelectTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/SelectTest.php" line="113" assertions="3" time="0.000147"/>
+      <testcase name="testRightJoin" class="LazyTest\Db\Sql\SelectTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/SelectTest.php" line="131" assertions="3" time="0.000142"/>
+      <testcase name="testWhere" class="LazyTest\Db\Sql\SelectTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/SelectTest.php" line="149" assertions="3" time="0.000139"/>
+      <testcase name="testHaving" class="LazyTest\Db\Sql\SelectTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/SelectTest.php" line="160" assertions="3" time="0.000140"/>
+    </testsuite>
+    <testsuite name="LazyTest\Db\Sql\UpdateTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/UpdateTest.php" tests="5" assertions="6" failures="0" errors="0" time="0.000617">
+      <testcase name="test" class="LazyTest\Db\Sql\UpdateTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/UpdateTest.php" line="9" assertions="1" time="0.000218"/>
+      <testcase name="testIgnore" class="LazyTest\Db\Sql\UpdateTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/UpdateTest.php" line="19" assertions="1" time="0.000091"/>
+      <testcase name="testLimit" class="LazyTest\Db\Sql\UpdateTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/UpdateTest.php" line="28" assertions="1" time="0.000090"/>
+      <testcase name="testGetWhere" class="LazyTest\Db\Sql\UpdateTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/UpdateTest.php" line="37" assertions="2" time="0.000088"/>
+      <testcase name="testOrWhere" class="LazyTest\Db\Sql\UpdateTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/UpdateTest.php" line="44" assertions="1" time="0.000130"/>
+    </testsuite>
+    <testsuite name="LazyTest\Db\Sql\WhereTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/WhereTest.php" tests="11" assertions="11" failures="0" errors="0" time="0.002248">
+      <testcase name="testItShouldReturnsAnEmptyStringWithNoCondition" class="LazyTest\Db\Sql\WhereTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/WhereTest.php" line="9" assertions="1" time="0.000092"/>
+      <testcase name="testSimpleConditions" class="LazyTest\Db\Sql\WhereTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/WhereTest.php" line="15" assertions="1" time="0.000121"/>
+      <testcase name="testWithBindParamsArray" class="LazyTest\Db\Sql\WhereTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/WhereTest.php" line="26" assertions="1" time="0.000401"/>
+      <testcase name="testWithBindParamsArrayMissingValue" class="LazyTest\Db\Sql\WhereTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/WhereTest.php" line="37" assertions="1" time="0.000177"/>
+      <testcase name="testWithBindParamArguments" class="LazyTest\Db\Sql\WhereTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/WhereTest.php" line="48" assertions="1" time="0.000213"/>
+      <testcase name="testSubWhere" class="LazyTest\Db\Sql\WhereTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/WhereTest.php" line="59" assertions="1" time="0.000280"/>
+      <testcase name="testNestedSubWhere" class="LazyTest\Db\Sql\WhereTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/WhereTest.php" line="74" assertions="1" time="0.000252"/>
+      <testcase name="testEscape" class="LazyTest\Db\Sql\WhereTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/WhereTest.php" line="89" assertions="1" time="0.000206"/>
+      <testcase name="testItShouldNotEscapeWithExpr" class="LazyTest\Db\Sql\WhereTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/WhereTest.php" line="100" assertions="1" time="0.000133"/>
+      <testcase name="testWhereFromArray" class="LazyTest\Db\Sql\WhereTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/WhereTest.php" line="109" assertions="1" time="0.000126"/>
+      <testcase name="testSmartBinding" class="LazyTest\Db\Sql\WhereTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Db/Sql/WhereTest.php" line="118" assertions="1" time="0.000247"/>
+    </testsuite>
+    <testsuite name="LazyTest\Http\RequestTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/RequestTest.php" tests="33" assertions="66" failures="0" errors="0" time="0.003333">
+      <testcase name="testAutoMapSuperGlobals" class="LazyTest\Http\RequestTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/RequestTest.php" line="9" assertions="1" time="0.000118"/>
+      <testcase name="testGetPath" class="LazyTest\Http\RequestTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/RequestTest.php" line="16" assertions="4" time="0.000152"/>
+      <testcase name="testTrimmedPath" class="LazyTest\Http\RequestTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/RequestTest.php" line="40" assertions="4" time="0.000127"/>
+      <testcase name="testGetOriginalMethod" class="LazyTest\Http\RequestTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/RequestTest.php" line="63" assertions="1" time="0.000086"/>
+      <testcase name="testGetMethod" class="LazyTest\Http\RequestTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/RequestTest.php" line="71" assertions="2" time="0.000103"/>
+      <testcase name="testGetCustomMethod" class="LazyTest\Http\RequestTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/RequestTest.php" line="80" assertions="2" time="0.000113"/>
+      <testcase name="testGetServerVars" class="LazyTest\Http\RequestTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/RequestTest.php" line="94" assertions="14" time="0.000190"/>
+      <testcase name="testHasVar" class="LazyTest\Http\RequestTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/RequestTest.php" line="128" assertions="13" time="0.000165"/>
+      <testcase name="testGetVar" class="LazyTest\Http\RequestTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/RequestTest.php" line="152" assertions="1" time="0.000088"/>
+      <testcase name="testGetVars" class="LazyTest\Http\RequestTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/RequestTest.php" line="161" assertions="1" time="0.000090"/>
+      <testcase name="testGetGetVar" class="LazyTest\Http\RequestTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/RequestTest.php" line="171" assertions="1" time="0.000084"/>
+      <testcase name="testGetGetVars" class="LazyTest\Http\RequestTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/RequestTest.php" line="180" assertions="1" time="0.000084"/>
+      <testcase name="testGetPostVar" class="LazyTest\Http\RequestTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/RequestTest.php" line="190" assertions="1" time="0.000084"/>
+      <testcase name="testGetPostVars" class="LazyTest\Http\RequestTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/RequestTest.php" line="199" assertions="1" time="0.000083"/>
+      <testcase name="testGetCookieVar" class="LazyTest\Http\RequestTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/RequestTest.php" line="210" assertions="1" time="0.000088"/>
+      <testcase name="testGetCookieVars" class="LazyTest\Http\RequestTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/RequestTest.php" line="219" assertions="1" time="0.000083"/>
+      <testcase name="testGetFileVar" class="LazyTest\Http\RequestTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/RequestTest.php" line="229" assertions="1" time="0.000105"/>
+      <testcase name="testGetFileVars" class="LazyTest\Http\RequestTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/RequestTest.php" line="238" assertions="1" time="0.000089"/>
+      <testcase name="testPickGetVars" class="LazyTest\Http\RequestTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/RequestTest.php" line="248" assertions="1" time="0.000109"/>
+      <testcase name="testPickPostVars" class="LazyTest\Http\RequestTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/RequestTest.php" line="258" assertions="1" time="0.000101"/>
+      <testcase name="testPickCookieVars" class="LazyTest\Http\RequestTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/RequestTest.php" line="268" assertions="1" time="0.000095"/>
+      <testcase name="testPickFileVars" class="LazyTest\Http\RequestTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/RequestTest.php" line="278" assertions="1" time="0.000091"/>
+      <testcase name="testPickVars" class="LazyTest\Http\RequestTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/RequestTest.php" line="288" assertions="1" time="0.000107"/>
+      <testcase name="testIsHead" class="LazyTest\Http\RequestTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/RequestTest.php" line="306" assertions="1" time="0.000090"/>
+      <testcase name="testIsGet" class="LazyTest\Http\RequestTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/RequestTest.php" line="315" assertions="1" time="0.000088"/>
+      <testcase name="testIsPost" class="LazyTest\Http\RequestTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/RequestTest.php" line="324" assertions="1" time="0.000092"/>
+      <testcase name="testIsPut" class="LazyTest\Http\RequestTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/RequestTest.php" line="333" assertions="1" time="0.000091"/>
+      <testcase name="testIsPatch" class="LazyTest\Http\RequestTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/RequestTest.php" line="343" assertions="1" time="0.000091"/>
+      <testcase name="testIsDelete" class="LazyTest\Http\RequestTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/RequestTest.php" line="353" assertions="1" time="0.000091"/>
+      <testcase name="testIsOptions" class="LazyTest\Http\RequestTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/RequestTest.php" line="363" assertions="1" time="0.000087"/>
+      <testcase name="testIsXhr" class="LazyTest\Http\RequestTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/RequestTest.php" line="372" assertions="1" time="0.000083"/>
+      <testcase name="testDefaultGetMethodCallback" class="LazyTest\Http\RequestTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/RequestTest.php" line="381" assertions="1" time="0.000088"/>
+      <testcase name="testCustomGetMethodCallback" class="LazyTest\Http\RequestTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/RequestTest.php" line="390" assertions="1" time="0.000098"/>
+    </testsuite>
+    <testsuite name="ResponseTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/ResponseTest.php" tests="6" assertions="17" failures="0" errors="0" time="0.000704">
+      <testcase name="testSetAndGetStatusCode" class="ResponseTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/ResponseTest.php" line="7" assertions="1" time="0.000099"/>
+      <testcase name="testHeaderMethods" class="ResponseTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/ResponseTest.php" line="14" assertions="8" time="0.000138"/>
+      <testcase name="testSetAndGetBody" class="ResponseTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/ResponseTest.php" line="39" assertions="1" time="0.000124"/>
+      <testcase name="testSend" class="ResponseTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/ResponseTest.php" line="46" assertions="3" time="0.000142"/>
+      <testcase name="testSendJsonData" class="ResponseTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/ResponseTest.php" line="58" assertions="3" time="0.000121"/>
+      <testcase name="testRedirect" class="ResponseTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Http/ResponseTest.php" line="71" assertions="1" time="0.000080"/>
+    </testsuite>
+    <testsuite name="LazyTest\ObserverTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/ObserverTest.php" tests="8" assertions="28" failures="0" errors="0" time="0.001470">
+      <testcase name="testAddAndRemoveListener" class="LazyTest\ObserverTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/ObserverTest.php" line="9" assertions="5" time="0.000338"/>
+      <testcase name="testHasListener" class="LazyTest\ObserverTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/ObserverTest.php" line="30" assertions="6" time="0.000134"/>
+      <testcase name="testNotify" class="LazyTest\ObserverTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/ObserverTest.php" line="49" assertions="5" time="0.000150"/>
+      <testcase name="testItShouldStopWhenCallbackReturnsFalse" class="LazyTest\ObserverTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/ObserverTest.php" line="80" assertions="1" time="0.000105"/>
+      <testcase name="testAddListenerOne" class="LazyTest\ObserverTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/ObserverTest.php" line="96" assertions="1" time="0.000101"/>
+      <testcase name="testListenTo" class="LazyTest\ObserverTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/ObserverTest.php" line="108" assertions="5" time="0.000172"/>
+      <testcase name="testListenOneTo" class="LazyTest\ObserverTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/ObserverTest.php" line="137" assertions="3" time="0.000133"/>
+      <testcase name="testRemoveUnregisteredEventShouldThrowAnException" class="LazyTest\ObserverTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/ObserverTest.php" line="161" assertions="2" time="0.000337"/>
+    </testsuite>
+    <testsuite name="LazyTest\Pagination\DataAdapter\ArrayAdapterTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Pagination/DataAdapter/ArrayAdapterTest.php" tests="1" assertions="3" failures="0" errors="0" time="0.000351">
+      <testcase name="test" class="LazyTest\Pagination\DataAdapter\ArrayAdapterTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Pagination/DataAdapter/ArrayAdapterTest.php" line="9" assertions="3" time="0.000351"/>
+    </testsuite>
+    <testsuite name="LazyTest\Pagination\DataAdapter\ModelCollectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Pagination/DataAdapter/ModelCollectionTest.php" tests="1" assertions="1" failures="0" errors="0" time="0.005286">
+      <testcase name="test" class="LazyTest\Pagination\DataAdapter\ModelCollectionTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Pagination/DataAdapter/ModelCollectionTest.php" line="10" assertions="1" time="0.005286"/>
+    </testsuite>
+    <testsuite name="LazyTest\Pagination\PaginatorTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Pagination/PaginatorTest.php" tests="11" assertions="31" failures="0" errors="0" time="0.008386">
+      <testcase name="testDataAdapter" class="LazyTest\Pagination\PaginatorTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Pagination/PaginatorTest.php" line="13" assertions="3" time="0.000771"/>
+      <testcase name="testInvalidDataAdapterShouldThrowException" class="LazyTest\Pagination\PaginatorTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Pagination/PaginatorTest.php" line="28" assertions="1" time="0.000194"/>
+      <testcase name="testArrayAdapter" class="LazyTest\Pagination\PaginatorTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Pagination/PaginatorTest.php" line="33" assertions="12" time="0.000204"/>
+      <testcase name="testWithFewRows" class="LazyTest\Pagination\PaginatorTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Pagination/PaginatorTest.php" line="63" assertions="4" time="0.000117"/>
+      <testcase name="testWithOutOfRange" class="LazyTest\Pagination\PaginatorTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Pagination/PaginatorTest.php" line="78" assertions="2" time="0.000102"/>
+      <testcase name="testModelCollectionAdapter" class="LazyTest\Pagination\PaginatorTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Pagination/PaginatorTest.php" line="95" assertions="1" time="0.000537"/>
+      <testcase name="testGetInfo" class="LazyTest\Pagination\PaginatorTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Pagination/PaginatorTest.php" line="129" assertions="2" time="0.005526"/>
+      <testcase name="testGetItems" class="LazyTest\Pagination\PaginatorTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Pagination/PaginatorTest.php" line="170" assertions="1" time="0.000114"/>
+      <testcase name="testCount" class="LazyTest\Pagination\PaginatorTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Pagination/PaginatorTest.php" line="176" assertions="3" time="0.000650"/>
+      <testcase name="testDefaultItemCountPerPage" class="LazyTest\Pagination\PaginatorTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Pagination/PaginatorTest.php" line="184" assertions="1" time="0.000089"/>
+      <testcase name="testDefaultPageRange" class="LazyTest\Pagination\PaginatorTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Pagination/PaginatorTest.php" line="190" assertions="1" time="0.000082"/>
+    </testsuite>
+    <testsuite name="LazyTest\Route\RouteTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Routing/RouteTest.php" tests="25" assertions="47" failures="0" errors="0" time="0.004200">
+      <testcase name="testSetMethod" class="LazyTest\Route\RouteTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Routing/RouteTest.php" line="18" assertions="1" time="0.000120"/>
+      <testcase name="testGetPattern" class="LazyTest\Route\RouteTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Routing/RouteTest.php" line="24" assertions="1" time="0.000088"/>
+      <testcase name="testGetSetCallback" class="LazyTest\Route\RouteTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Routing/RouteTest.php" line="30" assertions="2" time="0.000097"/>
+      <testcase name="testBasic" class="LazyTest\Route\RouteTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Routing/RouteTest.php" line="41" assertions="2" time="0.000157"/>
+      <testcase name="testMultipleMethod" class="LazyTest\Route\RouteTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Routing/RouteTest.php" line="50" assertions="3" time="0.000179"/>
+      <testcase name="testNamedFooShouldNotMatchWithPathFooBar" class="LazyTest\Route\RouteTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Routing/RouteTest.php" line="59" assertions="1" time="0.000150"/>
+      <testcase name="testOptionalNamed" class="LazyTest\Route\RouteTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Routing/RouteTest.php" line="65" assertions="4" time="0.000311"/>
+      <testcase name="testRegexPattern" class="LazyTest\Route\RouteTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Routing/RouteTest.php" line="76" assertions="1" time="0.000141"/>
+      <testcase name="testRegexNamedPattern" class="LazyTest\Route\RouteTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Routing/RouteTest.php" line="82" assertions="2" time="0.000148"/>
+      <testcase name="testSplatPattern" class="LazyTest\Route\RouteTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Routing/RouteTest.php" line="89" assertions="2" time="0.000223"/>
+      <testcase name="testNamedAndSplatPattern" class="LazyTest\Route\RouteTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Routing/RouteTest.php" line="98" assertions="1" time="0.000148"/>
+      <testcase name="testNamedHasAtChar" class="LazyTest\Route\RouteTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Routing/RouteTest.php" line="104" assertions="1" time="0.000156"/>
+      <testcase name="testNamedHasDotChar" class="LazyTest\Route\RouteTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Routing/RouteTest.php" line="110" assertions="1" time="0.000157"/>
+      <testcase name="testStaticPatternHasDotChar" class="LazyTest\Route\RouteTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Routing/RouteTest.php" line="116" assertions="1" time="0.000152"/>
+      <testcase name="testStaticPatternHasDollarChar" class="LazyTest\Route\RouteTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Routing/RouteTest.php" line="122" assertions="1" time="0.000146"/>
+      <testcase name="testEncodedPlusChar" class="LazyTest\Route\RouteTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Routing/RouteTest.php" line="128" assertions="1" time="0.000145"/>
+      <testcase name="testPlusChar" class="LazyTest\Route\RouteTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Routing/RouteTest.php" line="134" assertions="1" time="0.000104"/>
+      <testcase name="testNamedAllowPlusChar" class="LazyTest\Route\RouteTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Routing/RouteTest.php" line="140" assertions="1" time="0.000110"/>
+      <testcase name="testParenChars" class="LazyTest\Route\RouteTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Routing/RouteTest.php" line="146" assertions="1" time="0.000177"/>
+      <testcase name="testWithWhiteSpacesEncoded" class="LazyTest\Route\RouteTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Routing/RouteTest.php" line="152" assertions="2" time="0.000232"/>
+      <testcase name="testNamedAllowAmperChar" class="LazyTest\Route\RouteTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Routing/RouteTest.php" line="161" assertions="1" time="0.000157"/>
+      <testcase name="testNamedAndSplatAllowWhiteSpaces" class="LazyTest\Route\RouteTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Routing/RouteTest.php" line="167" assertions="1" time="0.000160"/>
+      <testcase name="testRegexWithDots" class="LazyTest\Route\RouteTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Routing/RouteTest.php" line="173" assertions="1" time="0.000171"/>
+      <testcase name="testRegex" class="LazyTest\Route\RouteTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Routing/RouteTest.php" line="179" assertions="1" time="0.000152"/>
+      <testcase name="testNamedWithDoubleColonShouldJustMatchInteger" class="LazyTest\Route\RouteTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Routing/RouteTest.php" line="185" assertions="13" time="0.000419"/>
+    </testsuite>
+    <testsuite name="LazyTest\Util\ArrayUtilsTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Util/ArrayUtilsTest.php" tests="3" assertions="7" failures="0" errors="0" time="0.000371">
+      <testcase name="testPick" class="LazyTest\Util\ArrayUtilsTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Util/ArrayUtilsTest.php" line="8" assertions="1" time="0.000120"/>
+      <testcase name="testPickWithDefaultValue" class="LazyTest\Util\ArrayUtilsTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Util/ArrayUtilsTest.php" line="17" assertions="1" time="0.000124"/>
+      <testcase name="testHasOnlyInts" class="LazyTest\Util\ArrayUtilsTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Util/ArrayUtilsTest.php" line="26" assertions="5" time="0.000127"/>
+    </testsuite>
+    <testsuite name="LazyTest\Util\UrlTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Util/UrlTest.php" tests="1" assertions="5" failures="0" errors="0" time="0.000367">
+      <testcase name="testAppendParams" class="LazyTest\Util\UrlTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/Util/UrlTest.php" line="8" assertions="5" time="0.000367"/>
+    </testsuite>
+    <testsuite name="LazyTest\View\Helper\CaptureTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/CaptureTest.php" tests="5" assertions="6" failures="0" errors="0" time="0.001638">
+      <testcase name="testBasic" class="LazyTest\View\Helper\CaptureTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/CaptureTest.php" line="9" assertions="1" time="0.000332"/>
+      <testcase name="testSetAndGetRenderer" class="LazyTest\View\Helper\CaptureTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/CaptureTest.php" line="16" assertions="1" time="0.000086"/>
+      <testcase name="testRenderWithCallback" class="LazyTest\View\Helper\CaptureTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/CaptureTest.php" line="24" assertions="1" time="0.000102"/>
+      <testcase name="testAssociateWithViewHelper" class="LazyTest\View\Helper\CaptureTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/CaptureTest.php" line="35" assertions="1" time="0.001013"/>
+      <testcase name="testReset" class="LazyTest\View\Helper\CaptureTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/CaptureTest.php" line="45" assertions="2" time="0.000105"/>
+    </testsuite>
+    <testsuite name="LazyTest\View\Helper\FormatDateTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/FormatDateTest.php" tests="4" assertions="5" failures="0" errors="0" time="0.000988">
+      <testcase name="testFromString" class="LazyTest\View\Helper\FormatDateTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/FormatDateTest.php" line="10" assertions="1" time="0.000487"/>
+      <testcase name="testFromNumber" class="LazyTest\View\Helper\FormatDateTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/FormatDateTest.php" line="17" assertions="1" time="0.000160"/>
+      <testcase name="testFromDateTimeClass" class="LazyTest\View\Helper\FormatDateTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/FormatDateTest.php" line="26" assertions="1" time="0.000187"/>
+      <testcase name="testItShouldReturnAnEmptyStringIfIsInvalidValue" class="LazyTest\View\Helper\FormatDateTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/FormatDateTest.php" line="35" assertions="2" time="0.000154"/>
+    </testsuite>
+    <testsuite name="LazyTest\View\Helper\FormatDateTimeTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/FormatDateTimeTest.php" tests="6" assertions="12" failures="0" errors="0" time="0.000770">
+      <testcase name="testSetAndGetInputOutputFormat" class="LazyTest\View\Helper\FormatDateTimeTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/FormatDateTimeTest.php" line="10" assertions="3" time="0.000166"/>
+      <testcase name="testFromString" class="LazyTest\View\Helper\FormatDateTimeTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/FormatDateTimeTest.php" line="25" assertions="1" time="0.000122"/>
+      <testcase name="testFromNumber" class="LazyTest\View\Helper\FormatDateTimeTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/FormatDateTimeTest.php" line="32" assertions="1" time="0.000125"/>
+      <testcase name="testFromDateTimeClass" class="LazyTest\View\Helper\FormatDateTimeTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/FormatDateTimeTest.php" line="41" assertions="1" time="0.000122"/>
+      <testcase name="testItShouldReturnAnEmptyStringIfIsInvalidValue" class="LazyTest\View\Helper\FormatDateTimeTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/FormatDateTimeTest.php" line="50" assertions="2" time="0.000122"/>
+      <testcase name="testDefaultInputOutputFormat" class="LazyTest\View\Helper\FormatDateTimeTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/FormatDateTimeTest.php" line="57" assertions="4" time="0.000113"/>
+    </testsuite>
+    <testsuite name="LazyTest\View\Helper\FormatTimeTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/FormatTimeTest.php" tests="4" assertions="5" failures="0" errors="0" time="0.002505">
+      <testcase name="testFromString" class="LazyTest\View\Helper\FormatTimeTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/FormatTimeTest.php" line="10" assertions="1" time="0.001969"/>
+      <testcase name="testFromNumber" class="LazyTest\View\Helper\FormatTimeTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/FormatTimeTest.php" line="17" assertions="1" time="0.000251"/>
+      <testcase name="testFromDateTimeClass" class="LazyTest\View\Helper\FormatTimeTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/FormatTimeTest.php" line="26" assertions="1" time="0.000130"/>
+      <testcase name="testItShouldReturnAnEmptyStringIfIsInvalidValue" class="LazyTest\View\Helper\FormatTimeTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/FormatTimeTest.php" line="35" assertions="2" time="0.000155"/>
+    </testsuite>
+    <testsuite name="LazyTest\View\Helper\ImageTagTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/ImageTagTest.php" tests="3" assertions="8" failures="0" errors="0" time="0.001330">
+      <testcase name="testWithBasePath" class="LazyTest\View\Helper\ImageTagTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/ImageTagTest.php" line="17" assertions="5" time="0.000895"/>
+      <testcase name="testMultipleSource" class="LazyTest\View\Helper\ImageTagTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/ImageTagTest.php" line="27" assertions="2" time="0.000235"/>
+      <testcase name="testAppendAndPrepend" class="LazyTest\View\Helper\ImageTagTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/ImageTagTest.php" line="35" assertions="1" time="0.000200"/>
+    </testsuite>
+    <testsuite name="LazyTest\View\Helper\InputEmailTagTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/InputEmailTagTest.php" tests="1" assertions="1" failures="0" errors="0" time="0.000895">
+      <testcase name="test" class="LazyTest\View\Helper\InputEmailTagTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/InputEmailTagTest.php" line="9" assertions="1" time="0.000895"/>
+    </testsuite>
+    <testsuite name="LazyTest\View\Helper\InputPasswordTagTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/InputPasswordTagTest.php" tests="1" assertions="1" failures="0" errors="0" time="0.000516">
+      <testcase name="test" class="LazyTest\View\Helper\InputPasswordTagTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/InputPasswordTagTest.php" line="9" assertions="1" time="0.000516"/>
+    </testsuite>
+    <testsuite name="LazyTest\View\Helper\InputTextTagTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/InputTextTagTest.php" tests="1" assertions="1" failures="0" errors="0" time="0.000457">
+      <testcase name="test" class="LazyTest\View\Helper\InputTextTagTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/InputTextTagTest.php" line="9" assertions="1" time="0.000457"/>
+    </testsuite>
+    <testsuite name="LazyTest\View\Helper\MailToTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/MailToTest.php" tests="1" assertions="2" failures="0" errors="0" time="0.000727">
+      <testcase name="testMailTo" class="LazyTest\View\Helper\MailToTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/MailToTest.php" line="9" assertions="2" time="0.000727"/>
+    </testsuite>
+    <testsuite name="LazyTest\View\Helper\PaginateTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/PaginateTest.php" tests="1" assertions="2" failures="0" errors="0" time="0.002877">
+      <testcase name="testWithDefaultTemplate" class="LazyTest\View\Helper\PaginateTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/PaginateTest.php" line="11" assertions="2" time="0.002877"/>
+    </testsuite>
+    <testsuite name="LazyTest\View\Helper\PartialLoopTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/PartialLoopTest.php" tests="1" assertions="1" failures="0" errors="0" time="0.001843">
+      <testcase name="testWithPureArray" class="LazyTest\View\Helper\PartialLoopTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/PartialLoopTest.php" line="16" assertions="1" time="0.001843"/>
+    </testsuite>
+    <testsuite name="LazyTest\View\Helper\PartialTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/PartialTest.php" tests="2" assertions="2" failures="0" errors="0" time="0.001705">
+      <testcase name="test" class="LazyTest\View\Helper\PartialTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/PartialTest.php" line="16" assertions="1" time="0.000999"/>
+      <testcase name="testOverrideVar" class="LazyTest\View\Helper\PartialTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/PartialTest.php" line="26" assertions="1" time="0.000706"/>
+    </testsuite>
+    <testsuite name="LazyTest\View\Helper\ScriptTagTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/ScriptTagTest.php" tests="3" assertions="8" failures="0" errors="0" time="0.000686">
+      <testcase name="testWithBasePath" class="LazyTest\View\Helper\ScriptTagTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/ScriptTagTest.php" line="17" assertions="5" time="0.000344"/>
+      <testcase name="testMultipleSource" class="LazyTest\View\Helper\ScriptTagTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/ScriptTagTest.php" line="27" assertions="2" time="0.000191"/>
+      <testcase name="testAppendAndPrepend" class="LazyTest\View\Helper\ScriptTagTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/ScriptTagTest.php" line="35" assertions="1" time="0.000151"/>
+    </testsuite>
+    <testsuite name="LazyTest\View\Helper\SelectTagTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/SelectTagTest.php" tests="7" assertions="9" failures="0" errors="0" time="0.002483">
+      <testcase name="testWithBasicArrayOptions" class="LazyTest\View\Helper\SelectTagTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/SelectTagTest.php" line="9" assertions="1" time="0.001338"/>
+      <testcase name="testMultipleSelect" class="LazyTest\View\Helper\SelectTagTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/SelectTagTest.php" line="16" assertions="1" time="0.000195"/>
+      <testcase name="testWithMapValueTextProperty" class="LazyTest\View\Helper\SelectTagTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/SelectTagTest.php" line="23" assertions="3" time="0.000261"/>
+      <testcase name="testWithMapValueTextPropertyByCallback" class="LazyTest\View\Helper\SelectTagTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/SelectTagTest.php" line="44" assertions="1" time="0.000169"/>
+      <testcase name="testOptionGroup" class="LazyTest\View\Helper\SelectTagTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/SelectTagTest.php" line="57" assertions="1" time="0.000178"/>
+      <testcase name="testMixOptionAndOptionGroup" class="LazyTest\View\Helper\SelectTagTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/SelectTagTest.php" line="77" assertions="1" time="0.000191"/>
+      <testcase name="testAppendAndPrepend" class="LazyTest\View\Helper\SelectTagTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/SelectTagTest.php" line="101" assertions="1" time="0.000151"/>
+    </testsuite>
+    <testsuite name="LazyTest\View\Helper\StylesheetTagTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/StylesheetTagTest.php" tests="3" assertions="7" failures="0" errors="0" time="0.001107">
+      <testcase name="testWithBasePath" class="LazyTest\View\Helper\StylesheetTagTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/StylesheetTagTest.php" line="17" assertions="5" time="0.000727"/>
+      <testcase name="testMultipleSource" class="LazyTest\View\Helper\StylesheetTagTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/StylesheetTagTest.php" line="27" assertions="1" time="0.000197"/>
+      <testcase name="testCustomAttribute" class="LazyTest\View\Helper\StylesheetTagTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/StylesheetTagTest.php" line="34" assertions="1" time="0.000183"/>
+    </testsuite>
+    <testsuite name="LazyTest\View\Helper\TagTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/TagTest.php" tests="2" assertions="2" failures="0" errors="0" time="0.000288">
+      <testcase name="testBasic" class="LazyTest\View\Helper\TagTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/TagTest.php" line="9" assertions="1" time="0.000142"/>
+      <testcase name="testWithAttribute" class="LazyTest\View\Helper\TagTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/TagTest.php" line="17" assertions="1" time="0.000146"/>
+    </testsuite>
+    <testsuite name="LazyTest\View\Helper\TextAreaTagTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/TextAreaTagTest.php" tests="1" assertions="1" failures="0" errors="0" time="0.000572">
+      <testcase name="test" class="LazyTest\View\Helper\TextAreaTagTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/TextAreaTagTest.php" line="9" assertions="1" time="0.000572"/>
+    </testsuite>
+    <testsuite name="LazyTest\View\Helper\UrlTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/UrlTest.php" tests="3" assertions="5" failures="0" errors="0" time="0.000469">
+      <testcase name="testWithDefaultUrl" class="LazyTest\View\Helper\UrlTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/UrlTest.php" line="11" assertions="1" time="0.000178"/>
+      <testcase name="testDefaultUrlWithClosure" class="LazyTest\View\Helper\UrlTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/UrlTest.php" line="19" assertions="1" time="0.000143"/>
+      <testcase name="test" class="LazyTest\View\Helper\UrlTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/Helper/UrlTest.php" line="31" assertions="3" time="0.000148"/>
+    </testsuite>
+    <testsuite name="LazyTest\View\ViewTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/ViewTest.php" tests="18" assertions="24" failures="0" errors="0" time="0.003814">
+      <testcase name="testSetAndGetVars" class="LazyTest\View\ViewTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/ViewTest.php" line="10" assertions="1" time="0.000106"/>
+      <testcase name="testSetAndGetVar" class="LazyTest\View\ViewTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/ViewTest.php" line="18" assertions="2" time="0.000100"/>
+      <testcase name="testSetAndGetPath" class="LazyTest\View\ViewTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/ViewTest.php" line="26" assertions="1" time="0.000131"/>
+      <testcase name="testSetAndGetExtension" class="LazyTest\View\ViewTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/ViewTest.php" line="33" assertions="1" time="0.000084"/>
+      <testcase name="testConfig" class="LazyTest\View\ViewTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/ViewTest.php" line="40" assertions="3" time="0.000110"/>
+      <testcase name="testSetAndGetFile" class="LazyTest\View\ViewTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/ViewTest.php" line="54" assertions="1" time="0.000081"/>
+      <testcase name="testSetAndGetLayout" class="LazyTest\View\ViewTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/ViewTest.php" line="61" assertions="1" time="0.000081"/>
+      <testcase name="testGetFilePath" class="LazyTest\View\ViewTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/ViewTest.php" line="68" assertions="2" time="0.000094"/>
+      <testcase name="testGetLayoutFilePath" class="LazyTest\View\ViewTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/ViewTest.php" line="78" assertions="2" time="0.000096"/>
+      <testcase name="testRender" class="LazyTest\View\ViewTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/ViewTest.php" line="88" assertions="2" time="0.000643"/>
+      <testcase name="testLayout" class="LazyTest\View\ViewTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/ViewTest.php" line="98" assertions="1" time="0.000625"/>
+      <testcase name="testNestedLayout" class="LazyTest\View\ViewTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/ViewTest.php" line="107" assertions="1" time="0.000689"/>
+      <testcase name="testRenderWithNoFileShouldThrowAnException" class="LazyTest\View\ViewTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/ViewTest.php" line="120" assertions="1" time="0.000189"/>
+      <testcase name="testRenderWithNonExistingFileShouldThrowAnException" class="LazyTest\View\ViewTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/ViewTest.php" line="129" assertions="1" time="0.000176"/>
+      <testcase name="testEscape" class="LazyTest\View\ViewTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/ViewTest.php" line="135" assertions="1" time="0.000090"/>
+      <testcase name="testCustomHelper" class="LazyTest\View\ViewTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/ViewTest.php" line="141" assertions="1" time="0.000146"/>
+      <testcase name="testInvalidHelperShouldThrowAnException" class="LazyTest\View\ViewTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/ViewTest.php" line="151" assertions="1" time="0.000184"/>
+      <testcase name="testCallUndefinedMethodShouldThrowAnException" class="LazyTest\View\ViewTest" file="/Users/lytc/Projects/lytc/lazy/lazy/tests/LazyTest/View/ViewTest.php" line="161" assertions="1" time="0.000188"/>
+    </testsuite>
+  </testsuite>
+</testsuites>
