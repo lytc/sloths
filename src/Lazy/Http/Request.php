@@ -2,6 +2,8 @@
 
 namespace Lazy\Http;
 
+use Lazy\Config\Config;
+
 class Request
 {
     /**
@@ -22,6 +24,8 @@ class Request
      * @var \Closure
      */
     protected $getMethodCallback;
+
+    protected $params;
 
     public function __construct(array $superGlobals = null)
     {
@@ -45,6 +49,30 @@ class Request
         }
 
         $this->superGlobals = $superGlobals;
+    }
+
+    public function __get($name)
+    {
+        switch ($name) {
+            case 'params':
+                return $this->params();
+        }
+
+        throw new \BadMethodCallException(sprintf('Call to undefined property %s', $name));
+    }
+
+    public function param($name)
+    {
+        return $this->getVar($name);
+    }
+
+    public function params()
+    {
+        if (!$this->params) {
+            $this->params = new Config($this->getVars());
+        }
+
+        return $this->params;
     }
 
     public static function setDefaultGetMethodCallback(\Closure $callback)

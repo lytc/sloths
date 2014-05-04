@@ -2,7 +2,7 @@
 
 namespace Lazy\Config;
 
-class Config implements \IteratorAggregate, \Countable
+class Config implements \IteratorAggregate, \Countable, \JsonSerializable
 {
     /**
      * @var array
@@ -145,5 +145,13 @@ class Config implements \IteratorAggregate, \Countable
     public function __get($k)
     {
         return isset($this->data[$k])? $this->data[$k] : null;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function jsonSerialize()
+    {
+        return $this->toArray();
     }
 }

@@ -2,13 +2,11 @@
 
 namespace Lazy\View;
 
-use Lazy\Config\ConfigurableTrait;
 use Lazy\Util\Inflector;
 use Lazy\View\Exception as ViewException;
 
 class View
 {
-    use ConfigurableTrait;
     /**
      * @var array
      */

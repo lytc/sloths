@@ -2,4 +2,7 @@
 .idea
 composer.lock
 composer.phar
-vendor
+/vendor/
+/build/
+/docs/vendor/
+/docs/config/nginx/nginx.conf

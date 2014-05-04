@@ -48,8 +48,15 @@ class Application
 
     public function __get($serviceName)
     {
+        switch ($serviceName) {
+            case 'request': return $this->getRequest();
+            case 'response': return $this->getResponse();
+            case 'config': return $this->getConfig();
+            case 'params': return $this->getRequest()->params;
+        }
+
         if (!isset($this->services[$serviceName])) {
-            throw new \InvalidArgumentException('Call to undefined service %s', $serviceName);
+            throw new \InvalidArgumentException(sprintf('Call to undefined service %s', $serviceName));
         }
 
         $service = $this->services[$serviceName];
@@ -147,6 +154,23 @@ class Application
     }
 
     /**
+     * @param string $name
+     * @return mixed
+     */
+    public function param($name)
+    {
+        return $this->getRequest()->param($name);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isXhr()
+    {
+        return $this->getRequest()->isXhr();
+    }
+
+    /**
      * @param Response $response
      * @return $this
      */
@@ -166,6 +190,37 @@ class Application
         }
 
         return $this->response;
+    }
+
+    /**
+     * @param $statusCode
+     * @return $this
+     */
+    public function responseCode($statusCode)
+    {
+        $this->getResponse()->setStatusCode($statusCode);
+        return $this;
+    }
+
+    /**
+     * @param string $name
+     * @param string $value
+     * @return $this
+     */
+    public function responseHeader($name, $value = null)
+    {
+        $this->getResponse()->setHeader($name, $value);
+        return $this;
+    }
+
+    /**
+     * @param array $headers
+     * @return $this
+     */
+    public function responseHeaders(array $headers)
+    {
+        $this->getResponse()->setHeaders($headers);
+        return $this;
     }
 
     /**
@@ -248,6 +303,7 @@ class Application
         if (file_exists($routeFile)) {
             require $routeFile;
         }
+
         return $dispatchPath;
     }
 
@@ -282,11 +338,9 @@ class Application
         !$request || $this->request = $request;
 
         $matchedRoute = $this->getMatchedRoute();
+
         if ($matchedRoute) {
             $callback = $matchedRoute->getCallback();
-            if ($callback instanceof \Closure) {
-                $callback = $callback->bindTo($this);
-            }
 
             $result = call_user_func_array($callback, $matchedRoute->getParams());
             $this->getResponse()->setBody($result)->send();
