@@ -1,0 +1,21 @@
+listen 80;
+server_name  docs.lazy.dev;
+root   <path-to-framework-directory>/docs/public;
+index  index.php index.html index.htm;
+client_max_body_size 2M;
+
+location /lazy {
+    try_files $uri $uri/ /index.php$is_args$args;
+}
+
+location ~ ^/lazy/assets/(.+)$ {
+    try_files $uri $uri/ /assets/$1;
+}
+
+location ~ \.php$ {
+    fastcgi_pass   127.0.0.1:9000;
+    fastcgi_index  index.php;
+    fastcgi_param APPLICATION_ENV development;
+    fastcgi_param  SCRIPT_FILENAME  <path-to-framework-directory>/public$fastcgi_script_name;
+    include        fastcgi_params;
+}
