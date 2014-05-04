@@ -8,7 +8,7 @@
     <link href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
     <link href="/lazy/assets/vendor/codemirror/4.1/lib/codemirror.css" rel="stylesheet">
     <link href="/lazy/assets/vendor/codemirror/4.1/theme/mdn-like.css" rel="stylesheet">
-    <?= $this->stylesheetTag('/assets/stylesheets/application.css') ?>
+    <?= $this->stylesheetTag('/lazy/assets/stylesheets/application.css') ?>
     <?= $this->capture('stylesheets')->render([$this, 'stylesheetTag']) ?>
 </head>
 <body>

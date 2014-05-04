@@ -1,6 +1,7 @@
 <?php
 
-$buildDir = __DIR__  .'/build/docs';
+$root = __DIR__;
+$buildDir = $root  .'/build/docs';
 $pages = [
     'index',
     'docs/installation',
@@ -24,11 +25,11 @@ $pages = [
 ];
 
 
-require_once __DIR__ . '/docs/application/init.php';
+require_once $root . '/docs/application/init.php';
 
 # copy assets folder
 echo "# Copying assets\n";
-exec("cp -r public/assets $buildDir");
+exec("cp -r $root/docs/public/assets $buildDir");
 
 $application = new \Application\Application();
 
