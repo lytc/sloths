@@ -3,8 +3,10 @@
 <head>
     <meta charset="utf-8">
     <title>
-        <?= isset($_title)? $this->escape($_title) : 'Lazy Framework' ?>
+        <?= isset($_title)? $this->escape($_title) : 'Sloths Framework Documentation' ?>
     </title>
+    <meta name="keywords" content="sloths, php, framework, orm, routing, mvc, web">
+    <meta name="description" content="Sloths - The small PHP framework for lazy man.">
     <link href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
     <link href="/sloths/assets/vendor/codemirror/4.1/lib/codemirror.css" rel="stylesheet">
     <link href="/sloths/assets/vendor/codemirror/4.1/theme/mdn-like.css" rel="stylesheet">
