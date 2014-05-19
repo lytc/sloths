@@ -12,7 +12,7 @@ $this->get(\'/hi\', function() {
             </div>
         </div>
         <div class="text-center">
-            <h1><span class="text-success">Lazy Framework</span></h1>
+            <h1><span class="text-success">Sloths Framework</span></h1>
             <h3><span class="text-danger">PHP Framework for Lazy Man</span></h3>
             <br>
             <div>
