@@ -1,5 +1,11 @@
-Lazy - A PHP 5.5 framework for Lazy Man
+SLOTHS - A small PHP 5.4+ framework for Lazy Man
 ====
-[![Build Status](https://travis-ci.org/lytc/lazy.png?branch=master)](https://travis-ci.org/lytc/lazy)
 
-Lazy is a PHP 5.5+ full stack framework that helps you to build quickly web application and APIs.
+[![Build Status](https://travis-ci.org/lytc/sloths.png)](https://travis-ci.org/lytc/sloths)
+[![Build Status](https://coveralls.io/repos/lytc/sloths/badge.png)](https://coveralls.io/r/lytc/sloths)
+[![Build Status](https://poser.pugx.org/lytc/sloths/v/stable.png)](https://packagist.org/packages/lytc/sloths)
+[![Build Status](https://poser.pugx.org/lytc/sloths/v/unstable.png)](https://packagist.org/packages/lytc/sloths)
+[![Build Status](https://poser.pugx.org/lytc/sloths/downloads.png)](https://packagist.org/packages/lytc/sloths)
+
+
+[DOCUMENTATION](http://lytc.github.io/sloths)

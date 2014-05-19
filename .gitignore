@@ -1,8 +1,5 @@
 .DS_Store
 .idea
 composer.lock
-composer.phar
 /vendor/
 /build/
-/docs/vendor/
-/docs/config/nginx/nginx.conf
