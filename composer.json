@@ -1,9 +1,9 @@
 {
-    "name": "lazy/lazy",
-    "description": "Lazy Framework",
+    "name": "lytc/sloths",
+    "description": "Sloths Framework",
     "type": "library",
     "license": "MIT",
-    "keywords": ["framework", "lazy"],
+    "keywords": ["php", "framework", "sloths"],
     "authors": [
         {
             "name": "lytc",
@@ -22,8 +22,8 @@
     },
     "autoload": {
         "psr-0": {
-            "Lazy\\": "src",
-            "LazyTest\\": "tests"
+            "Sloths\\": "src",
+            "SlothsTest\\": "tests"
         }
     }
 }
