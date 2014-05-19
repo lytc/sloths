@@ -5,9 +5,9 @@
     <title>
         Lazy Framework    </title>
     <link href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
-    <link href="/lazy/assets/vendor/codemirror/4.1/lib/codemirror.css" rel="stylesheet">
-    <link href="/lazy/assets/vendor/codemirror/4.1/theme/mdn-like.css" rel="stylesheet">
-    <link href="/lazy/assets/stylesheets/application.css?__dc" rel="stylesheet">    </head>
+    <link href="/sloths/assets/vendor/codemirror/4.1/lib/codemirror.css" rel="stylesheet">
+    <link href="/sloths/assets/vendor/codemirror/4.1/theme/mdn-like.css" rel="stylesheet">
+    <link href="/sloths/assets/stylesheets/application.css?__dc" rel="stylesheet">    </head>
 <body>
 <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
     <div class="container">
@@ -18,11 +18,11 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="/lazy/index.html">Lazy Framework</a>
+            <a class="navbar-brand" href="/sloths/index.html">Lazy Framework</a>
         </div>
         <div class="collapse navbar-collapse">
             <ul class="nav navbar-nav navbar-right">
-                <li><a href="/lazy/docs/installation.html">Documentation</a></li>
+                <li><a href="/sloths/docs/installation.html">Documentation</a></li>
             </ul>
         </div><!--/.nav-collapse -->
     </div>
@@ -30,88 +30,39 @@
 
 <div class="jumbotron">
     <div class="container">
+        <div class="row">
+            <div class="col-md-6 col-md-push-3 col-sm-8 col-sm-push-2">
+                <div class="welcome-code">
+                    <code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br />$this</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">get</span><span style="color: #007700">(</span><span style="color: #DD0000">'/hi'</span><span style="color: #007700">,&nbsp;function()&nbsp;{<br />&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;</span><span style="color: #DD0000">'Hi&nbsp;Lazy&nbsp;Man,&nbsp;welcome&nbsp;to&nbsp;join&nbsp;us!'</span><span style="color: #007700">;<br />});</span>
+</span>
+</code>                </div>
+            </div>
+        </div>
         <div class="text-center">
             <h1><span class="text-success">Lazy Framework</span></h1>
             <h3><span class="text-danger">PHP Framework for Lazy Man</span></h3>
             <br>
-
             <div>
-                <iframe src="http://ghbtns.com/github-btn.html?user=lytc&repo=lazy&type=watch&count=true&size=large"
+                <iframe src="http://ghbtns.com/github-btn.html?user=lytc&repo=sloths&type=watch&count=true&size=large"
                         allowtransparency="true" frameborder="0" scrolling="0" width="150" height="30"></iframe>
-                <iframe src="http://ghbtns.com/github-btn.html?user=lytc&repo=lazy&type=fork&count=true&size=large"
+                <iframe src="http://ghbtns.com/github-btn.html?user=lytc&repo=sloths&type=fork&count=true&size=large"
                         allowtransparency="true" frameborder="0" scrolling="0" width="150" height="30"></iframe>
-                <iframe src="http://ghbtns.com/github-btn.html?user=lytc&repo=lazy&type=follow&count=true&size=large"
-                        allowtransparency="true" frameborder="0" scrolling="0" width="150" height="30"></iframe>
+                <iframe src="http://ghbtns.com/github-btn.html?user=lytc&repo=sloths&type=follow&count=true&size=large"
+                        allowtransparency="true" frameborder="0" scrolling="0" width="240" height="30"></iframe>
             </div>
             <div>
-                <a href="https://travis-ci.org/lytc/lazy"><img src="https://travis-ci.org/lytc/lazy.png?1399198521"></a>
-                <a href="https://coveralls.io/r/lytc/lazy"><img src="https://coveralls.io/repos/lytc/lazy/badge.png"></a>
-                <a href="https://packagist.org/packages/lazy/lazy"><img src="https://poser.pugx.org/lazy/lazy/v/stable.png"></a>
-                <a href="https://packagist.org/packages/lazy/lazy"><img src="https://poser.pugx.org/lazy/lazy/v/unstable.png"></a>
-                <a href="https://packagist.org/packages/lazy/lazy"><img src="https://poser.pugx.org/lazy/lazy/downloads.png?1399198521"></a>
+                <a href="https://travis-ci.org/lytc/sloths"><img src="https://travis-ci.org/lytc/sloths.png"></a>
+                <a href="https://coveralls.io/r/lytc/sloths"><img src="https://coveralls.io/repos/lytc/sloths/badge.png?branch=develop"></a>
+                <a href="https://packagist.org/packages/lytc/sloths"><img src="https://poser.pugx.org/lytc/sloths/v/stable.png"></a>
+                <a href="https://packagist.org/packages/lytc/sloths"><img src="https://poser.pugx.org/lytc/sloths/v/unstable.png"></a>
+                <a href="https://packagist.org/packages/lytc/sloths"><img src="https://poser.pugx.org/lytc/sloths/downloads.png"></a>
             </div>
         </div>
     </div>
 </div>
 
 <div class="container">
-<textarea class="code">
-    # GET /
-    $this->get('/', function() {
-        return 'Hi Lazy Man, welcome to joining with us!';
-    });
-
-    # GET /posts
-    $this->get('/posts', function() {
-        return $this->render('posts/list', [
-            'posts' => Post::all()->limit(10)
-        ]);
-    });
-
-    # GET /posts/123
-    $this->get('/posts/::id', function($id) {
-        $post = Post::first($id);
-
-        $post || $this->notFound();
-
-        return $this->render('/posts/view', [
-            'post' => $post
-        ]);
-    });
-
-    # POST /posts
-    $this->post('/posts', function() {
-        $post = Post::create([
-            'title' => $this->params->title,
-            'content' => $this->params->content,
-        ])->save();
-
-        $this->redirectTo('/posts/' . $post->id);
-    });
-
-    # PUT /posts/123
-    $this->put('/posts/::id', function($id) {
-        $post = Post::first($id);
-        $post || $this->notFound();
-
-        $post->title    = $this->params->title;
-        $post->content  = $this->params->content;
-
-        $post->save();
-
-        $this->redirectBack();
-    });
-
-    # DELETE /posts/123
-    $this->delete('/posts/::id', function($id) {
-        $post = Post::first($id);
-        $post || $this->notFound();
-
-        $post->delete();
-
-        $this->redirectTo('/posts');
-    });
-</textarea>
 </div>
 <hr>
 
@@ -119,18 +70,18 @@
     <div class="container">
         <div>
             <div class="pull-left">
-                <iframe src="http://ghbtns.com/github-btn.html?user=lytc&repo=lazy&type=watch&count=true"
+                <iframe src="http://ghbtns.com/github-btn.html?user=lytc&repo=sloths&type=watch&count=true"
                         allowtransparency="true" frameborder="0" scrolling="0" width="100" height="20"></iframe>
-                <iframe src="http://ghbtns.com/github-btn.html?user=lytc&repo=lazy&type=fork&count=true"
+                <iframe src="http://ghbtns.com/github-btn.html?user=lytc&repo=sloths&type=fork&count=true"
                         allowtransparency="true" frameborder="0" scrolling="0" width="100" height="20"></iframe>
-                <iframe src="http://ghbtns.com/github-btn.html?user=lytc&repo=lazy&type=follow&count=true"
-                        allowtransparency="true" frameborder="0" scrolling="0" width="100" height="20"></iframe>
+                <iframe src="http://ghbtns.com/github-btn.html?user=lytc&repo=sloths&type=follow&count=true"
+                        allowtransparency="true" frameborder="0" scrolling="0" width="180" height="20"></iframe>
             </div>
         </div>
         <div class="pull-right">
             <ul class="list-inline">
-                <li><a href="https://github.com/lytc/lazy">GitHub</a></li>
-                <li><a href="/docs">Documentation</a></li>
+                <li><a href="https://github.com/lytc/sloths">GitHub</a></li>
+                <li><a href="/sloths/docs/installation.html">Documentation</a></li>
             </ul>
         </div>
     </div>
@@ -141,15 +92,25 @@
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
 <script src="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
 
-<script src="/lazy/assets/vendor/codemirror/4.1/lib/codemirror.js"></script>
-<script src="/lazy/assets/vendor/codemirror/4.1/lib/util/formatting.js"></script>
-<script src="/lazy/assets/vendor/codemirror/4.1/addon/edit/matchbrackets.js"></script>
-<script src="/lazy/assets/vendor/codemirror/4.1/mode/htmlmixed/htmlmixed.js"></script>
-<script src="/lazy/assets/vendor/codemirror/4.1/mode/javascript/javascript.js"></script>
-<script src="/lazy/assets/vendor/codemirror/4.1/mode/css/css.js"></script>
-<script src="/lazy/assets/vendor/codemirror/4.1/mode/clike/clike.js"></script>
-<script src="/lazy/assets/vendor/codemirror/4.1/mode/php/php.js"></script>
-<script src="/lazy/assets/vendor/codemirror/4.1/mode/nginx/nginx.js"></script>
-<script src="/lazy/assets/vendor/codemirror/4.1/mode/sql/sql.js"></script>
-<script src="/lazy/assets/javascripts/application.js?__dc"></script></body>
+<script src="/sloths/assets/vendor/codemirror/4.1/lib/codemirror.js"></script>
+<script src="/sloths/assets/vendor/codemirror/4.1/lib/util/formatting.js"></script>
+<script src="/sloths/assets/vendor/codemirror/4.1/addon/edit/matchbrackets.js"></script>
+<script src="/sloths/assets/vendor/codemirror/4.1/mode/htmlmixed/htmlmixed.js"></script>
+<script src="/sloths/assets/vendor/codemirror/4.1/mode/javascript/javascript.js"></script>
+<script src="/sloths/assets/vendor/codemirror/4.1/mode/css/css.js"></script>
+<script src="/sloths/assets/vendor/codemirror/4.1/mode/clike/clike.js"></script>
+<script src="/sloths/assets/vendor/codemirror/4.1/mode/php/php.js"></script>
+<script src="/sloths/assets/vendor/codemirror/4.1/mode/nginx/nginx.js"></script>
+<script src="/sloths/assets/vendor/codemirror/4.1/mode/sql/sql.js"></script>
+<script src="/sloths/assets/javascripts/application.js?__dc"></script><script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-50648420-1', 'lytc.github.io');
+    ga('send', 'pageview');
+
+</script>
+</body>
 </html>
