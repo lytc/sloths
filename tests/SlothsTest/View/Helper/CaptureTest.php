@@ -38,7 +38,7 @@ class CaptureTest extends \PHPUnit_Framework_TestCase
         $view->capture('js', 'foo.js');
         $view->capture('js', 'bar.js');
         $result = $view->capture('js')->render([$view, 'scriptTag']);
-        $expected = '<script src="/foo.js?__dc"></script><script src="/bar.js?__dc"></script>';
+        $expected = '<script src="/foo.js"></script><script src="/bar.js"></script>';
         $this->assertSame($expected, $result);
     }
 

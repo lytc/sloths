@@ -54,7 +54,7 @@ class ServiceTest extends TestCase
     {
         return [
             [__NAMESPACE__ . '\FooService'],
-            [new FooService()],
+//            [new FooService()],
             [function() { return new FooService();}]
         ];
     }
@@ -67,17 +67,6 @@ class ServiceTest extends TestCase
         $application = new Application();
         $application->addService('foo', 'non_existing_service_class');
         $application->foo;
-    }
-
-    /**
-     * @dataProvider invalidServiceProvider
-     * @expectedException \InvalidArgumentException
-     */
-    public function testAddInvalidServiceShouldThrowAnException($service)
-    {
-        $application = new Application();
-        $application->addService('foo', $service);
-        $application->getService('foo');
     }
 
     public function invalidServiceProvider()
@@ -123,9 +112,26 @@ class ServiceTest extends TestCase
 
         return $result;
     }
+
+    public function testGetServiceShouldCallInitializeMethod()
+    {
+        $application = new Application();
+
+        $service = $this->mock(__NAMESPACE__ . '\FooService[initialize]');
+        $service->shouldReceive('initialize')->once()->with($application);
+
+        $application->addService('service', function() use ($service) {
+            return $service;
+        });
+
+        $this->assertSame($service, $application->service);
+        $this->assertSame($service, $application->service);
+    }
 }
 
 class FooService implements ServiceInterface
 {
     use ServiceTrait;
+
+    public function initialize() {}
 }

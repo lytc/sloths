@@ -18,8 +18,12 @@ class Url extends AbstractHelper
         return static::$defaultUrl;
     }
 
-    public function __invoke($url, array $params = null)
+    public function __invoke($url = null, array $params = [])
     {
+        if (!$url) {
+            return static::$defaultUrl;
+        }
+        
         if (is_array($url)) {
             $params = $url;
             $url = static::$defaultUrl;

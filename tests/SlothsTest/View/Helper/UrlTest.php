@@ -13,6 +13,7 @@ class UrlTest extends \PHPUnit_Framework_TestCase
         Url::setDefaultUrl('/foo');
         $view = new View();
 
+        $this->assertSame('/foo', $view->url());
         $this->assertSame('/foo?bar=baz', $view->url(['bar' => 'baz']));
     }
 
