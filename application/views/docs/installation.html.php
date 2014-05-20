@@ -2,18 +2,23 @@
     <h1>Installation</h1>
 </div>
 
-<h3>Composer</h3>
-<code>composer.json</code>
+<p><b>Step 1:</b> Install Composer</p>
+<p>Install <a href="https://getcomposer.org/download/">Composer</a> if you don't have Composer installed yet:</p>
+<br>
+
+<p><b>Step 2:</b> Create a <code>composer.json</code> file in your project root</p>
+<code>&lt;path-to-your-project&gt;/composer.json</code>
 <textarea class="code" data-type="javascript">
     {
       "require": {
-        "lytc/sloths": "dev-master"
+        "lytc/sloths": "~3.*"
       }
     }
 </textarea>
+<br>
 
-<h3>Clone from GitHub</h3>
-<code>$ git clone https://github.com/lytc/sloths.git</code>
+<p><b>Step 3:</b> Install via composer command <code>$ composer install</code></p>
 
-<h3>Download</h3>
-<code><a href="https://github.com/lytc/sloths/archive/master.zip">https://github.com/lytc/sloths/archive/master.zip</a></code>
+<br>
+
+<p><b>Step 4:</b> Setting up your <a href="/sloths/docs/application-structure.html">application structure</a> & <a href="/sloths/docs/server-configuration.html">config web server</a></p>

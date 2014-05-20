@@ -10,9 +10,12 @@
     ],
     "minimum-stability": "dev",
     "require": {
-        "lytc/sloths": "dev-develop"
+        "lytc/sloths": "3.*"
     },
     "autoload": {
-        "classmap": ["application"]
+        "classmap": ["application"],
+        "psr-4": {
+            "Application\\View\\Helper\\": "application/views/helpers"
+        }
     }
 }

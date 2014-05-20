@@ -2,8 +2,13 @@ $(function() {
     $('.code').each(function() {
         var $me = $(this)
         var type = $me.data('type')
+        var autoTrim = $me.data('auto-trim')
+
         var code = this.tagName == 'TEXTAREA'? $me.val() : $me.html()
-        code = code.replace(/ {4}/, '').replace(/\n {4}/g, '\n').replace(/\n$/, '')
+
+        if (autoTrim !== 0) {
+            code = code.replace(/ {4}/, '').replace(/\n {4}/g, '\n').replace(/\n$/, '')
+        }
 
         if (!type || type == 'php') {
             type = 'text/x-php'

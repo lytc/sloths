@@ -23,6 +23,8 @@
 \root-directory
     \application
         \config
+            application.php
+            view.php
         \models
         \routes
             index.php
@@ -47,6 +49,8 @@
 \root-directory
     \application
         \config
+            application.php
+            view.php
         \models
         \modules
             \content

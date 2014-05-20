@@ -24,6 +24,7 @@
                             <a href="/sloths/docs/view.html">View</a>
                             <ul>
                                 <li><a href="/sloths/docs/view/helpers.html">Helpers</a></li>
+                                <li><a href="/sloths/docs/view/custom-helpers.html">Custom Helpers</a></li>
                             </ul>
                         </li>
                     </ul>
@@ -60,13 +61,13 @@
 
                     </ul>
                 </li>
-                <li>
-                    <a href="#"><b>Development Tools</b></a>
-                    <ul>
-                        <li><a href="#">Console</a></li>
-                        <li><a href="#">Model Generator</a></li>
-                    </ul>
-                </li>
+<!--                <li>-->
+<!--                    <a href="#"><b>Development Tools</b></a>-->
+<!--                    <ul>-->
+<!--                        <li><a href="#">Console</a></li>-->
+<!--                        <li><a href="#">Model Generator</a></li>-->
+<!--                    </ul>-->
+<!--                </li>-->
             </ul>
         </div>
         <div class="col-md-9">

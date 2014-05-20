@@ -8,7 +8,6 @@
     server_name  my-application.dev;
     root   <path-to-application-root>/public;
     index  index.php index.html index.htm;
-    client_max_body_size 2M;
 
     location / {
         try_files $uri $uri/ /index.php$is_args$args;
@@ -24,3 +23,9 @@
 </textarea>
 
 <h2>Apache</h2>
+<code>.htaccess</code>
+<textarea class="code" data-type="htaccess">
+    RewriteEngine On
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [QSA,L]
+</textarea>
