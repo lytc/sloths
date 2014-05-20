@@ -54,15 +54,15 @@ class Application
      * @var array
      */
     protected $services = [
-        'exceptionHandler'  => 'Sloths\Application\Service\ExceptionHandler',
-        'config'            => 'Sloths\Application\Service\Config',
-        'request'           => 'Sloths\Application\Service\Request',
-        'response'          => 'Sloths\Application\Service\Response',
+        'exceptionHandler'  => 'Sloths\Exception\Handler',
+        'config'            => 'Sloths\Misc\Config',
+        'request'           => 'Sloths\Http\Request',
+        'response'          => 'Sloths\Http\Response',
         'view'              => 'Sloths\Application\Service\View',
         'router'            => 'Sloths\Application\Service\Router',
-        'session'           => 'Sloths\Application\Service\Session',
-        'flash'             => 'Sloths\Application\Service\FlashSession',
-        'messages'          => 'Sloths\Application\Service\Messages'
+        'session'           => 'Sloths\Session\Session',
+        'flash'             => 'Sloths\Session\Flash',
+        'messages'          => 'Sloths\Session\Messages'
     ];
 
     /**
