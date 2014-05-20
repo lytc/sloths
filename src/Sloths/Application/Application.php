@@ -36,6 +36,21 @@ class Application
     protected $requestBasePath;
 
     /**
+     * @var string
+     */
+    protected $env = 'production';
+
+    /**
+     * @var bool
+     */
+    protected $debug = false;
+
+    /**
+     * @var array
+     */
+    protected $configDirectories = [];
+
+    /**
      * @var array
      */
     protected $services = [
@@ -123,12 +138,49 @@ class Application
     }
 
     /**
+     * @param string $env
+     * @return $this
+     */
+    public function setEnv($env)
+    {
+        $this->env = $env;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getEnv()
+    {
+        return $this->env;
+    }
+
+    /**
+     * @param bool $state
+     * @return $this
+     */
+    public function setDebug($state)
+    {
+        $this->debug = $state;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getDebug()
+    {
+        return $this->debug;
+    }
+
+    /**
      * @param string $directory
      * @return $this
      */
     public function setDirectory($directory)
     {
         $this->applicationDirectory = $directory;
+
         return $this;
     }
 
@@ -144,6 +196,42 @@ class Application
         }
 
         return $this->applicationDirectory;
+    }
+
+    /**
+     * @param string $directory
+     * @return $this
+     */
+    public function addConfigDirectory($directory)
+    {
+        $this->configDirectories[$directory] = $directory;
+        return $this;
+    }
+
+    /**
+     * @param array $directories
+     * @return $this
+     */
+    public function addConfigDirectories(array $directories)
+    {
+        foreach ($directories as $directory) {
+            $this->addConfigDirectory($directory);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getConfigDirectories()
+    {
+        if (!$this->configDirectories) {
+            $defaultDirectory = $this->getDirectory() . '/config';
+            $this->configDirectories[$defaultDirectory] = $defaultDirectory;
+        }
+
+        return $this->configDirectories;
     }
 
     /**
@@ -229,16 +317,43 @@ class Application
             $service = new $service;
         } else if ($service instanceof \Closure) {
             $service = $service($this);
+        } else {
+            return $service;
         }
 
-        if (!$service instanceof ServiceInterface) {
-            throw new \InvalidArgumentException('Service class must be an instance of Sloths\Application\Service\ServiceInterface');
+        if ($service instanceof ServiceInterface) {
+            $service->setApplication($this);
         }
 
-        $service->setApplication($this);
+        if (method_exists($service, 'initialize')) {
+            $service->initialize($this);
+        }
+
+        # load config
+        foreach ($this->getConfigDirectories() as $directory) {
+            $configFile = $directory . '/' . $name . '.php';
+            $envConfigFile = $directory . '/' . $name . '.' . $this->getEnv() . '.php';
+
+            $this->applyServiceConfig($service, $configFile);
+            $this->applyServiceConfig($service, $envConfigFile);
+        }
 
         $this->services[$name] = $service;
         return $service;
+    }
+
+    protected function applyServiceConfig($service, $configFile)
+    {
+        if (!file_exists($configFile)) {
+            return;
+        }
+
+        $callback = function($configFile) {
+            require $configFile;
+        };
+
+        $callback = $callback->bindTo($service, $service);
+        $callback($configFile);
     }
 
     /**
@@ -444,15 +559,34 @@ class Application
     protected function before() {}
     protected function after() {}
 
+    protected function boot()
+    {
+        # load config
+        foreach ($this->getConfigDirectories() as $directory) {
+            $configFile = $directory . '/application.php';
+
+            if (file_exists($configFile)) {
+                require $configFile;
+            }
+
+            $envConfigFile = $directory . '/application.' . $this->getEnv() . '.php';
+
+            if (file_exists($envConfigFile)) {
+                require $envConfigFile;
+            }
+        }
+    }
+
     /**
-     * @param Request $request
-     * @return $this
+     * @return $this|void
      */
     public function run()
     {
         if (false === $this->before()) {
             return $this;
         }
+
+        $this->boot();
 
         if ($this->notify('run') === false) {
             return $this;

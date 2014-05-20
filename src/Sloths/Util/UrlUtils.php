@@ -6,6 +6,10 @@ class UrlUtils
 {
     public static function appendParams($url, array $params)
     {
+        if (!$params) {
+            return $url;
+        }
+
         $components = explode('?', $url, 2);
         $currentParams = [];
 

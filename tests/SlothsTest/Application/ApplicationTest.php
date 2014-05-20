@@ -7,11 +7,47 @@ use SlothsTest\TestCase;
 
 class ApplicationTest extends TestCase
 {
+    public function testEnvMethod()
+    {
+        $application = new Application();
+        $this->assertSame('production', $application->getEnv());
+
+        $application->setEnv('development');
+        $this->assertSame('development', $application->getEnv());
+    }
+
+    public function testDebugMethod()
+    {
+        $application = new Application();
+        $this->assertFalse($application->getDebug());
+
+        $application->setDebug(true);
+        $this->assertTrue($application->getDebug());
+    }
+
     public function testGetAndSetDirectory()
     {
         $application = new Application();
         $application->setDirectory('foo');
         $this->assertSame('foo', $application->getDirectory());
+    }
+
+    public function testConfigDirectoryMethod()
+    {
+        $application = new Application();
+
+        $applicationDirectory = $application->getDirectory();
+
+        $expected = [$applicationDirectory . '/config' => $applicationDirectory . '/config'];
+        $this->assertSame($expected, $application->getConfigDirectories());
+
+        $application->addConfigDirectory('foo');
+        $expected['foo'] = 'foo';
+        $this->assertSame($expected, $application->getConfigDirectories());
+
+        $application->addConfigDirectories(['bar' => 'bar']);
+        $expected['bar'] = 'bar';
+        $this->assertSame($expected, $application->getConfigDirectories());
     }
 
     public function testRedirectTo()

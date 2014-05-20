@@ -17,17 +17,17 @@ class ImageTagTest extends \PHPUnit_Framework_TestCase
     public function testWithBasePath()
     {
         $view = new View();
-        $this->assertSame('<img src="/assets/images/foo.jpg?__dc">', (String) $view->imageTag('foo.jpg'));
-        $this->assertSame('<img src="/foo.jpg?__dc">', (String) $view->imageTag('/foo.jpg'));
-        $this->assertSame('<img src="http://test.com/foo.jpg?__dc">', (String) $view->imageTag('http://test.com/foo.jpg'));
-        $this->assertSame('<img src="//test.com/foo.jpg?__dc">', (String) $view->imageTag('//test.com/foo.jpg'));
+        $this->assertSame('<img src="/assets/images/foo.jpg">', (String) $view->imageTag('foo.jpg'));
+        $this->assertSame('<img src="/foo.jpg">', (String) $view->imageTag('/foo.jpg'));
+        $this->assertSame('<img src="http://test.com/foo.jpg">', (String) $view->imageTag('http://test.com/foo.jpg'));
+        $this->assertSame('<img src="//test.com/foo.jpg">', (String) $view->imageTag('//test.com/foo.jpg'));
         $this->assertSame('<img src="//test.com/foo.jpg?foo">', (String) $view->imageTag('//test.com/foo.jpg')->setDisableCachingParam('foo'));
     }
 
     public function testMultipleSource()
     {
         $view = new View();
-        $expected = '<img src="/assets/images/foo.jpg?__dc"><img src="/assets/images/bar.jpg?__dc">';
+        $expected = '<img src="/assets/images/foo.jpg"><img src="/assets/images/bar.jpg">';
         $this->assertSame($expected, (String) $view->imageTag(['foo.jpg', 'bar.jpg']));
         $this->assertSame($expected, (String) $view->imageTag('foo.jpg', 'bar.jpg'));
     }
@@ -35,7 +35,7 @@ class ImageTagTest extends \PHPUnit_Framework_TestCase
     public function testAppendAndPrepend()
     {
         $view = new View();
-        $expected = '<img src="/assets/images/baz.jpg?__dc"><img src="/assets/images/foo.jpg?__dc"><img src="/assets/images/bar.jpg?__dc">';
+        $expected = '<img src="/assets/images/baz.jpg"><img src="/assets/images/foo.jpg"><img src="/assets/images/bar.jpg">';
         $imageTag = $view->imageTag('foo.jpg')->append('bar.jpg')->prepend('baz.jpg');
         $this->assertSame($expected, (String) $imageTag);
     }

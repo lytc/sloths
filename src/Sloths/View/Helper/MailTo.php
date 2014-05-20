@@ -9,9 +9,11 @@ class MailTo extends Tag
         is_array($addresses) || ($addresses = [$addresses]);
 
         $result = [];
-        foreach ($addresses as $name => $address) {
+        foreach ($addresses as $address => $name) {
             if (!$name) {
                 $result[] = $address;
+            } else if (is_numeric($address)) {
+                $result[] = $name;
             } else {
                 $result[] = sprintf('%s(%s)', $escape? $this->view->escapeUrl($name) : $name, $address);
             }
@@ -27,7 +29,7 @@ class MailTo extends Tag
             $name = null;
         }
 
-        is_array($addresses) || ($addresses = [$name => $addresses]);
+        is_array($addresses) || ($addresses = [$addresses => $name]);
 
         $href = 'mailto:' . $this->buildAddress($addresses, true);
 

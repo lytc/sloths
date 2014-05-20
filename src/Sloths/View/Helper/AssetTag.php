@@ -9,7 +9,7 @@ abstract class AssetTag extends Tag
     /**
      * @var string
      */
-    protected static $defaultBasePath = '';
+    protected static $defaultBasePath;
 
     /**
      * @var string
@@ -24,7 +24,7 @@ abstract class AssetTag extends Tag
     /**
      * @var string
      */
-    protected static $defaultDisableCachingParam = '__dc';
+    protected static $defaultDisableCachingParam;
 
     /**
      * @var string
@@ -44,7 +44,7 @@ abstract class AssetTag extends Tag
      */
     public static function getDefaultBasePath()
     {
-        return static::$defaultBasePath;
+        return static::$defaultBasePath?: self::$defaultBasePath;
     }
 
     /**
@@ -81,7 +81,7 @@ abstract class AssetTag extends Tag
      */
     public function getBasePath()
     {
-        return $this->basePath === null? static::$defaultBasePath : $this->basePath;
+        return $this->basePath?: $this->getDefaultBasePath();
     }
 
     /**
@@ -97,7 +97,7 @@ abstract class AssetTag extends Tag
      */
     public static function getDefaultDisableCachingParam()
     {
-        return static::$defaultDisableCachingParam;
+        return static::$defaultDisableCachingParam?: self::$defaultDisableCachingParam;
     }
 
     /**
@@ -115,7 +115,7 @@ abstract class AssetTag extends Tag
      */
     public function getDisableCachingParam()
     {
-        return $this->disableCachingParam === null? static::$defaultDisableCachingParam : $this->disableCachingParam;
+        return $this->disableCachingParam?: $this->getDefaultDisableCachingParam();
     }
 
     /**
