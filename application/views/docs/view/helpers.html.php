@@ -71,6 +71,7 @@ Commonly, I'm do that by this way:
 </div>
 <textarea class="code">
     \Sloths\View\Helper\AssetTag::setDefaultDisableCachingParam(time());
+    <?php \Sloths\View\Helper\AssetTag::setDefaultDisableCachingParam(time()); ?>
 </textarea>
 <br>
 

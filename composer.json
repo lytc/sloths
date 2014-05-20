@@ -8,9 +8,15 @@
             "email": "prtran@gmail.com"
         }
     ],
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "http://github.com/lytc/sloths.git"
+        }
+    ],
     "minimum-stability": "dev",
     "require": {
-        "lytc/sloths": "3.*"
+        "lytc/sloths": "dev-develop"
     },
     "autoload": {
         "classmap": ["application"],
