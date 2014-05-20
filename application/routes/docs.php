@@ -8,24 +8,28 @@ $this->get('/', function() {
 
 $this->get('/?:section?/:doc.html', function($section, $doc) {
     $view = $this->view;
-    $file = "docs/$section";
+    $file = $section? "docs/$section/$doc" : "docs/$doc";
 
-    $title = ucfirst($section);
+    $title = trim($doc);
+    $title = explode('-', $title);
+    $title = array_map('ucfirst', $title);
+    $title = implode(' ', $title);
 
-    if ($doc) {
-        $file .= "/$doc";
-        $title .= ' - ' . implode(' ', array_map('ucfirst', explode('-', $doc)));
+    if ($section) {
+        $section = trim($section);
+        $section = explode('-', $section);
+        $section = array_map('ucfirst', $section);
+
+        $title = implode(' ', $section) . ' - ' . $title;
     }
+
     $view->setFile($file);
 
     if (!file_exists($view->getFilePath())) {
         $this->notFound();
     }
 
-
-
-
     return $this->render([
-        '_title' => 'Lazy Framework - ' . trim($title)
+        '_title' => 'Sloth Framework - ' . $title
     ]);
 });

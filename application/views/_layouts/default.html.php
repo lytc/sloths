@@ -67,6 +67,7 @@
 <script src="/sloths/assets/vendor/codemirror/4.1/lib/util/formatting.js"></script>
 <script src="/sloths/assets/vendor/codemirror/4.1/addon/edit/matchbrackets.js"></script>
 <script src="/sloths/assets/vendor/codemirror/4.1/mode/htmlmixed/htmlmixed.js"></script>
+<script src="/sloths/assets/vendor/codemirror/4.1/mode/xml/xml.js"></script>
 <script src="/sloths/assets/vendor/codemirror/4.1/mode/javascript/javascript.js"></script>
 <script src="/sloths/assets/vendor/codemirror/4.1/mode/css/css.js"></script>
 <script src="/sloths/assets/vendor/codemirror/4.1/mode/clike/clike.js"></script>

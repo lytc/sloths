@@ -3,13 +3,13 @@
 <head>
     <meta charset="utf-8">
     <title>
-        Sloth Framework - System Requirements    </title>
+        Sloth Framework - View - Helpers    </title>
     <meta name="keywords" content="sloths, php, framework, orm, routing, mvc, web">
     <meta name="description" content="Sloths - The small PHP framework for lazy man.">
     <link href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
     <link href="/sloths/assets/vendor/codemirror/4.1/lib/codemirror.css" rel="stylesheet">
     <link href="/sloths/assets/vendor/codemirror/4.1/theme/mdn-like.css" rel="stylesheet">
-    <link href="/sloths/assets/stylesheets/application.css" rel="stylesheet">    </head>
+    <link href="/sloths/assets/stylesheets/application.css?1400560022" rel="stylesheet">    </head>
 <body>
 <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
     <div class="container">
@@ -102,14 +102,110 @@
         </div>
         <div class="col-md-9">
             <div class="page-header">
-    <h1>System Requirements</h1>
+    <h1>View Helpers</h1>
 </div>
 
-<ul>
-    <li>PHP >= 5.4.0</li>
-    <li><a href="https://github.com/doctrine/inflector">Doctrine Inflector</a> <small><em class="text-muted">Required only if you use Db Model</em></small></li>
-    <li><a href="https://github.com/zendframework/zf2/tree/master/library/Zend/Code">Zend Code</a> <small><em class="text-muted">Required only if you use Db Model Generator</em></small></li>
-</ul>        </div>
+<p><b>Sloths</b> shipping with a lot of builtin useful helpers</p>
+
+<h4>HTML Assets Tag Helpers</h4>
+<code>views/my-view-script.html.php</code>
+<textarea class="code" data-type="application/x-httpd-php">
+    &lt;?= $this->scriptTag('/assets/javascripts/application.js') ?&gt;
+    &lt;?= $this->stylesheetTag('/assets/stylesheets/application.css') ?&gt;
+    &lt;?= $this->imageTag('/assets/images/pic.jpg') ?&gt;
+</textarea>
+<br>
+The output is:
+<textarea class="code">
+    <script src="/assets/javascripts/application.js"></script>
+    <link href="/assets/stylesheets/application.css" rel="stylesheet">
+    <img src="/assets/images/pic.jpg"></textarea>
+<br>
+
+<h4>Disable Caching Assets Tag</h4>
+<p>As you know, the assets tag might caching by the browser.
+    For example, sometime you changes the javascript code,
+    but you might need press <code>Ctrl+F5</code> on Windows or <code>Cmd+F5</code> on Mac to tell browser update your script code.
+    Is is bad for end user, they don't know you was changes the script code.
+    Solved that problem is very simple, just append the assert script source url with a increment parameter version number whenever you change the script code.
+</p>
+
+Commonly, I'm do that by this way:
+<code>application/config/view.php</code>
+<textarea class="code">
+    \Sloths\View\Helper\AssetTag::setDefaultDisableCachingParam('v1'); // for all asset tags
+    \Sloths\View\Helper\ScriptTag::setDefaultDisableCachingParam('v1'); // for all javascript tags
+    \Sloths\View\Helper\StylesheetTag::setDefaultDisableCachingParam('v1'); // for all stylesheet tags
+    \Sloths\View\Helper\ImageTag::setDefaultDisableCachingParam('v1'); // for all images tags
+</textarea>
+<p>Changes <code>v1</code> to <code>v2</code>, <code>v3</code>,.. whenever you change the script code.</p>
+<p>And now you call asset tag helper like above, the output is:</p>
+<textarea class="code">
+    <script src="/assets/javascripts/application.js?v1"></script>
+    <link href="/assets/stylesheets/application.css?v1" rel="stylesheet">
+    <img src="/assets/images/pic.jpg?v1"></textarea>
+<p>Or if you want to directive config per assert by calling: <code>setDisableCachingParam('v1')</code></p>
+<textarea class="code">
+    &lt;?= $this->scriptTag('/assets/javascripts/application.js')->setDisableCachingParam('v2') ?&gt;
+    &lt;?= $this->stylesheetTag('/assets/stylesheets/application.css')->setDisableCachingParam('v3') ?&gt;
+    &lt;?= $this->imageTag('/assets/images/pic.jpg')->setDisableCachingParam('v4') ?&gt;
+</textarea>
+<br>
+
+<p>The output now is:</p>
+<textarea class="code">
+    <script src="/assets/javascripts/application.js?v2"></script>
+    <link href="/assets/stylesheets/application.css?v3" rel="stylesheet">
+    <img src="/assets/images/pic.jpg?v4"></textarea>
+<br>
+
+<div class="alert alert-danger">
+    <p>For development mode, I'm recommend you set the disable caching param value is <code>time()</code></p>
+</div>
+<textarea class="code">
+    \Sloths\View\Helper\AssetTag::setDefaultDisableCachingParam(time());
+</textarea>
+<textarea class="code">
+    </textarea>
+<br>
+
+<p>The output look like:</p>
+<textarea class="code">
+    <script src="/assets/javascripts/application.js?1400560022"></script>
+    <link href="/assets/stylesheets/application.css?1400560022" rel="stylesheet">
+    <img src="/assets/images/pic.jpg?1400560022"></textarea>
+
+<h4>Escape Helper</h4>
+<code>views/my-view-script.php</code>
+<textarea class="code" data-type="application/x-httpd-php">
+    &lt;?= $this->escape('<div>'); ?&gt;
+</textarea>
+<p>output: <code>&amp;lt;div&amp;gt;</code></p>
+
+<h4>FormatDateTime & FormatDate Helper</h4>
+<textarea class="code">
+    &lt;?= $this->formatDateTime(2014-05-20 04:27:02) ?&gt;
+    // Output: May 20, 2014 04:27:02 AM
+
+    &lt;?= $this->formatDate(2014-05-20) ?&gt;
+    // Output: May 20, 2014
+
+    &lt;?php \Sloths\View\Helper\FormatDateTime::setDefaultOutputFormat('c') ?&gt;
+    &lt;?= $this->formatDateTime(date('Y-m-d H:i:s')) ?&gt;
+    // Output: 2014-05-20T04:27:02+00:00
+
+    &lt;?= $this->formatDateTime(date('Y-m-d H:i:s'))->setOutputFormat('r') ?&gt;
+    // Output: Tue, 20 May 2014 04:27:02 +0000</textarea>
+
+<h4>MailTo Helper</h4>
+
+<h4>Partial & PartialLoop Helper</h4>
+
+<h4>Capture Helper</h4>
+
+<h4>Url Helper</h4>
+
+<h4>Paginate Helper</h4>        </div>
     </div>
 </div>
 
@@ -176,7 +272,7 @@
 <script src="/sloths/assets/vendor/codemirror/4.1/mode/php/php.js"></script>
 <script src="/sloths/assets/vendor/codemirror/4.1/mode/nginx/nginx.js"></script>
 <script src="/sloths/assets/vendor/codemirror/4.1/mode/sql/sql.js"></script>
-<script src="/sloths/assets/javascripts/application.js"></script><script>
+<script src="/sloths/assets/javascripts/application.js?1400560022"></script><script>
     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
         (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
         m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)

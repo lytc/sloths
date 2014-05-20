@@ -3,13 +3,13 @@
 <head>
     <meta charset="utf-8">
     <title>
-        Lazy Framework - - Request    </title>
+        Sloth Framework - Request    </title>
     <meta name="keywords" content="sloths, php, framework, orm, routing, mvc, web">
     <meta name="description" content="Sloths - The small PHP framework for lazy man.">
     <link href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
     <link href="/sloths/assets/vendor/codemirror/4.1/lib/codemirror.css" rel="stylesheet">
     <link href="/sloths/assets/vendor/codemirror/4.1/theme/mdn-like.css" rel="stylesheet">
-    <link href="/sloths/assets/stylesheets/application.css?__dc" rel="stylesheet">    </head>
+    <link href="/sloths/assets/stylesheets/application.css" rel="stylesheet">    </head>
 <body>
 <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
     <div class="container">
@@ -51,7 +51,12 @@
                         <li><a href="/sloths/docs/routing.html">Routing</a></li>
                         <li><a href="/sloths/docs/request.html">Request</a></li>
                         <li><a href="/sloths/docs/response.html">Response</a></li>
-                        <li><a href="#">View</a></li>
+                        <li>
+                            <a href="/sloths/docs/view.html">View</a>
+                            <ul>
+                                <li><a href="/sloths/docs/view/helpers.html">Helpers</a></li>
+                            </ul>
+                        </li>
                     </ul>
                 </li>
                 <li>
@@ -195,13 +200,14 @@
 <script src="/sloths/assets/vendor/codemirror/4.1/lib/util/formatting.js"></script>
 <script src="/sloths/assets/vendor/codemirror/4.1/addon/edit/matchbrackets.js"></script>
 <script src="/sloths/assets/vendor/codemirror/4.1/mode/htmlmixed/htmlmixed.js"></script>
+<script src="/sloths/assets/vendor/codemirror/4.1/mode/xml/xml.js"></script>
 <script src="/sloths/assets/vendor/codemirror/4.1/mode/javascript/javascript.js"></script>
 <script src="/sloths/assets/vendor/codemirror/4.1/mode/css/css.js"></script>
 <script src="/sloths/assets/vendor/codemirror/4.1/mode/clike/clike.js"></script>
 <script src="/sloths/assets/vendor/codemirror/4.1/mode/php/php.js"></script>
 <script src="/sloths/assets/vendor/codemirror/4.1/mode/nginx/nginx.js"></script>
 <script src="/sloths/assets/vendor/codemirror/4.1/mode/sql/sql.js"></script>
-<script src="/sloths/assets/javascripts/application.js?__dc"></script><script>
+<script src="/sloths/assets/javascripts/application.js"></script><script>
     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
         (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
         m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)

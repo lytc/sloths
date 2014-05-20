@@ -20,7 +20,12 @@
                         <li><a href="/sloths/docs/routing.html">Routing</a></li>
                         <li><a href="/sloths/docs/request.html">Request</a></li>
                         <li><a href="/sloths/docs/response.html">Response</a></li>
-                        <li><a href="#">View</a></li>
+                        <li>
+                            <a href="/sloths/docs/view.html">View</a>
+                            <ul>
+                                <li><a href="/sloths/docs/view/helpers.html">Helpers</a></li>
+                            </ul>
+                        </li>
                     </ul>
                 </li>
                 <li>

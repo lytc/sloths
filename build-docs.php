@@ -11,6 +11,8 @@ $pages = [
     'docs/routing',
     'docs/request',
     'docs/response',
+    'docs/view',
+    'docs/view/helpers',
 
     'docs/databases/connection',
     'docs/databases/query-builder',
