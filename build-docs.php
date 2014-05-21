@@ -41,7 +41,7 @@ error_reporting(E_ERROR);
 foreach ($pages as $page) {
     echo "# Building: $page.html\n";
 
-    $request = new \Sloths\Application\Service\Request([
+    $request = new \Sloths\Http\Request([
         '_SERVER' => ['REQUEST_METHOD' => 'GET', 'PATH_INFO' => "/$page.html"]
     ]);
 
