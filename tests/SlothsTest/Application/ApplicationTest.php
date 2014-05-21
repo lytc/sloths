@@ -2,7 +2,7 @@
 
 namespace SlothsTest\Application;
 use Sloths\Application\Application;
-use Sloths\Application\Service\Request;
+use Sloths\Http\Request;
 use SlothsTest\TestCase;
 
 class ApplicationTest extends TestCase
@@ -52,7 +52,7 @@ class ApplicationTest extends TestCase
 
     public function testRedirectTo()
     {
-        $response = $this->mock('Sloths\Application\Service\Response[redirect,send]');
+        $response = $this->mock('Sloths\Http\Response[redirect,send]');
         $response->shouldReceive('redirect')->once()->with('foo');
         $response->shouldReceive('send')->once();
 
@@ -64,7 +64,7 @@ class ApplicationTest extends TestCase
 
     public function testRedirectBack()
     {
-        $response = $this->mock('\Sloths\Application\Service\Response[redirect,send]');
+        $response = $this->mock('\Sloths\Http\Response[redirect,send]');
         $response->shouldReceive('redirect')->once()->with('foo');
         $response->shouldReceive('send')->once();
 
@@ -82,7 +82,7 @@ class ApplicationTest extends TestCase
 
     public function testRun()
     {
-        $response = $this->mock('Sloths\Application\Service\Response[setBody,send]');
+        $response = $this->mock('Sloths\Http\Response[setBody,send]');
         $response->shouldReceive('setBody')->once()->with('foo')->andReturnSelf();
         $response->shouldReceive('send')->once();
 
@@ -103,7 +103,7 @@ class ApplicationTest extends TestCase
 
     public function testWithRequestBasePath()
     {
-        $response = $this->mock('Sloths\Application\Service\Response[setBody,send]');
+        $response = $this->mock('Sloths\Http\Response[setBody,send]');
         $response->shouldReceive('setBody')->once()->with('foo')->andReturnSelf();
         $response->shouldReceive('send')->once();
 
@@ -172,7 +172,7 @@ class ApplicationTest extends TestCase
         $application->setService('router', $router);
 
 
-        $response = $this->mock('Sloths\Application\Service\Response[setBody,send]');
+        $response = $this->mock('Sloths\Http\Response[setBody,send]');
         $response->shouldReceive('setBody')->andReturnSelf();
         $response->shouldReceive('send');
         $application->setService('response', $response);
