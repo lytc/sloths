@@ -170,9 +170,9 @@ Commonly, I'm do that by this way:
 
 <p>The output look like:</p>
 <textarea class="code">
-    <script src="/assets/javascripts/application.js?1400636579"></script>
-    <link href="/assets/stylesheets/application.css?1400636579" rel="stylesheet">
-    <img src="/assets/images/pic.jpg?1400636579"></textarea>
+    <script src="/assets/javascripts/application.js?1400636934"></script>
+    <link href="/assets/stylesheets/application.css?1400636934" rel="stylesheet">
+    <img src="/assets/images/pic.jpg?1400636934"></textarea>
 
 <h4>Escape Helper</h4>
 <code>views/my-view-script.php</code>
@@ -183,18 +183,18 @@ Commonly, I'm do that by this way:
 
 <h4>FormatDateTime & FormatDate Helper</h4>
 <textarea class="code">
-    &lt;?= $this->formatDateTime('2014-05-21 01:42:59') ?&gt;
-    // Output: May 21, 2014 01:42:59 AM
+    &lt;?= $this->formatDateTime('2014-05-21 01:48:54') ?&gt;
+    // Output: May 21, 2014 01:48:54 AM
 
     &lt;?= $this->formatDate('2014-05-21') ?&gt;
     // Output: May 21, 2014
 
     &lt;?php \Sloths\View\Helper\FormatDateTime::setDefaultOutputFormat('c') ?&gt;
     &lt;?= $this->formatDateTime(date('Y-m-d H:i:s')) ?&gt;
-    // Output: 2014-05-21T01:42:59+00:00
+    // Output: 2014-05-21T01:48:54+00:00
 
     &lt;?= $this->formatDateTime(date('Y-m-d H:i:s'))->setOutputFormat('r') ?&gt;
-    // Output: Wed, 21 May 2014 01:42:59 +0000</textarea>
+    // Output: Wed, 21 May 2014 01:48:54 +0000</textarea>
 
 <h4>MailTo Helper</h4>
 <textarea class="code">

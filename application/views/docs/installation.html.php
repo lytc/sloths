@@ -11,7 +11,7 @@
 <textarea class="code" data-type="javascript">
     {
       "require": {
-        "lytc/sloths": "~3.*"
+        "lytc/sloths": "3.*"
       }
     }
 </textarea>
