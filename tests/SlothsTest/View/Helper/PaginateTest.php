@@ -3,11 +3,55 @@
 namespace SlothsTest\View\Helper;
 
 use Sloths\Pagination\Paginator;
+use Sloths\View\Helper\Paginate;
 use Sloths\View\View;
 use Sloths\View\Helper\Url;
 
+/**
+ * @covers \Sloths\View\Helper\Paginate
+ */
 class PaginateTest extends \PHPUnit_Framework_TestCase
 {
+    public function testGetAndSetDefaultTemplate()
+    {
+        $defaultTemplate = Paginate::getDefaultTemplate();
+
+        Paginate::setDefaultTemplate('foo');
+        $this->assertSame('foo', Paginate::getDefaultTemplate());
+
+        Paginate::setDefaultTemplate($defaultTemplate);
+    }
+
+    public function testUrl()
+    {
+        $view = $this->getMock('Sloths\View\View', ['url']);
+        $view->expects($this->at(0))->method('url')->with(['page' => 1]);
+        $view->expects($this->at(1))->method('url')->with('foo', ['page' => 2]);
+        $paginate = new Paginate($view);
+        $paginate->url(1);
+
+        $paginate->setUrl('foo');
+        $paginate->url(2);
+    }
+
+    public function testGetAndSetTemplate()
+    {
+        $paginate = new Paginate(new View());
+        $this->assertSame($paginate::getDefaultTemplate(), $paginate->getTemplate());
+
+        $paginate->setTemplate('foo');
+        $this->assertSame('foo', $paginate->getTemplate());
+    }
+
+    public function testPageParamName()
+    {
+        $paginate = new Paginate(new View());
+        $this->assertSame('page', $paginate->getPageParamName());
+
+        $paginate->setPageParamName('foo');
+        $this->assertSame('foo', $paginate->getPageParamName());
+    }
+
     public function testWithDefaultTemplate()
     {
         $minify = function($html) {

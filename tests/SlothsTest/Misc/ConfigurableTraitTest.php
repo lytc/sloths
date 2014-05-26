@@ -6,6 +6,9 @@ use Sloths\Misc\Config;
 use Sloths\Misc\ConfigurableTrait;
 use SlothsTest\TestCase;
 
+/**
+ * @covers \Sloths\Misc\ConfigurableTrait
+ */
 class ConfigurableTraitTest extends TestCase
 {
     public function test()

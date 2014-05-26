@@ -4,6 +4,9 @@ namespace SlothsTest\Http;
 
 use Sloths\Http\Request;
 
+/**
+ * @covers \Sloths\Http\Request<extended>
+ */
 class RequestTest extends \PHPUnit_Framework_TestCase
 {
     public function testAutoMapSuperGlobals()
@@ -480,5 +483,14 @@ class RequestTest extends \PHPUnit_Framework_TestCase
         $this->assertInstanceOf('Sloths\Misc\ArrayContainer', $headers);
         $this->assertSame($headers, $request->headers());
         $this->assertSame(['foo' => 'foo'], $headers->toArray());
+    }
+
+    /**
+     * @expectedException \InvalidArgumentException
+     */
+    public function testGetUndefinedPropertyShouldThrowAnException()
+    {
+        $request = new Request();
+        $request->foo;
     }
 }

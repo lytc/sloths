@@ -4,6 +4,9 @@ namespace SlothsTest\View\Helper;
 
 use Sloths\View\View;
 
+/**
+ * @covers \Sloths\View\Helper\TextAreaTag<extended>
+ */
 class TextAreaTagTest extends \PHPUnit_Framework_TestCase
 {
     public function test()

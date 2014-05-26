@@ -6,6 +6,9 @@ use Sloths\Routing\Router;
 use SlothsTest\TestCase;
 use Sloths\Application\Application;
 
+/**
+ * @covers \Sloths\Routing\Router
+ */
 class RouterTest extends TestCase
 {
     public function testGetAndSetDirectory()
@@ -15,13 +18,15 @@ class RouterTest extends TestCase
         $this->assertSame('foo', $router->getDirectory());
     }
 
-    public function testGetAndSetContext()
+    public function testContext()
     {
-        $context = new \stdClass();
-        $router = new Router();
-        $router->setContext($context);
+        $application = new Application();
+        $application->setDirectory(__DIR__ . '/fixtures');
+        $router = $application->router;
+        $this->assertSame($application, $router->getContext());
 
-        $this->assertSame($context, $router->getContext());
+        $route = $router->matches('GET', '/context-test');
+        $this->assertSame($application, call_user_func($route->getCallback()));
     }
 
     public function testMap()
@@ -61,26 +66,50 @@ class RouterTest extends TestCase
 
     }
 
-    public function test()
+    /**
+     * @dataProvider dataProvider
+     */
+    public function testMethods($method, $requestMethod, $requestPath)
     {
         $callback = function() {};
         $router = $this->getMock('Sloths\Routing\Router', ['map']);
-        $router->expects($this->at(0))->method('map')->with($router::HEAD, '/head', $callback);
-        $router->expects($this->at(1))->method('map')->with($router::GET, '/get', $callback);
-        $router->expects($this->at(2))->method('map')->with($router::POST, '/post', $callback);
-        $router->expects($this->at(3))->method('map')->with($router::PUT, '/put', $callback);
-        $router->expects($this->at(4))->method('map')->with($router::PATCH, '/patch', $callback);
-        $router->expects($this->at(5))->method('map')->with($router::DELETE, '/delete', $callback);
-        $router->expects($this->at(6))->method('map')->with($router::OPTIONS, '/options', $callback);
-        $router->expects($this->at(7))->method('map')->with($router::TRACE, '/trace', $callback);
+        $router->expects($this->once())->method('map')->with($requestMethod, $requestPath, $callback);
 
-        $router->head('/head', $callback);
-        $router->get('/get', $callback);
-        $router->post('/post', $callback);
-        $router->put('/put', $callback);
-        $router->patch('/patch', $callback);
-        $router->delete('/delete', $callback);
-        $router->options('/options', $callback);
-        $router->trace('/trace', $callback);
+        $router->{$method}($requestPath, $callback);
+    }
+
+    public function dataProvider()
+    {
+        return [
+            ['head', 'HEAD', '/head'],
+            ['get', 'GET', '/get'],
+            ['post', 'POST', '/post'],
+            ['put', 'PUT', '/put'],
+            ['patch', 'PATCH', '/patch'],
+            ['delete', 'DELETE', '/delete'],
+            ['options', 'OPTIONS', '/options'],
+            ['trace', 'TRACE', '/trace'],
+        ];
+    }
+
+    public function testDefaultRouteFile()
+    {
+        $router = new Router();
+        $router->setDirectory(__DIR__ . '/fixtures/routes');
+        $this->assertSame('index.php', $router->getDefaultRouteFile());
+        $route = $router->matches('GET', '/');
+        $this->assertSame(1, call_user_func($route->getCallback()));
+
+        $router = new Router();
+        $router->setDirectory(__DIR__ . '/fixtures/routes');
+        $router->setDefaultRouteFile('default-routes.php');
+        $this->assertSame('default-routes.php', $router->getDefaultRouteFile());
+        $route =$router->matches('GET', '/');
+        $this->assertSame(2, call_user_func($route->getCallback()));
+
+        $router = new Router();
+        $router->setDefaultRouteFile(__DIR__ . '/fixtures/routes/default-routes.php');
+        $route =$router->matches('GET', '/');
+        $this->assertSame(2, call_user_func($route->getCallback()));
     }
 }

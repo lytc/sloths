@@ -4,6 +4,9 @@ namespace SlothsTest\Routing;
 
 use Sloths\Routing\Route;
 
+/**
+ * @covers \Sloths\Routing\Route
+ */
 class RouteTest extends \PHPUnit_Framework_TestCase
 {
     public function getMethodMethod()
@@ -66,6 +69,8 @@ class RouteTest extends \PHPUnit_Framework_TestCase
     {
         $route = new Route('GET', '/:foo?/?:bar?');
         $this->assertSame(['foo' => 'hello', 'bar' => 'world'], $route->match('GET', '/hello/world'));
+        $this->assertSame(['foo' => 'hello', 'bar' => 'world'], $route->getParams());
+
         $this->assertSame(['foo' => 'hello', 'bar' => null], $route->match('GET', '/hello'));
 
         $route = new Route('GET', '/?:foo?/:bar.html');

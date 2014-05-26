@@ -8,6 +8,10 @@ use Sloths\Application\Service\ServiceTrait;
 use SlothsTest\TestCase;
 
 @session_start();
+
+/**
+ * @covers \Sloths\Application\Application
+ */
 class ServiceTest extends TestCase
 {
     /**
@@ -83,8 +87,8 @@ class ServiceTest extends TestCase
      */
     public function testAddDuplicateServiceShouldThrowAnException()
     {
-        $application = $this->mock('Sloths\Application\Application[hasService]');
-        $application->shouldReceive('hasService')->once()->with('foo')->andReturn(true);
+        $application = $this->getMock('Sloths\Application\Application', ['hasService']);
+        $application->expects($this->once())->method('hasService')->with('foo')->willReturn(true);
 
         $application->addService('foo', 'foo');
     }
@@ -117,8 +121,8 @@ class ServiceTest extends TestCase
     {
         $application = new Application();
 
-        $service = $this->mock(__NAMESPACE__ . '\FooService[initialize]');
-        $service->shouldReceive('initialize')->once()->with($application);
+        $service = $this->getMock(__NAMESPACE__ . '\FooService', ['initialize']);
+        $service->expects($this->once())->method('initialize')->with($application);
 
         $application->addService('service', function() use ($service) {
             return $service;

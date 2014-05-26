@@ -2,7 +2,7 @@
 
 namespace Sloths\Session;
 
-class Flash implements \IteratorAggregate, \ArrayAccess
+class Flash implements \IteratorAggregate, \ArrayAccess, \Countable
 {
     /**
      * @var array
@@ -31,9 +31,25 @@ class Flash implements \IteratorAggregate, \ArrayAccess
     /**
      * @return array
      */
+    public function getCurrentData()
+    {
+        return $this->currentData;
+    }
+
+    /**
+     * @return array
+     */
     public function getNextData()
     {
         return $this->nextData;
+    }
+
+    /**
+     * @return int
+     */
+    public function count()
+    {
+        return count($this->currentData);
     }
 
     /**

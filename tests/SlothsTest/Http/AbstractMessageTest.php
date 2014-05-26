@@ -5,6 +5,9 @@ namespace SlothsTest\Http;
 use Sloths\Http\AbstractMessage;
 use SlothsTest\TestCase;
 
+/**
+ * @covers \Sloths\Http\AbstractMessage
+ */
 class AbstractMessageTest extends TestCase
 {
     public function testSetAndGetHeader()

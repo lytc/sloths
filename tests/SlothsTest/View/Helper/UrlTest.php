@@ -6,6 +6,9 @@ use Sloths\Http\Request;
 use Sloths\View\Helper\Url;
 use Sloths\View\View;
 
+/**
+ * @covers \Sloths\View\Helper\Url
+ */
 class UrlTest extends \PHPUnit_Framework_TestCase
 {
     public function testWithDefaultUrl()

@@ -5,13 +5,11 @@ namespace SlothsTest\Db\Model;
 use SlothsTest\Db\Model\Stub\User;
 use SlothsTest\Db\Model\Stub\FooBar;
 
+/**
+ * @covers \Sloths\Db\Model\Model
+ */
 class ModelTest extends TestCase
 {
-    public function setUp()
-    {
-        User::setConnection($this->mockConnection());
-    }
-
     public function testGetPrimaryKey()
     {
         $this->assertSame('id', User::getPrimaryKey());
@@ -64,11 +62,11 @@ class ModelTest extends TestCase
 
     public function testGetNonLoadedColumn()
     {
-        $stmt = $this->mock('PDOStatement');
-        $stmt->shouldReceive('fetchColumn')->once()->with(0)->andReturn('profile');
+        $stmt = $this->getMock('PDOStatement', ['fetchColumn']);
+        $stmt->expects($this->once())->method('fetchColumn')->with(0)->willReturn('profile');
 
-        $pdo = $this->mockPdo();
-        $pdo->shouldReceive('query')->once()->with("SELECT users.profile FROM users WHERE (users.id = 1)")->andReturn($stmt);
+        $pdo = $this->mockPdo('query');
+        $pdo->expects($this->once())->method('query')->with("SELECT users.profile FROM users WHERE (users.id = 1)")->willReturn($stmt);
         $connection = $this->createConnection($pdo);
 
         User::setConnection($connection);
@@ -84,10 +82,11 @@ class ModelTest extends TestCase
 
     public function testMethodFirst()
     {
-        $connection = User::getConnection();
-        $connection->shouldReceive('select')->once()->andReturn(['id' => 1]);
-        $connection->shouldReceive('select')->once()->andReturn(null);
+        $connection = $this->mockConnection('select');
+        $connection->expects($this->at(0))->method('select')->willReturn(['id' => 1]);
+        $connection->expects($this->at(1))->method('select')->willReturn(null);
 
+        User::setConnection($connection);
         $user = User::first(1);
         $this->assertInstanceOf('SlothsTest\Db\Model\Stub\User', $user);
 
@@ -123,9 +122,9 @@ class ModelTest extends TestCase
 
     public function testMethodSaveInsertShouldUpdateExistingState()
     {
-        $pdo = $this->mockPdo();
-        $pdo->shouldReceive('exec')->once()->with("INSERT INTO users (name) VALUES ('foo')")->andReturn(true);
-        $pdo->shouldReceive('lastInsertId')->once()->andReturn(1);
+        $pdo = $this->mockPdo('exec', 'lastInsertId');
+        $pdo->expects($this->once())->method('exec')->with("INSERT INTO users (name) VALUES ('foo')")->willReturn(true);
+        $pdo->expects($this->once())->method('lastInsertId')->willReturn(1);
         $connection = $this->createConnection($pdo);
         User::setConnection($connection);
 
@@ -137,8 +136,8 @@ class ModelTest extends TestCase
 
     public function testMethodSaveUpdate()
     {
-        $pdo = $this->mockPdo();
-        $pdo->shouldReceive('exec')->once()->with("UPDATE users SET name = 'foo' WHERE (id = 1)");
+        $pdo = $this->mockPdo('exec');
+        $pdo->expects($this->once())->method('exec')->with("UPDATE users SET name = 'foo' WHERE (id = 1)");
         $connection = $this->createConnection($pdo);
         User::setConnection($connection);
 
@@ -166,8 +165,8 @@ class ModelTest extends TestCase
 
     public function testMethodDeleteShouldExecuteSqlDelete()
     {
-        $pdo = $this->mockPdo();
-        $pdo->shouldReceive('exec')->once()->with("DELETE FROM users WHERE (id = 1)");
+        $pdo = $this->mockPdo('exec');
+        $pdo->expects($this->once())->method('exec')->with("DELETE FROM users WHERE (id = 1)");
         $connection = $this->createConnection($pdo);
         User::setConnection($connection);
 
@@ -216,5 +215,14 @@ class ModelTest extends TestCase
         $user = new User($data);
 
         $this->assertSame(['id' => 1], $user->toArray());
+    }
+
+    /**
+     * @expectedException \InvalidArgumentException
+     */
+    public function testCallUndefinedRelationShouldThrowAnException()
+    {
+        $user = new User(['id' => 1]);
+        $user->Foo();
     }
 }

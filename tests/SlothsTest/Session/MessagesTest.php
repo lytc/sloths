@@ -6,6 +6,9 @@ use Sloths\Session\Flash;
 use Sloths\Session\Messages;
 use SlothsTest\TestCase;
 
+/**
+ * @covers \Sloths\Session\Messages
+ */
 class MessagesTest extends TestCase
 {
     public function testMethodAdd()
@@ -25,15 +28,38 @@ class MessagesTest extends TestCase
 
     public function test()
     {
-        $messages = $this->getMock('Sloths\Session\Messages', ['add']);
-        $messages->expects($this->at(0))->method('add')->with($messages::SUCCESS, 'success');
-        $messages->expects($this->at(1))->method('add')->with($messages::INFO, 'info');
-        $messages->expects($this->at(2))->method('add')->with($messages::WARNING, 'warning');
-        $messages->expects($this->at(3))->method('add')->with($messages::ERROR, 'error');
+        $messages = new Messages();
 
         $messages->success('success');
         $messages->info('info');
         $messages->warning('warning');
         $messages->error('error');
+
+        $expected = [
+            ['type' => $messages::SUCCESS, 'message' => 'success'],
+            ['type' => $messages::INFO, 'message' => 'info'],
+            ['type' => $messages::WARNING, 'message' => 'warning'],
+            ['type' => $messages::ERROR, 'message' => 'error'],
+        ];
+
+        $messages->now();
+        $data = [];
+        foreach ($messages as $message) {
+            $data[] = $message;
+        }
+
+        $this->assertSame($expected, $data);
+    }
+
+    public function testNowKeepAndClear()
+    {
+        $flash = $this->getMock('Sloths\Session\Flash', ['now', 'keep', 'clear']);
+        $flash->expects($this->once())->method('now');
+        $flash->expects($this->once())->method('keep');
+        $flash->expects($this->once())->method('clear');
+
+        $messages = new Messages($flash);
+        $this->assertSame($flash, $messages->getFlashSession());
+        $messages->now()->keep()->clear();
     }
 }

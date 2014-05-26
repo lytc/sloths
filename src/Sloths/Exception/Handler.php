@@ -37,17 +37,20 @@ class Handler
     }
 
     /**
-     * @param bool $handleError
+     * @param int $errorLevel
      */
-    public function __construct($handleError = true)
+    public function __construct($errorLevel = E_ALL)
     {
-        if ($handleError) {
-            set_error_handler(function($level, $message, $file, $line) {
-                throw new \ErrorException($message, 0, $level, $file, $line);
-            });
+        if ($errorLevel) {
+            set_error_handler([$this, 'errorHandler'], $errorLevel);
         }
 
         $this->register();
+    }
+
+    public function errorHandler($level, $message, $file, $line)
+    {
+        throw new \ErrorException($message, 0, $level, $file, $line);
     }
 
     /**

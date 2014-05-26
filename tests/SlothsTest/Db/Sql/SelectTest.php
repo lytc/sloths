@@ -3,6 +3,9 @@
 namespace SlothsTest\Db\Sql;
 use Sloths\Db\Sql\Select;
 
+/**
+ * @covers \Sloths\Db\Sql\Select
+ */
 class SelectTest extends \PHPUnit_Framework_TestCase
 {
     public function testSimple()
@@ -42,6 +45,14 @@ class SelectTest extends \PHPUnit_Framework_TestCase
             ->select(['f' => 'foo', 'b' => $sub]);
 
         $this->assertSame("SELECT foo f, (SELECT id FROM bar WHERE (bar.foo_id = foo.id)) b FROM foo", $select->toString());
+    }
+
+    public function testSelectWithPrefix()
+    {
+        $select = new Select('foo f');
+        $select->select('f', ['bar']);
+
+        $this->assertSame("SELECT f.bar FROM foo f", $select->toString());
     }
 
     public function testOrderBy()
@@ -90,6 +101,8 @@ class SelectTest extends \PHPUnit_Framework_TestCase
         $select = new Select('foo');
         $select->distinct()->calcFoundRows();
         $this->assertSame("SELECT DISTINCT SQL_CALC_FOUND_ROWS foo.* FROM foo", $select->toString());
+
+        $this->assertTrue($select->isCalcFoundRows());
     }
 
     public function testJoin()

@@ -2,6 +2,9 @@
 
 use Sloths\Http\Response;
 
+/**
+ * @covers \Sloths\Http\Response<extended>
+ */
 class ResponseTest extends \PHPUnit_Framework_TestCase
 {
     public function testSetAndGetStatusCode()

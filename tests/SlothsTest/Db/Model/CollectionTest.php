@@ -3,6 +3,9 @@
 namespace SlothsTest\Db\Model;
 use SlothsTest\Db\Model\Stub\User;
 
+/**
+ * @covers \Sloths\Db\Model\Collection
+ */
 class CollectionTest extends TestCase
 {
     public function testInstance()
@@ -20,23 +23,23 @@ class CollectionTest extends TestCase
 
     public function testCount()
     {
-        $connection = $this->mockConnection();
+        $connection = $this->mockConnection('selectAll');
         User::setConnection($connection);
         $users = User::all();
 
-        $connection->shouldReceive('selectAll')->with($users->getSqlSelect())->andReturn([[], []]);
+        $connection->expects($this->once())->method('selectAll')->with($users->getSqlSelect())->willReturn([[], []]);
 
         $this->assertCount(2, $users);
     }
 
     public function testFoundRows()
     {
-        $connection = $this->mockConnection();
+        $connection = $this->mockConnection('selectAllWithFoundRows');
         User::setConnection($connection);
         $users = User::all();
         $users->calcFoundRows();
 
-        $connection->shouldReceive('selectAllWithFoundRows')->once()->andReturn([
+        $connection->expects($this->once())->method('selectAllWithFoundRows')->willReturn([
             'rows' => [[], []],
             'foundRows' => 4
         ]);
@@ -49,11 +52,11 @@ class CollectionTest extends TestCase
 
     public function testFoundRowsWithAlreadyFetched()
     {
-        $connection = $this->mockConnection();
+        $connection = $this->mockConnection('selectAll', 'selectAllWithFoundRows');
         User::setConnection($connection);
 
-        $connection->shouldReceive('selectAll')->once()->andReturn([]);
-        $connection->shouldReceive('selectAllWithFoundRows')->once()->andReturn([
+        $connection->expects($this->once())->method('selectAll')->willReturn([]);
+        $connection->expects($this->once())->method('selectAllWithFoundRows')->willReturn([
             'rows' => [],
             'foundRows' => 4
         ]);
@@ -64,11 +67,11 @@ class CollectionTest extends TestCase
 
     public function testFoundRowsWithoutCallCalcFoundRows()
     {
-        $connection = $this->mockConnection();
+        $connection = $this->mockConnection('selectAllWithFoundRows');
         User::setConnection($connection);
         $users = User::all();
 
-        $connection->shouldReceive('selectAllWithFoundRows')->once()->andReturn([
+        $connection->expects($this->once())->method('selectAllWithFoundRows')->willReturn([
             'rows' => [],
             'foundRows' => 4
         ]);
@@ -78,35 +81,35 @@ class CollectionTest extends TestCase
 
     public function testToArray()
     {
-        $connection = $this->mockConnection();
+        $connection = $this->mockConnection('selectAll');
         User::setConnection($connection);
         $users = User::all();
 
         $data = [['id' => 1], ['id' => 2]];
-        $connection->shouldReceive('selectAll')->once()->andReturn($data);
+        $connection->expects($this->once())->method('selectAll')->willReturn($data);
         $this->assertSame($data, $users->toArray());
     }
 
     public function testJsonEncode()
     {
-        $connection = $this->mockConnection();
+        $connection = $this->mockConnection('selectAll');
         User::setConnection($connection);
         $users = User::all();
 
         $data = [['id' => 1], ['id' => 2]];
-        $connection->shouldReceive('selectAll')->once()->andReturn($data);
+        $connection->expects($this->once())->method('selectAll')->willReturn($data);
         $this->assertSame(json_encode($data), $users->toJson());
         $this->assertSame(json_encode($data), json_encode($users));
     }
 
     public function testToArrayAndToJsonShouldNotIncludeHiddenColumn()
     {
-        $connection = $this->mockConnection();
+        $connection = $this->mockConnection('selectAll');
         User::setConnection($connection);
         $users = User::all();
 
         $data = [['id' => 1, 'password' => 'password'], ['id' => 2, 'password' => 'password']];
-        $connection->shouldReceive('selectAll')->once()->andReturn($data);
+        $connection->expects($this->once())->method('selectAll')->willReturn($data);
 
         $expected = [['id' => 1], ['id' => 2]];
         $this->assertSame($expected, $users->toArray());
@@ -116,12 +119,12 @@ class CollectionTest extends TestCase
 
     public function testMethodColumn()
     {
-        $connection = $this->mockConnection();
+        $connection = $this->mockConnection('selectAll');
         User::setConnection($connection);
         $users = User::all();
 
         $data = [['id' => 1, 'name' => 'foo'], ['id' => 2, 'name' => 'bar']];
-        $connection->shouldReceive('selectAll')->once()->andReturn($data);
+        $connection->expects($this->once())->method('selectAll')->willReturn($data);
 
         $this->assertSame([1, 2], $users->column('id'));
         $this->assertSame(['foo', 'bar'], $users->column('name'));
@@ -130,22 +133,24 @@ class CollectionTest extends TestCase
 
     public function testLazyLoading()
     {
-        $stmt1 = $this->mock('PDOStatement');
-        $stmt1->shouldReceive('fetchAll')->once()->andReturn([
+        $stmt1 = $this->getMock('PDOStatement', ['fetchAll']);
+        $stmt1->expects($this->once())->method('fetchAll')->willReturn([
             ['id' => 1],
             ['id' => 2]
         ]);
 
-        $stmt2 = $this->mock('PDOStatement');
-        $stmt2->shouldReceive('fetchAll')->once()->andReturn([
+        $stmt2 = $this->getMock('PDOStatement', ['fetchAll']);
+        $stmt2->expects($this->once())->method('fetchAll')->willReturn([
             ['id' => 1, 'profile' => 'foo'],
             ['id' => 2, 'profile' => 'bar'],
         ]);
 
-        $pdo = $this->mockPdo();
+        $pdo = $this->mockPdo('query');
 
-        $pdo->shouldReceive('query')->once()->with("SELECT users.id, users.name, users.password, users.created_time FROM users")->andReturn($stmt1);
-        $pdo->shouldReceive('query')->once()->with("SELECT users.id, users.profile FROM users WHERE (users.id IN(1, 2))")->andReturn($stmt2);
+        $pdo->expects($this->at(0))->method('query')
+            ->with("SELECT users.id, users.name, users.password, users.created_time FROM users")->willReturn($stmt1);
+        $pdo->expects($this->at(1))->method('query')
+            ->with("SELECT users.id, users.profile FROM users WHERE (users.id IN(1, 2))")->willReturn($stmt2);
 
         $connection = $this->createConnection($pdo);
         User::setConnection($connection);
@@ -158,29 +163,29 @@ class CollectionTest extends TestCase
 
     public function testEagerLoading()
     {
-        $stmt1 = $this->mock('PDOStatement');
-        $stmt1->shouldReceive('fetchAll')->once()->andReturn([
+        $stmt1 = $this->getMock('PDOStatement', ['fetchAll']);
+        $stmt1->expects($this->once())->method('fetchAll')->willReturn([
             ['id' => 1],
             ['id' => 2],
             ['id' => 3],
         ]);
 
-        $stmt2 = $this->mock('PDOStatement');
-        $stmt2->shouldReceive('fetchAll')->once()->andReturn([
+        $stmt2 = $this->getMock('PDOStatement', ['fetchAll']);
+        $stmt2->expects($this->once())->method('fetchAll')->willReturn([
             ['id' => 4, 'created_user_id' => 1, 'name' => 'foo'],
             ['id' => 5, 'created_user_id' => 1, 'name' => 'bar'],
             ['id' => 6, 'created_user_id' => 2, 'name' => 'baz'],
         ]);
 
-        $pdo = $this->mockPdo();
+        $pdo = $this->mockPdo('query');
 
-        $pdo->shouldReceive('query')->once()
+        $pdo->expects($this->at(0))->method('query')
             ->with("SELECT users.id, users.name, users.password, users.created_time FROM users")
-            ->andReturn($stmt1);
+            ->willReturn($stmt1);
 
-        $pdo->shouldReceive('query')->once()
+        $pdo->expects($this->at(1))->method('query')
             ->with("SELECT posts.id, posts.created_user_id, posts.modified_user_id, posts.name FROM posts WHERE (posts.created_user_id IN(1, 2, 3))")
-            ->andReturn($stmt2);
+            ->willReturn($stmt2);
 
         $connection = $this->createConnection($pdo);
         User::setConnection($connection);
@@ -198,17 +203,17 @@ class CollectionTest extends TestCase
     public function testCompositeMethods()
     {
         $users = User::all();
-        $user1 = $this->mock('SlothsTest\Db\Model\Stub\User');
-        $user1->shouldReceive('save')->once();
-        $user1->shouldReceive('delete')->once();
+        $user1 = $this->getMock('SlothsTest\Db\Model\Stub\User', ['save', 'delete']);
+        $user1->expects($this->once())->method('save');
+        $user1->expects($this->once())->method('delete');
 
-        $user2 = $this->mock('SlothsTest\Db\Model\Stub\User');
-        $user2->shouldReceive('save')->once();
-        $user2->shouldReceive('delete')->once();
+        $user2 = $this->getMock('SlothsTest\Db\Model\Stub\User', ['save', 'delete']);
+        $user2->expects($this->once())->method('save');
+        $user2->expects($this->once())->method('delete');
 
-        $user3 = $this->mock('SlothsTest\Db\Model\Stub\User');
-        $user3->shouldReceive('save')->once();
-        $user3->shouldReceive('delete')->once();
+        $user3 = $this->getMock('SlothsTest\Db\Model\Stub\User', ['save', 'delete']);
+        $user3->expects($this->once())->method('save');
+        $user3->expects($this->once())->method('delete');
 
         $users[0] = $user1;
         $users[1] = $user2;

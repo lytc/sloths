@@ -5,6 +5,9 @@ namespace SlothsTest\View\Helper;
 use Sloths\View\View;
 use Sloths\View\Helper\FormatDateTime;
 
+/**
+ * @covers \Sloths\View\Helper\FormatDateTime
+ */
 class FormatDateTimeTest extends \PHPUnit_Framework_TestCase
 {
     public function testSetAndGetInputOutputFormat()

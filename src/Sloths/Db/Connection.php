@@ -179,7 +179,11 @@ class Connection
             return $value;
         }
 
-        if ($value instanceof Expr || $value instanceof Select) {
+        if ($value instanceof Expr) {
+            return (string) $value;
+        }
+
+        if ($value instanceof Select) {
             return $value->toString();
         }
 

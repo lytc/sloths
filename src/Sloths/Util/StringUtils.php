@@ -26,6 +26,11 @@ class StringUtils
     public static function getNamespace($className)
     {
         $parts = explode('\\', $className);
+
+        if (1 == count($parts)) {
+            return;
+        }
+
         array_pop($parts);
 
         return implode('\\', $parts);

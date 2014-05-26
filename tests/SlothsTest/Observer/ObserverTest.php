@@ -4,6 +4,9 @@ namespace SlothsTest\Observer;
 
 use Sloths\Observer\Observer;
 
+/**
+ * @covers \Sloths\Observer\ObserverTrait
+ */
 class ObserverTest extends \PHPUnit_Framework_TestCase
 {
     public function testAddAndRemoveListener()

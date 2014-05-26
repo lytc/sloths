@@ -322,7 +322,7 @@ abstract class Model implements \JsonSerializable
      * @param string $name
      * @return bool|Collection
      */
-    protected function getHasManyRelation($name)
+    protected function getHasManyRelation($name, $cache)
     {
         static $hasMany = [];
 
@@ -346,14 +346,77 @@ abstract class Model implements \JsonSerializable
                 class_exists($definition['model']) || $definition['model'] = StringUtils::getNamespace(get_called_class())
                     . '\\' . Inflector::classify(Inflector::singularize($definition['model']));
 
-                $hasMany[$name] = function() use ($name, $definition) {
-                    return new HasMany($name, $this, $definition['model'], $definition['primaryKey'], $definition['foreignKey'], $this->fromCollection);
+                $hasMany[$name] = function($model, $fromCollection = null) use ($name, $definition) {
+                    return new HasMany($name, $model, $definition['model'], $definition['primaryKey'], $definition['foreignKey'], $fromCollection);
                 };
             }
         }
 
         if (isset($hasMany[$name]) && $hasMany[$name]) {
-            return $this->relationData[$name] = call_user_func($hasMany[$name]->bindTo($this));
+            return call_user_func($hasMany[$name], $this, $cache? $this->fromCollection : null);
+        }
+
+        return false;
+    }
+
+    /**
+     * @param string $name
+     * @return bool|Collection
+     */
+    protected function getHasManyThroughRelation($name, $cache)
+    {
+        static $hasManyThrough = [];
+
+        if (!isset($hasManyThrough[$name]) && isset(static::$hasManyThrough)) {
+            if (isset(static::$hasManyThrough[$name])) {
+                $hasManyThrough[$name] = static::$hasManyThrough[$name];
+            } elseif (false !== array_search($name, static::$hasManyThrough)) {
+                $hasManyThrough[$name] = $name;
+            } else {
+                $hasManyThrough[$name] = false;
+            }
+
+            if ($definition = $hasManyThrough[$name]) {
+                if (is_string($definition)) {
+                    $definition = ['model' => $definition];
+                }
+
+                isset($definition['model']) || $definition['model'] = $name;
+                class_exists($definition['model']) || $definition['model'] = StringUtils::getNamespace(get_called_class())
+                    . '\\' . Inflector::classify(Inflector::singularize($definition['model']));
+
+                if (!isset($definition['throughModel'])) {
+                    $leftTable = static::getTableName();
+                    $rightTable = static::getTableName();
+                    $leftPart = Inflector::classify(Inflector::singularize($leftTable));
+                    $rightPart = Inflector::classify(Inflector::singularize($rightTable));
+                    $definition['throughModel'] = $leftPart > $rightPart? $leftPart . $rightPart : $rightPart . $leftPart;
+                }
+
+                class_exists($definition['throughModel']) || $definition['throughModel'] = StringUtils::getNamespace(get_called_class())
+                    . '\\' . Inflector::classify(Inflector::singularize($definition['throughModel']));
+
+                isset($definition['leftForeignKey']) || $definition['leftForeignKey'] = Inflector::singularize(static::getTableName()) . '_id';
+                isset($definition['leftPrimaryKey']) || $definition['leftPrimaryKey'] = static::$primaryKey;
+                isset($definition['rightForeignKey']) || $definition['rightForeignKey'] = Inflector::singularize($definition['model']::getTableName()) . '_id';
+                isset($definition['rightPrimaryKey']) || $definition['rightPrimaryKey'] = $definition['model']::getPrimaryKey();
+
+                $hasManyThrough[$name] = function($model, $fromCollection = null) use ($name, $definition) {
+                    return new HasManyThrough(
+                        $name, $model,
+                        $definition['model'],
+                        $definition['throughModel'],
+                        $definition['leftPrimaryKey'], $definition['leftForeignKey'],
+                        $definition['rightPrimaryKey'], $definition['rightForeignKey'],
+                        $fromCollection
+                    );
+                };
+            }
+        }
+
+
+        if (isset($hasManyThrough[$name]) && $hasManyThrough[$name]) {
+            return call_user_func($hasManyThrough[$name]->bindTo($this), $this, $cache? $this->fromCollection : null);
         }
 
         return false;
@@ -453,91 +516,28 @@ abstract class Model implements \JsonSerializable
 
     /**
      * @param string $name
-     * @return bool|Collection
-     */
-    protected function getHasManyThroughRelation($name)
-    {
-        static $hasManyThrough = [];
-
-        if (!isset($hasManyThrough[$name]) && isset(static::$hasManyThrough)) {
-            if (isset(static::$hasManyThrough[$name])) {
-                $hasManyThrough[$name] = static::$hasManyThrough[$name];
-            } elseif (false !== array_search($name, static::$hasManyThrough)) {
-                $hasManyThrough[$name] = $name;
-            } else {
-                $hasManyThrough[$name] = false;
-            }
-
-            if ($definition = $hasManyThrough[$name]) {
-                if (is_string($definition)) {
-                    $definition = ['model' => $definition];
-                }
-
-                isset($definition['model']) || $definition['model'] = $name;
-                class_exists($definition['model']) || $definition['model'] = StringUtils::getNamespace(get_called_class())
-                    . '\\' . Inflector::classify(Inflector::singularize($definition['model']));
-
-                if (!isset($definition['throughModel'])) {
-                    $leftTable = static::getTableName();
-                    $rightTable = static::getTableName();
-                    $leftPart = Inflector::classify(Inflector::singularize($leftTable));
-                    $rightPart = Inflector::classify(Inflector::singularize($rightTable));
-                    $definition['throughModel'] = $leftPart > $rightPart? $leftPart . $rightPart : $rightPart . $leftPart;
-                }
-
-                class_exists($definition['throughModel']) || $definition['throughModel'] = StringUtils::getNamespace(get_called_class())
-                    . '\\' . Inflector::classify(Inflector::singularize($definition['throughModel']));
-
-                isset($definition['leftForeignKey']) || $definition['leftForeignKey'] = Inflector::singularize(static::getTableName()) . '_id';
-                isset($definition['leftPrimaryKey']) || $definition['leftPrimaryKey'] = static::$primaryKey;
-                isset($definition['rightForeignKey']) || $definition['rightForeignKey'] = Inflector::singularize($definition['model']::getTableName()) . '_id';
-                isset($definition['rightPrimaryKey']) || $definition['rightPrimaryKey'] = $definition['model']::getPrimaryKey();
-
-                $hasManyThrough[$name] = function() use ($name, $definition) {
-                    return new HasManyThrough(
-                        $name, $this,
-                        $definition['model'],
-                        $definition['throughModel'],
-                        $definition['leftPrimaryKey'], $definition['leftForeignKey'],
-                        $definition['rightPrimaryKey'], $definition['rightForeignKey'],
-                        $this->fromCollection
-                    );
-                };
-            }
-        }
-
-
-        if (isset($hasManyThrough[$name]) && $hasManyThrough[$name]) {
-            return $this->relationData[$name] = call_user_func($hasManyThrough[$name]->bindTo($this));
-        }
-
-        return false;
-    }
-
-    /**
-     * @param string $name
+     * @param bool [$cache=false]
      * @return bool|Collection|Model
      */
-    public function getRelation($name)
+    public function getRelation($name, $cache = false)
     {
-        if (array_key_exists($name, $this->relationData)) {
+        if ($cache && array_key_exists($name, $this->relationData)) {
             return $this->relationData[$name];
         }
 
-        if (false !== ($relation = $this->getHasManyRelation($name))) {
-            return $relation;
+        if (false === ($result = $this->getHasManyRelation($name, $cache))) {
+            if (false === ($result = $this->getBelongsToRelation($name))) {
+                if (false === ($result = $this->getHasOneRelation($name))) {
+                    $result = $this->getHasManyThroughRelation($name, $cache);
+                }
+            }
         }
 
-        if (false !== ($relation = $this->getBelongsToRelation($name))) {
-            return $relation;
-        }
-
-        if (false !== ($relation = $this->getHasOneRelation($name))) {
-            return $relation;
-        }
-
-        if (false !== ($relation = $this->getHasManyThroughRelation($name))) {
-            return $relation;
+        if ($result !== false) {
+            if ($cache) {
+                $this->setRelation($name, $result);
+            }
+            return $result;
         }
     }
 
@@ -588,7 +588,7 @@ abstract class Model implements \JsonSerializable
             }
         }
 
-        if (false !== ($relation = $this->getRelation($name))) {
+        if (false !== ($relation = $this->getRelation($name, true))) {
             return $relation;
         }
 
@@ -611,6 +611,25 @@ abstract class Model implements \JsonSerializable
     public function __get($name)
     {
         return $this->get($name);
+    }
+
+    /**
+     * @param string $method
+     * @param array $args
+     * @return bool|Collection|Model
+     * @throws \InvalidArgumentException
+     */
+    public function __call($method, $args)
+    {
+        if (isset(static::$hasMany) && array_key_exists($method, static::$hasMany)) {
+            return $this->getRelation($method);
+        }
+
+        if (isset(static::$hasManyThrough) && array_key_exists($method, static::$hasManyThrough)) {
+            return $this->getRelation($method);
+        }
+
+        throw new \InvalidArgumentException(sprintf('Call to undefined method %s', $method));
     }
 
     /**

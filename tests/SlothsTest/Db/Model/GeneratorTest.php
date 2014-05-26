@@ -4,7 +4,10 @@ namespace SlothsTest\Db\Model;
 
 use Sloths\Db\Model\Generator;
 
-class GeneratorTest extends \PHPUnit_Framework_TestCase
+/**
+ * @covers \Sloths\Db\Model\Generator
+ */
+class GeneratorTest extends TestCase
 {
     protected $modelFile;
     protected $abstractModelFile;
@@ -127,5 +130,33 @@ class GeneratorTest extends \PHPUnit_Framework_TestCase
 
         unlink($generator->getFilename());
         rmdir(dirname($generator->getFilename()));
+    }
+
+    public function testFromTable()
+    {
+        $connection = $this->mockConnection();
+        $table = $this->getMock('Sloths\Db\Schema\Table',
+            ['getPrimaryKeyColumn', 'getName', 'getColumns', 'getHasManyConstraints', 'getHasOneConstraints', 'getBelongsToConstraints', 'getHasManyThroughConstraints'],
+            ['users', $connection]);
+        $table->expects($this->once())->method('getPrimaryKeyColumn')->willReturn('id');
+        $table->expects($this->once())->method('getName')->willReturn('users');
+        $table->expects($this->once())->method('getColumns')->willReturn([
+            'id' => ['type' => 'int'],
+            'name' => ['type' => 'varchar'],
+        ]);
+        $table->expects($this->once())->method('getHasManyConstraints')->willReturn([
+            'posts' => ['table' => 'posts', 'foreignKey' => 'author_id']
+        ]);
+        $table->expects($this->once())->method('getHasOneConstraints')->willReturn([
+            'profiles' => ['table' => 'profiles', 'foreignKey' => 'user_id']
+        ]);
+        $table->expects($this->once())->method('getBelongsToConstraints')->willReturn([
+            'groups' => ['table' => 'groups', 'foreignKey' => 'group_id']
+        ]);
+        $table->expects($this->once())->method('getHasManyThroughConstraints')->willReturn([
+            ['throughTableName' => 'user_roles', 'tableName' => 'roles', 'leftKey' => 'user_id', 'rightKey' => 'role_id']
+        ]);
+
+        $generator = Generator::fromTable($table, 'Model', $connection);
     }
 }

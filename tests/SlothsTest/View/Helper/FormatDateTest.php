@@ -5,6 +5,9 @@ namespace SlothsTest\View\Helper;
 use Sloths\View\View;
 use Sloths\View\Helper\FormatDate;
 
+/**
+ * @covers \Sloths\View\Helper\FormatDate<extended>
+ */
 class FormatDateTest extends \PHPUnit_Framework_TestCase
 {
     public function testFromString()

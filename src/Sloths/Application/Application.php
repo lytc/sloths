@@ -51,6 +51,11 @@ class Application
     protected $configDirectories = [];
 
     /**
+     * @var bool
+     */
+    protected $stopped = false;
+
+    /**
      * @var array
      */
     protected $services = [
@@ -533,11 +538,12 @@ class Application
     }
 
     /**
-     *
+     * @return $this
      */
     public function stop()
     {
-        exit;
+        $this->stopped = true;
+        return $this;
     }
 
     /**
@@ -589,6 +595,13 @@ class Application
         $this->boot();
 
         if ($this->notify('run') === false) {
+            return $this;
+        }
+
+        if ($this->stopped) {
+            $this->response->send();
+            $this->after();
+            $this->notify('ran');
             return $this;
         }
 

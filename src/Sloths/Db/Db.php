@@ -97,7 +97,7 @@ class Db
     public static function quote($value)
     {
         if ($value instanceof Expr) {
-            return $value->toString();
+            return (string) $value;
         }
 
         return call_user_func(self::getQuoter(), $value);

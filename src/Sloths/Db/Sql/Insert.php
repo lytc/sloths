@@ -20,10 +20,20 @@ class Insert extends Replace
      * @param bool $state
      * @return $this
      */
+    public function highPriority($state = true)
+    {
+        return $this->toggleOption('HIGH_PRIORITY', 'priority', $state);
+    }
+
+    /**
+     * @param bool $state
+     * @return $this
+     */
     public function ignore($state = true)
     {
         return $this->toggleOption('IGNORE', $state);
     }
+
 
     /**
      * @param array $values

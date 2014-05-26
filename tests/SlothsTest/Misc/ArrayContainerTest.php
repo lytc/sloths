@@ -5,72 +5,83 @@ namespace SlothsTest\Misc;
 use Sloths\Misc\ArrayContainer;
 use SlothsTest\TestCase;
 
+/**
+ * @covers \Sloths\Misc\ArrayContainer
+ */
 class ArrayContainerTest extends TestCase
 {
     public function testSetAndGet()
     {
-        $hash = new ArrayContainer();
-        $this->assertNull($hash->foo);
+        $arrayContainer = new ArrayContainer();
+        $this->assertNull($arrayContainer->foo);
 
-        $hash->foo = 'foo';
-        $this->assertSame('foo', $hash->foo);
+        $arrayContainer->foo = 'foo';
+        $this->assertSame('foo', $arrayContainer->foo);
 
-        $hash->bar = ['baz' => 'qux'];
-        $this->assertInstanceOf('Sloths\Misc\ArrayContainer', $hash->bar);
-        $this->assertSame('qux', $hash->bar->baz);
+        $arrayContainer->bar = ['baz' => 'qux'];
+        $this->assertInstanceOf('Sloths\Misc\ArrayContainer', $arrayContainer->bar);
+        $this->assertSame('qux', $arrayContainer->bar->baz);
     }
 
     public function testCount()
     {
-        $hash = new ArrayContainer();
-        $this->assertCount(0, $hash);
+        $arrayContainer = new ArrayContainer();
+        $this->assertCount(0, $arrayContainer);
 
-        $hash->foo = 'bar';
-        $this->assertCount(1, $hash);
+        $arrayContainer->foo = 'bar';
+        $this->assertCount(1, $arrayContainer);
     }
 
     public function testGetIterator()
     {
-        $hash = new ArrayContainer();
-        $this->assertInstanceOf('ArrayIterator', $hash->getIterator());
+        $arrayContainer = new ArrayContainer();
+        $this->assertInstanceOf('ArrayIterator', $arrayContainer->getIterator());
     }
 
     public function testMerge()
     {
-        $hash = new ArrayContainer(['foo' => 'foo']);
-        $hash->merge(new ArrayContainer(['foo' => 'bar', 'bar' => 'baz']));
+        $arrayContainer = new ArrayContainer(['foo' => 'foo']);
+        $arrayContainer->merge(new ArrayContainer(['foo' => 'bar', 'bar' => 'baz']));
 
-        $this->assertSame(['foo' => 'bar', 'bar' => 'baz'], $hash->toArray());
+        $this->assertSame(['foo' => 'bar', 'bar' => 'baz'], $arrayContainer->toArray());
     }
 
     public function testNested()
     {
-        $hash = new ArrayContainer([
+        $arrayContainer = new ArrayContainer([
             'foo' => [
                 'bar' => 'baz'
             ]
         ], true);
 
-        $this->assertInstanceOf('Sloths\Misc\ArrayContainer', $hash->foo);
-        $this->assertSame('baz', $hash->foo->bar);
+        $this->assertInstanceOf('Sloths\Misc\ArrayContainer', $arrayContainer->foo);
+        $this->assertSame('baz', $arrayContainer->foo->bar);
     }
 
     public function testReplaceRecursive()
     {
-        $hash = new ArrayContainer([
+        $arrayContainer = new ArrayContainer([
             'foo' => [
                 'bar' => 'baz',
                 'baz' => 'qux'
             ]
         ], true);
 
-        $hash->replaceRecursive(new ArrayContainer([
+        $arrayContainer->replaceRecursive(new ArrayContainer([
             'foo' => [
                 'baz' => 'wot'
             ]
         ]));
 
-        $this->assertSame('baz', $hash->foo->bar);
-        $this->assertSame('wot', $hash->foo->baz);
+        $this->assertSame('baz', $arrayContainer->foo->bar);
+        $this->assertSame('wot', $arrayContainer->foo->baz);
+    }
+    
+    public function testJsonSerialize()
+    {
+        $data = ['foo' => 'bar'];
+        $arrayContainer = new ArrayContainer($data);
+
+        $this->assertSame(json_encode($data), json_encode($arrayContainer));
     }
 }

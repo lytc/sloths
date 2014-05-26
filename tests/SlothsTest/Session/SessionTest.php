@@ -7,6 +7,9 @@ use SlothsTest\TestCase;
 
 @session_start();
 
+/**
+ * @covers \Sloths\Session\Session
+ */
 class SessionTest extends TestCase
 {
     public function testSetAndGetNamespace()

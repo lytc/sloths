@@ -5,6 +5,9 @@ namespace SlothsTest\View\Helper;
 use Sloths\View\View;
 use Sloths\View\Helper\FormatTime;
 
+/**
+ * @covers \Sloths\View\Helper\FormatTime<extended>
+ */
 class FormatTimeTest extends \PHPUnit_Framework_TestCase
 {
     public function testFromString()

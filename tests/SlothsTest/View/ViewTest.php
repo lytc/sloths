@@ -5,6 +5,9 @@ namespace SlothsTest\View;
 use Sloths\View\Helper\AbstractHelper;
 use Sloths\View\View;
 
+/**
+ * @covers \Sloths\View\View
+ */
 class ViewTest extends \PHPUnit_Framework_TestCase
 {
     public function testSetAndGetVars()
@@ -93,6 +96,7 @@ class ViewTest extends \PHPUnit_Framework_TestCase
 
         $content = $view->render(['bar' => 'baz']);
         $this->assertSame('foo baz', $content);
+        $this->assertSame('foo baz', (string) $view);
     }
 
     public function testLayout()
@@ -136,6 +140,12 @@ class ViewTest extends \PHPUnit_Framework_TestCase
     {
         $view = new View();
         $this->assertSame('&lt;foo&gt;', $view->escape('<foo>'));
+    }
+
+    public function testEscapeUrl()
+    {
+        $view = new View();
+        $this->assertSame('foo%20%40%2B%25%2F', $view->escapeUrl('foo @+%/'));
     }
 
     public function testCustomHelper()

@@ -5,6 +5,9 @@ namespace SlothsTest\Util;
 use Sloths\Util\StringUtils;
 use SlothsTest\TestCase;
 
+/**
+ * @covers \Sloths\Util\StringUtils
+ */
 class StringUtilsTest extends TestCase
 {
     public function testRandom()
@@ -29,5 +32,17 @@ class StringUtilsTest extends TestCase
     {
         $str = StringUtils::random(100, false, false, true);
         $this->assertSame(0, preg_match('/^([a-z]+)$/', $str));
+    }
+
+    public function testGetNamespace()
+    {
+        $this->assertSame('Foo\Bar', StringUtils::getNamespace('Foo\Bar\Baz'));
+        $this->assertNull(StringUtils::getNamespace('Foo'));
+    }
+
+    public function testGetClassNameWithoutNamspace()
+    {
+        $this->assertSame('Baz', StringUtils::getClassNameWithoutNamespaceName('Foo\Bar\Baz'));
+        $this->assertSame('Foo', StringUtils::getClassNameWithoutNamespaceName('Foo'));
     }
 }

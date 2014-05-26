@@ -3,10 +3,14 @@
 namespace SlothsTest\Util;
 use Sloths\Util\UrlUtils;
 
-class UrlTest extends \PHPUnit_Framework_TestCase
+/**
+ * @covers \Sloths\Util\UrlUtils
+ */
+class UrlUtilsTest extends \PHPUnit_Framework_TestCase
 {
     public function testAppendParams()
     {
+        $this->assertSame('foo', UrlUtils::appendParams('foo', []));
         $url = 'foo';
         $this->assertSame('foo?bar=baz', UrlUtils::appendParams($url, ['bar' => 'baz']));
 

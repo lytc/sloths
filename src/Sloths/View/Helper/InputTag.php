@@ -79,11 +79,11 @@ abstract class InputTag extends Tag
     /**
      * @return string
      */
-    public function build()
+    public function render()
     {
         $this->processName();
         $this->processValue();
 
-        return parent::build();
+        return parent::render();
     }
 }

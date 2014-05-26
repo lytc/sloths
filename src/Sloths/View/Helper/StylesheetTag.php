@@ -11,7 +11,7 @@ class StylesheetTag extends AssetTag
 
     protected $tagName = 'link';
 
-    protected static $defaultAttributes = [
+    protected $defaultAttributes = [
         'rel' => 'stylesheet'
     ];
 }

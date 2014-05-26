@@ -190,21 +190,19 @@ trait ObserverTrait
      */
     public function notify($eventName, array $args = [])
     {
-        if (!isset($this->observerListeners[$eventName])) {
-            return $this;
-        }
+        if (isset($this->observerListeners[$eventName])) {
+            $listeners = $this->observerListeners[$eventName];
 
-        $listeners = $this->observerListeners[$eventName];
+            foreach ($listeners as $callback) {
+                $listeners->setInfo($listeners[$callback] - 1);
+                if ($listeners[$callback] == 0) {
+                    $this->removeListener($eventName, $callback);
+                }
 
-        foreach ($listeners as $callback) {
-            $listeners->setInfo($listeners[$callback] - 1);
-            if ($listeners[$callback] == 0) {
-                $this->removeListener($eventName, $callback);
-            }
-
-            $callback = $callback->bindTo($this, $this);
-            if (false === call_user_func_array($callback, $args)) {
-                return false;
+                $callback = $callback->bindTo($this, $this);
+                if (false === call_user_func_array($callback, $args)) {
+                    return false;
+                }
             }
         }
 

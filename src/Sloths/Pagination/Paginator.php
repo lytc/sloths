@@ -212,7 +212,7 @@ class Paginator implements \Countable, \IteratorAggregate
      */
     public function getFromIndex()
     {
-        return $this->getTotalItemsCount()? max(1, $this->getOffset() + 1) : 0;
+        return $this->getTotalItemsCount()? max(0, $this->getOffset()) : 0;
     }
 
     /**

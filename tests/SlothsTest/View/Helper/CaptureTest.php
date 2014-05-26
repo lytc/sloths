@@ -4,6 +4,10 @@ namespace SlothsTest\View\Helper;
 use Sloths\View\Capture;
 use Sloths\View\View;
 
+/**
+ * @covers \Sloths\View\Capture
+ * @covers \Sloths\View\View
+ */
 class CaptureTest extends \PHPUnit_Framework_TestCase
 {
     public function testBasic()

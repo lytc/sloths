@@ -122,7 +122,7 @@ class SelectTag extends InputTag
     {
         if ($value instanceof \Traversable) {
             $value = iterator_to_array($value);
-        } else if ($value instanceof \stdClass && method_exists($value, 'toArray')) {
+        } else if (is_object($value) && method_exists($value, 'toArray')) {
             $value = $value->toArray();
         }
 

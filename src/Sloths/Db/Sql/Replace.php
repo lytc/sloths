@@ -41,18 +41,42 @@ class Replace implements SqlInterface
 
     /**
      * @param string $option
-     * @param bool $state
+     * @param string $group
+     * @param bool [$state]
      * @return $this
      */
-    protected function toggleOption($option, $state)
+    protected function toggleOption($option, $group, $state = null)
     {
+        if (func_num_args() == 2) {
+            $state = $group;
+            $group = $option;
+        }
+
         if ($state) {
-            $this->options[$option] = $option;
+            $this->options[$group] = $option;
         } else {
-            unset($this->options[$option]);
+            unset($this->options[$group]);
         }
 
         return $this;
+    }
+
+    /**
+     * @param bool $state
+     * @return $this
+     */
+    public function lowPriority($state = true)
+    {
+        return $this->toggleOption('LOW_PRIORITY', 'priority', $state);
+    }
+
+    /**
+     * @param bool $state
+     * @return $this
+     */
+    public function delayed($state = true)
+    {
+        return $this->toggleOption('DELAYED', 'priority', $state);
     }
 
     /**
@@ -113,7 +137,7 @@ class Replace implements SqlInterface
         // columns part
         $columns = $this->columns;
 
-        if (!$columns) {
+        if (!$columns && is_array($values)) {
             $columns = array_keys(current($values));
         }
 
