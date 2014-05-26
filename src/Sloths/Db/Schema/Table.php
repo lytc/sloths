@@ -4,6 +4,7 @@ namespace Sloths\Db\Schema;
 
 use Sloths\Db\Sql\Select;
 use Sloths\Db\Connection;
+use Sloths\Util\ArrayUtils;
 
 class Table
 {
@@ -240,7 +241,7 @@ class Table
         if (null === $this->hasManyThroughConstraints) {
             $constraints = [];
             $hasManyConstraints = $this->getHasManyConstraints();
-            $belongsToTables = array_column($this->getBelongsToConstraints(), 'table');
+            $belongsToTables =  ArrayUtils::column($this->getBelongsToConstraints(), 'table');
 
             foreach ($hasManyConstraints as $tableName => $hasManyMeta) {
                 $table = $this->_fromCache($tableName);
