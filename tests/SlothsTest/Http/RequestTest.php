@@ -265,64 +265,6 @@ class RequestTest extends \PHPUnit_Framework_TestCase
         $this->assertSame($vars, $request->getFileVars());
     }
 
-    public function testPickGetVars()
-    {
-        $vars = ['foo' => 'bar', 'bar' => 'baz', 'baz' => 'buz'];
-        $request = new Request([
-            '_GET' => $vars
-        ]);
-
-        $this->assertSame(['foo' => 'bar', 'baz' => 'buz'], $request->pickGetVars('foo baz'));
-    }
-
-    public function testPickPostVars()
-    {
-        $vars = ['foo' => 'bar', 'bar' => 'baz', 'baz' => 'buz'];
-        $request = new Request([
-            '_POST' => $vars
-        ]);
-
-        $this->assertSame(['foo' => 'bar', 'baz' => 'buz'], $request->pickPostVars('foo baz'));
-    }
-
-    public function testPickCookieVars()
-    {
-        $vars = ['foo' => 'bar', 'bar' => 'baz', 'baz' => 'buz'];
-        $request = new Request([
-            '_COOKIE' => $vars
-        ]);
-
-        $this->assertSame(['foo' => 'bar', 'baz' => 'buz'], $request->pickCookieVars('foo baz'));
-    }
-
-    public function testPickFileVars()
-    {
-        $vars = ['foo' => 'bar', 'bar' => 'baz', 'baz' => 'buz'];
-        $request = new Request([
-            '_FILES' => $vars
-        ]);
-
-        $this->assertSame(['foo' => 'bar', 'baz' => 'buz'], $request->pickFileVars('foo baz'));
-    }
-
-    public function testPickVars()
-    {
-        $getVars = ['foo' => 'bar', 'bar' => 'baz'];
-        $postVars = ['bar' => 'baz', 'baz' => 'buz'];
-        $cookieVars = ['qux' => 'bar', 'baz' => 'baz'];
-        $fileVars = ['wot' => 'bar', 'baz' => 'buz'];
-
-        $request = new Request([
-            '_GET' => $getVars,
-            '_POST' => $postVars,
-            '_COOKIE' => $cookieVars,
-            '_FILES' => $fileVars,
-        ]);
-
-        $expected = ['foo' => 'bar', 'baz' => 'buz', 'wot' => 'bar'];
-        $this->assertSame($expected, $request->pickVars('foo baz wot'));
-    }
-
     public function testIsHead()
     {
         $request = new Request([

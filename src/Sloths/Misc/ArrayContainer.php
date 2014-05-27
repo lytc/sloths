@@ -2,6 +2,8 @@
 
 namespace Sloths\Misc;
 
+use Sloths\Util\ArrayUtils;
+
 class ArrayContainer implements \IteratorAggregate, \Countable, \JsonSerializable
 {
     /**
@@ -48,7 +50,7 @@ class ArrayContainer implements \IteratorAggregate, \Countable, \JsonSerializabl
         if ($this->recursive) {
             foreach ($data as $k => $v) {
                 if (is_array($v)) {
-                    $data[$k] = new static($v);
+                    $data[$k] = new static($v, $this->recursive);
                 }
             }
         }
@@ -93,21 +95,21 @@ class ArrayContainer implements \IteratorAggregate, \Countable, \JsonSerializabl
     }
 
     /**
-     * @param $k
-     * @param $v
+     * @param string $k
+     * @param mixed $v
      */
     public function set($k, $v)
     {
         if (is_array($v)) {
-            $v = new static($v);
+            $v = new static($v, $this->recursive);
         }
 
         $this->data[$k] = $v;
     }
 
     /**
-     * @param $k
-     * @return null
+     * @param string $k
+     * @return mixed
      */
     public function get($k)
     {
@@ -115,8 +117,47 @@ class ArrayContainer implements \IteratorAggregate, \Countable, \JsonSerializabl
     }
 
     /**
-     * @param $k
-     * @param $v
+     * @param callable $callback
+     * @return static
+     */
+    public function map(callable $callback)
+    {
+        return new static(array_map($callback, $this->toArray()), $this->recursive);
+    }
+
+    /**
+     * @param string $characterMask
+     * @return static
+     */
+    public function trim($characterMask = ' \t\n\r\0\x0B')
+    {
+        return $this->map(function($v) use ($characterMask) {
+            return trim($v, $characterMask);
+        });
+    }
+
+    /**
+     * @param string|array $keys
+     * @param mixed [$default]
+     * @return static
+     */
+    public function only($keys, $default = null)
+    {
+        return new static(ArrayUtils::only($this->toArray(), $keys, $default), $this->recursive);
+    }
+
+    /**
+     * @param string|array $keys
+     * @return static
+     */
+    public function except($keys)
+    {
+        return new static(ArrayUtils::except($this->toArray(), $keys), $this->recursive);
+    }
+
+    /**
+     * @param string $k
+     * @param mixed $v
      */
     public function __set($k, $v)
     {
@@ -124,8 +165,8 @@ class ArrayContainer implements \IteratorAggregate, \Countable, \JsonSerializabl
     }
 
     /**
-     * @param $k
-     * @return null
+     * @param string $k
+     * @return mixed
      */
     public function __get($k)
     {

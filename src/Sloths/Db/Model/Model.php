@@ -260,7 +260,7 @@ abstract class Model implements \JsonSerializable
     {
         if (isset($data[static::$primaryKey])) {
             $this->id = $data[static::$primaryKey];
-            $data = ArrayUtils::pick($data, array_keys(static::$columns));
+            $data = ArrayUtils::only($data, array_keys(static::$columns));
             $this->data = $data;
         } else {
             $this->changedData = $data;
@@ -653,7 +653,7 @@ abstract class Model implements \JsonSerializable
      */
     protected function getDataForSave()
     {
-        $data = ArrayUtils::pick($this->changedData, array_keys(static::$columns));
+        $data = ArrayUtils::only($this->changedData, array_keys(static::$columns));
         unset($data[static::$primaryKey]);
         return $data;
     }

@@ -4,7 +4,7 @@ namespace Sloths\Util;
 
 class ArrayUtils
 {
-    public static function pick(array $values, $keys, $default = null)
+    public static function only(array $values, $keys, $default = null)
     {
         if (is_string($keys)) {
             $keys = preg_split('/\s+/', trim($keys));
@@ -23,6 +23,20 @@ class ArrayUtils
         }
 
         return $result;
+    }
+
+    /**
+     * @param array $array
+     * @param $keys
+     * @return array
+     */
+    public static function except(array $array, $keys)
+    {
+        if (is_string($keys)) {
+            $keys = preg_split('/\s+/', trim($keys));
+        }
+
+        return array_diff_key($array, array_flip($keys));
     }
 
     public static function hasOnlyInts(array $arr)

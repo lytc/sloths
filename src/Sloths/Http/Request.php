@@ -581,67 +581,6 @@ class Request extends AbstractMessage
     }
 
     /**
-     * @param string $section
-     * @param string|array $names
-     * @return array
-     */
-    protected function _pickVars($section, $names)
-    {
-        if (is_string($names)) {
-            $names = trim($names);
-            $names = preg_split('/\s+/', $names);
-        }
-
-        $vars = $this->{'get' . $section . 'Vars'}();
-        return array_intersect_key($vars, array_combine($names, $names));
-    }
-
-    /**
-     * @param string|array $names
-     * @return array
-     */
-    public function pickVars($names)
-    {
-        return $this->_pickVars('', $names);
-    }
-
-    /**
-     * @param string|array $names
-     * @return array
-     */
-    public function pickGetVars($names)
-    {
-        return $this->_pickVars('Get', $names);
-    }
-
-    /**
-     * @param string|array $names
-     * @return array
-     */
-    public function pickPostVars($names)
-    {
-        return $this->_pickVars('Post', $names);
-    }
-
-    /**
-     * @param string|array $names
-     * @return array
-     */
-    public function pickCookieVars($names)
-    {
-        return $this->_pickVars('Cookie', $names);
-    }
-
-    /**
-     * @param string|array $names
-     * @return array
-     */
-    public function pickFileVars($names)
-    {
-        return $this->_pickVars('File', $names);
-    }
-
-    /**
      * @return bool
      */
     public function isHead()

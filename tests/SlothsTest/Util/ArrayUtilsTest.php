@@ -8,22 +8,30 @@ use Sloths\Util\ArrayUtils;
  */
 class ArrayUtilsTest extends \PHPUnit_Framework_TestCase
 {
-    public function testPick()
+    public function testMethodOnly()
     {
         $values = ['foo' => 1, 'bar' => 2, 'baz' => 3, 'qux' => 4];
-        $pickKeys = 'bar qux wot';
+        $keys = 'bar qux wot';
         $expected = ['bar' => 2, 'qux' => 4];
 
-        $this->assertSame($expected, ArrayUtils::pick($values, $pickKeys));
+        $this->assertSame($expected, ArrayUtils::only($values, $keys));
     }
 
-    public function testPickWithDefaultValue()
+    public function testMethodOnlyWithDefaultValue()
     {
         $values = ['foo' => 1, 'bar' => 2, 'baz' => 3, 'qux' => 4];
-        $pickKeys = 'bar qux wot';
+        $keys = 'bar qux wot';
         $expected = ['bar' => 2, 'qux' => 4, 'wot' => null];
 
-        $this->assertSame($expected, ArrayUtils::pick($values, $pickKeys, null));
+        $this->assertSame($expected, ArrayUtils::only($values, $keys, null));
+    }
+
+    public function testMethodExcept()
+    {
+        $values = ['foo' => 1, 'bar' => 2, 'baz' => 3];
+
+        $this->assertSame(['foo' => 1], ArrayUtils::except($values, 'bar baz'));
+        $this->assertSame(['foo' => 1], ArrayUtils::except($values, ['bar', 'baz']));
     }
 
     public function testHasOnlyInts()

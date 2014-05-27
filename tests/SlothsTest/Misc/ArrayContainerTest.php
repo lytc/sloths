@@ -84,4 +84,43 @@ class ArrayContainerTest extends TestCase
 
         $this->assertSame(json_encode($data), json_encode($arrayContainer));
     }
+
+    public function testMethodMap()
+    {
+        $data = ['foo' => 1, 'bar' => 2];
+        $arrayContainer = new ArrayContainer($data);
+
+        $newArrayContainer = $arrayContainer->map(function($v) {
+            return $v + 1;
+        });
+
+        $this->assertSame(['foo' => 2, 'bar' => 3], $newArrayContainer->toArray());
+    }
+
+    public function testMethodTrim()
+    {
+        $data = ['foo' => ' foo  '];
+        $arrayContainer = new ArrayContainer($data);
+        $trimmedArrayContainer = $arrayContainer->trim();
+
+        $this->assertSame(['foo' => 'foo'], $trimmedArrayContainer->toArray());
+    }
+
+    public function testMethodOnly()
+    {
+        $data = ['foo' => 1, 'bar' => 2, 'baz' => 3];
+        $arrayContainer = new ArrayContainer($data);
+
+        $this->assertSame(['foo' => 1, 'baz' => 3], $arrayContainer->only('foo baz')->toArray());
+        $this->assertSame(['foo' => 1, 'baz' => 3], $arrayContainer->only(['foo', 'baz'])->toArray());
+    }
+
+    public function testMethodExcept()
+    {
+        $data = ['foo' => 1, 'bar' => 2, 'baz' => 3];
+        $arrayContainer = new ArrayContainer($data);
+
+        $this->assertSame(['bar' => 2], $arrayContainer->except('foo baz')->toArray());
+        $this->assertSame(['bar' => 2], $arrayContainer->except(['foo', 'baz'])->toArray());
+    }
 }
