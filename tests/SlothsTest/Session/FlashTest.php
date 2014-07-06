@@ -89,7 +89,7 @@ class FlashTest extends TestCase
 
     public function testMagicMethods()
     {
-        $session = new Session(null, ['__LAZY_SESSION__' => ['flash' => ['foo' => 2]]]);
+        $session = new Session(null, [Session::DEFAULT_NAMESPACE => ['flash' => ['foo' => 2]]]);
         $flash = new Flash('flash', $session);
 
         $this->assertSame(['foo' => 2], $flash->getCurrentData());

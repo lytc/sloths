@@ -132,7 +132,7 @@ class ArrayContainer implements \IteratorAggregate, \Countable, \JsonSerializabl
     public function trim($characterMask = ' \t\n\r\0\x0B')
     {
         return $this->map(function($v) use ($characterMask) {
-            return trim($v, $characterMask);
+            return is_string($v)? trim($v, $characterMask) : $v;
         });
     }
 

@@ -7,13 +7,14 @@ use SlothsTest\TestCase;
 
 /**
  * @covers \Sloths\Application\Application
+ * @runTestsInSeparateProcesses
  */
 class ApplicationConfigTest extends TestCase
 {
     public function testLoadApplicationConfig()
     {
-        $application = $this->getMock('Sloths\Application\Application', ['notFound']);
-        $application->expects($this->once())->method('notFound');
+        $application = $this->getMock('Sloths\Application\Application', ['send']);
+        $application->expects($this->once())->method('send');
 
         $application->setDirectory(__DIR__ . '/fixtures');
         $application->setEnv('development');

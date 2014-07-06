@@ -2,10 +2,11 @@
 
 namespace Sloths\Application;
 
+use Sloths\Http\Response;
 use Sloths\Application\Exception\Pass;
 use Sloths\Application\Exception\NotFound;
+use Sloths\Application\Exception\Stop;
 use Sloths\Application\Service\ServiceInterface;
-use Sloths\Misc\ConfigurableTrait;
 use Sloths\Observer\ObserverTrait;
 use \Closure;
 
@@ -13,13 +14,15 @@ use \Closure;
  * Class Application
  * @package Sloths\Application
  *
- * @property Service\Request $request
- * @property Service\Response $response
+ * @property \Sloths\Http\Request $request
+ * @property \Sloths\Http\Response $response
  * @property Service\View $view
  * @property Service\Router $router
- * @property Service\Config $config
- * @property Service\Session $session
- * @property Service\Messages $messages
+ * @property \Sloths\Misc\Config $config
+ * @property \Sloths\Session\Session $session
+ * @property \Sloths\Session\Messages $messages
+ * @property \Sloths\Translation\Translator $translator
+ * @property \Sloths\Application\Service\Validator $validator
  */
 class Application
 {
@@ -51,11 +54,6 @@ class Application
     protected $configDirectories = [];
 
     /**
-     * @var bool
-     */
-    protected $stopped = false;
-
-    /**
      * @var array
      */
     protected $services = [
@@ -63,11 +61,14 @@ class Application
         'config'            => 'Sloths\Misc\Config',
         'request'           => 'Sloths\Http\Request',
         'response'          => 'Sloths\Http\Response',
+        'redirect'          => 'Sloths\Application\Service\Redirect',
         'view'              => 'Sloths\Application\Service\View',
         'router'            => 'Sloths\Application\Service\Router',
         'session'           => 'Sloths\Session\Session',
         'flash'             => 'Sloths\Session\Flash',
-        'messages'          => 'Sloths\Session\Messages'
+        'messages'          => 'Sloths\Session\Messages',
+        'translator'        => 'Sloths\Translation\Translator',
+        'validator'         => 'Sloths\Application\Service\Validator'
     ];
 
     /**
@@ -92,10 +93,10 @@ class Application
      * @var array
      */
     protected $shortcutProperties = [
+        'queryParams'    => ['request', 'queryParams'],
+        'postParams'    => ['request', 'postParams'],
         'params'    => ['request', 'params'],
-        'get'       => ['request', 'get'],
-        'post'      => ['request', 'post'],
-        'cookie'    => ['request', 'cookie'],
+        'cookies'    => ['request', 'cookies'],
         'headers'   => ['request', 'headers'],
     ];
 
@@ -520,38 +521,20 @@ class Application
     }
 
     /**
-     * @param $url
+     * @throws Exception\Stop
      */
-    public function redirectTo($url)
+    protected function stop()
     {
-        call_user_func_array([$this->response, 'redirect'], func_get_args());
-        $this->response->send();
-        $this->stop();
+        throw new Stop();
     }
 
     /**
      *
      */
-    public function redirectBack()
+    protected function notFound()
     {
-        $this->redirectTo($this->request->getReferrer());
-    }
-
-    /**
-     * @return $this
-     */
-    public function stop()
-    {
-        $this->stopped = true;
-        return $this;
-    }
-
-    /**
-     * @throws NotFound
-     */
-    public function notFound()
-    {
-        throw new NotFound();
+        $this->response->setStatusCode(404);
+        $this->stop();
     }
 
     /**
@@ -584,57 +567,97 @@ class Application
     }
 
     /**
+     * @param Response $response
+     * @return $this
+     */
+    protected function send(Response $response)
+    {
+        $headers = $response->getHeaders();
+
+        http_response_code($response->getStatusCode()?: 200);
+
+        if ($headerLocation = $headers->getLine('Location')) {
+            header($headerLocation);
+            return;
+        }
+
+        $body = $response->getBody();
+        $isBodyString = is_string($body);
+
+        if (!$headers->get('Content-Type')) {
+            if ($isBodyString) {
+                $headers->set('Content-Type', 'text/html');
+            } else {
+                $headers->set('Content-Type', 'application/json');
+            }
+        }
+
+        foreach ($headers->getLines() as $line) {
+            header($line);
+        }
+
+        if (!$isBodyString) {
+            $body = json_encode($body);
+        }
+
+        echo $body;
+        return $this;
+    }
+
+    /**
      * @return $this|void
      */
     public function run()
     {
-        if (false === $this->before()) {
-            return $this;
-        }
-
         $this->boot();
 
-        if ($this->notify('run') === false) {
-            return $this;
-        }
+        try {
+            $result = $this->before();
 
-        if ($this->stopped) {
-            $this->response->send();
-            $this->after();
-            $this->notify('ran');
-            return $this;
-        }
-
-        $request = $this->request;
-        $method = $request->getMethod();
-        $requestPath = $request->getPath();
-
-        if ($this->requestBasePath) {
-            $requestPath = substr($requestPath, strlen($this->requestBasePath))?: '/';
-        }
-
-        $found = false;
-        while ($route = $this->router->matches($method, $requestPath)) {
-            $callback = $route->getCallback();
-            $callback = $callback->bindTo($this);
-
-            try {
-                $result = call_user_func_array($callback, $route->getParams());
-                $this->response->setBody($result)->send();
-                $found = true;
-                break;
-            } catch(Pass $e) {
-
+            if ($result instanceof Response) {
+                $this->setService('response', $result);
+                $this->stop();
             }
+
+            $result = $this->notify('run');
+
+            if ($result instanceof Response) {
+                $this->setService('response', $result);
+                $this->stop();
+            }
+
+            $request = $this->request;
+            $method = $request->getMethod();
+            $requestPath = $request->getPath();
+
+            if ($this->requestBasePath) {
+                $requestPath = substr($requestPath, strlen($this->requestBasePath))?: '/';
+            }
+
+            while ($route = $this->router->matches($method, $requestPath)) {
+                $callback = $route->getCallback();
+                $callback = $callback->bindTo($this, $this);
+
+                try {
+                    $result = call_user_func_array($callback, $route->getParams());
+                    if ($result instanceof Response) {
+                        $this->setService('response', $result);
+                    } else {
+                        $this->response->setBody($result);
+                    }
+                    $this->stop();
+                } catch(Pass $e) {
+
+                }
+            }
+            $this->response->setStatusCode(404);
+        } catch(Stop $e) {
+
         }
 
+        $this->send($this->response);
         $this->after();
         $this->notify('ran');
-
-        if ($found) {
-            return $this;
-        }
-
-        return $this->notFound();
+        return $this;
     }
 }

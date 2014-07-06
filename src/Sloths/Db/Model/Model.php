@@ -120,7 +120,7 @@ abstract class Model implements \JsonSerializable
     }
 
     /**
-     * @param bool [$withTablePrefix=true]
+     * @param bool $withTablePrefix
      * @return array
      */
     public static function getDefaultSelectColumns($withTablePrefix = true)
@@ -516,7 +516,7 @@ abstract class Model implements \JsonSerializable
 
     /**
      * @param string $name
-     * @param bool [$cache=false]
+     * @param bool $cache
      * @return bool|Collection|Model
      */
     public function getRelation($name, $cache = false)

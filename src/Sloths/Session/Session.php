@@ -4,10 +4,12 @@ namespace Sloths\Session;
 
 class Session implements \ArrayAccess
 {
+    const DEFAULT_NAMESPACE = '__SLOTHS_SESSION__';
+
     /**
      * @var string
      */
-    protected $namespace = '__LAZY_SESSION__';
+    protected $namespace = self::DEFAULT_NAMESPACE;
 
     /**
      * @var \SessionHandlerInterface

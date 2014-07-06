@@ -137,7 +137,7 @@ class Collection implements \Countable, \IteratorAggregate, \JsonSerializable, \
     }
 
     /**
-     * @param bool [$reload=false]
+     * @param bool $reload
      */
     protected function load($reload = false)
     {
@@ -199,7 +199,7 @@ class Collection implements \Countable, \IteratorAggregate, \JsonSerializable, \
 
     /**
      * @param string $name
-     * @param string [$columnKey=null]
+     * @param string $columnKey
      * @return array
      */
     public function column($name, $columnKey = null)

@@ -17,7 +17,7 @@ class Messages implements \Countable, \IteratorAggregate
     /**
      * @param string $flashSession
      */
-    public function __construct($flashSession = '__LAZY_FLASH_MESSAGE__')
+    public function __construct($flashSession = '__SLOTHS_FLASH_MESSAGE__')
     {
         if (!$flashSession instanceof Flash) {
             $flashSession = new Flash($flashSession);

@@ -4,25 +4,69 @@ namespace Sloths\Util;
 
 class StringUtils
 {
-    public static function random($length, $numeric = true, $upperCase = true, $specialCharacter = false)
+    const RANDOM_ALPHA_LOWER    = 1;
+    const RANDOM_ALPHA_UPPER    = 2;
+    const RANDOM_NUMERIC        = 4;
+    const RANDOM_SPECIAL_CHAR   = 8;
+    const RANDOM_ALPHA          = 3;
+    const RANDOM_ALNUM          = 7;
+    const RANDOM_ALL            = 15;
+
+    protected static $characters = [
+        self::RANDOM_ALPHA_LOWER    => 'abcdefghijklmnopqrstuvwxyz',
+        self::RANDOM_ALPHA_UPPER    => 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+        self::RANDOM_NUMERIC        => '0123456789',
+        self::RANDOM_SPECIAL_CHAR   => '`-=[]\;\',./~!@#$%^&*()+{}|:"<>?'
+    ];
+
+
+    /**
+     * @param int $length
+     * @param int $flags
+     * @return string
+     */
+    public static function random($length, $flags = self::RANDOM_ALNUM)
     {
-        $chars = 'abcdefghijklmnopqrstuvwxyz';
+        $characters = '';
 
-        if ($numeric) {
-            $chars .= '0123456789';
+        foreach (self::$characters as $flag => $chars) {
+            if ($flags & $flag) {
+                $characters .= $chars;
+            }
         }
 
-        if ($upperCase) {
-            $chars .= 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        }
-
-        if ($specialCharacter) {
-            $chars .= '~!@#$%^&*()_+:"<>?;{}|[]\\';
-        }
-
-        return substr(str_shuffle($chars), 0, $length);
+        $characters = str_pad($characters, $length, $characters);
+        return substr(str_shuffle($characters), 0, $length);
     }
 
+    /**
+     * @param string $str
+     * @param array $data...
+     * @return mixed
+     */
+    public static function format($str, $data)
+    {
+        if (!is_array($data)) {
+            $data = func_get_args();
+            array_shift($data);
+        }
+
+        return preg_replace_callback('/\:\:|\:(\b[\w_]+\b)/', function($matches) use ($data) {
+            if ($matches[0] == '::') {
+                return ':';
+            }
+
+            $key = $matches[1];
+            $value = !isset($data[$key])? '' : $data[$key];
+
+            return $value;
+        }, $str);
+    }
+
+    /**
+     * @param string $className
+     * @return string
+     */
     public static function getNamespace($className)
     {
         $parts = explode('\\', $className);
@@ -36,6 +80,10 @@ class StringUtils
         return implode('\\', $parts);
     }
 
+    /**
+     * @param string $className
+     * @return mixed
+     */
     public static function getClassNameWithoutNamespaceName($className)
     {
         $parts = explode('\\', $className);

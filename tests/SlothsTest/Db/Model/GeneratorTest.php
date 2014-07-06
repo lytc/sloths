@@ -6,6 +6,7 @@ use Sloths\Db\Model\Generator;
 
 /**
  * @covers \Sloths\Db\Model\Generator
+ * @covers \Sloths\Db\Model\CustomDockBlockGenerator
  */
 class GeneratorTest extends TestCase
 {

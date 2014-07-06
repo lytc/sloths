@@ -18,7 +18,7 @@ class Flash implements \IteratorAggregate, \ArrayAccess, \Countable
      * @param string $name
      * @param Session $session
      */
-    public function __construct($name = '__LAZY_FLASH_SESSION__', Session $session = null)
+    public function __construct($name = '__SLOTHS_FLASH_SESSION__', Session $session = null)
     {
         if (!$session) {
             $session = Session::getInstance();

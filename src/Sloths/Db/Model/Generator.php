@@ -346,9 +346,7 @@ class Generator
 
     public function getAbstractModelFileName()
     {
-        if ($this->abstractModelClassName) {
-            return $this->getDirectory() . '/' . $this->abstractModelClassName . '.php';
-        }
+        return $this->abstractModelClassName? $this->getDirectory() . '/' . $this->abstractModelClassName . '.php' : null;
     }
 
     /**

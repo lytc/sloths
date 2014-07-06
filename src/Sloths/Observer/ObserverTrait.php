@@ -57,7 +57,7 @@ trait ObserverTrait
     /**
      * @param string $eventName
      * @param callable $callback
-     * @param int [$limitCall=-1]
+     * @param int $limitCall
      * @return $this
      */
     public function addListener($eventName, \Closure $callback, $limitCall = -1)
@@ -190,6 +190,8 @@ trait ObserverTrait
      */
     public function notify($eventName, array $args = [])
     {
+        $result = $this;
+
         if (isset($this->observerListeners[$eventName])) {
             $listeners = $this->observerListeners[$eventName];
 
@@ -200,12 +202,12 @@ trait ObserverTrait
                 }
 
                 $callback = $callback->bindTo($this, $this);
-                if (false === call_user_func_array($callback, $args)) {
+                if (false === ($result = call_user_func_array($callback, $args))) {
                     return false;
                 }
             }
         }
 
-        return $this;
+        return $result;
     }
 }

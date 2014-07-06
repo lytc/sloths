@@ -58,7 +58,6 @@ class ServiceTest extends TestCase
     {
         return [
             [__NAMESPACE__ . '\FooService'],
-//            [new FooService()],
             [function() { return new FooService();}]
         ];
     }

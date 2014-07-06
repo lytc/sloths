@@ -298,7 +298,7 @@ class Connection
 
     /**
      * @param Select $sql
-     * @param int [$index=0]
+     * @param int $index
      * @return string
      */
     public function selectColumn(Select $sql, $index = 0)

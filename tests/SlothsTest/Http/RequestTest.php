@@ -2,437 +2,316 @@
 
 namespace SlothsTest\Http;
 
+use Sloths\Http\Message\Parameters;
 use Sloths\Http\Request;
+use SlothsTest\TestCase;
 
 /**
- * @covers \Sloths\Http\Request<extended>
+ * @covers Sloths\Http\Request
  */
-class RequestTest extends \PHPUnit_Framework_TestCase
+class RequestTest extends TestCase
 {
-    public function testAutoMapSuperGlobals()
+    public function testServerVars()
     {
-        $_GET = ['foo' => 'bar'];
         $request = new Request();
-        $this->assertSame('bar', $request->getGetVar('foo'));
-    }
-
-    public function testGetPath()
-    {
-        $request = new Request([
-            '_SERVER' => ['PATH_INFO' => '/foo/bar']
-        ]);
-        $this->assertSame('/foo/bar', $request->getPath());
-
-        $request = new Request([
-            '_SERVER' => ['PATH_INFO' => '/foo/bar//']
-        ]);
-        $this->assertSame('/foo/bar', $request->getPath());
-
-
-        $request = new Request([
-            '_SERVER' => ['REQUEST_URI' => '/foo/bar/baz']
-        ]);
-        $this->assertSame('/foo/bar/baz', $request->getPath());
-
-        $request = new Request([
-            '_SERVER' => ['REQUEST_URI' => '/foo/bar/baz/?foo=bar&bar=baz']
-        ]);
-        $this->assertSame('/foo/bar/baz', $request->getPath());
-    }
-
-    public function testTrimmedPath()
-    {
-        $request = new Request([
-            '_SERVER' => ['PATH_INFO' => '/']
-        ]);
-        $this->assertSame('/', $request->getPath());
-
-        $request = new Request([
-            '_SERVER' => ['PATH_INFO' => '///']
-        ]);
-        $this->assertSame('/', $request->getPath());
-
-        $request = new Request([
-            '_SERVER' => ['PATH_INFO' => '/foo/']
-        ]);
-        $this->assertSame('/foo', $request->getPath());
-
-        $request = new Request([
-            '_SERVER' => ['PATH_INFO' => '/foo/bar//']
-        ]);
-        $this->assertSame('/foo/bar', $request->getPath());
-    }
-
-    public function testGetOriginalMethod()
-    {
-        $request = new Request([
-            '_SERVER' => ['REQUEST_METHOD' => 'GET']
-        ]);
-        $this->assertSame('GET', $request->getOriginalMethod());
-    }
-
-    public function testGetMethod()
-    {
-        $request = new Request([
-            '_SERVER' => ['REQUEST_METHOD' => 'GET']
-        ]);
-        $this->assertSame('GET', $request->getMethod());
-        $this->assertSame($request->getOriginalMethod(), $request->getMethod());
-    }
-
-    public function testGetCustomMethod()
-    {
-        $request = new Request([
-            '_SERVER'   => ['REQUEST_METHOD' => 'POST'],
-            '_POST'     => ['_method' => 'PUT']
-        ]);
-        $this->assertSame('PUT', $request->getMethod());
-
-        $request = new Request([
-            '_SERVER'   => ['REQUEST_METHOD' => 'POST', 'HTTP_X_HTTP_METHOD_OVERRIDE' => 'PUT'],
-        ]);
-
-        $this->assertSame('PUT', $request->getMethod());
-    }
-
-    public function testGetServerVars()
-    {
-        $request = new Request([
-            '_SERVER' => [
-                'HTTP_REFERER' => '/foo',
-                'SERVER_NAME' => 'foo',
-                'SERVER_PORT' => '1111',
-                'HTTP_HOST' => 'foo',
-                'SERVER_ADDR' => '2222',
-                'REMOTE_ADDR' => 'foo',
-                'REMOTE_PORT' => '1111',
-                'HTTP_USER_AGENT' => 'firefox',
-                'HTTP_ACCEPT' => 'foo,bar',
-                'HTTPS' => 'on',
-                'HTTP_CONTENT_TYPE' => 'text/html'
-            ]
-        ]);
-
-        $this->assertSame('/foo', $request->getReferrer());
-        $this->assertSame('foo', $request->getServerName());
-        $this->assertSame('1111', $request->getServerPort());
-        $this->assertSame('foo', $request->getHost());
-        $this->assertSame('2222', $request->getServerIp());
-        $this->assertSame('foo', $request->getClientIp());
-        $this->assertSame('1111', $request->getClientPort());
-        $this->assertSame('firefox', $request->getUserAgent());
-        $this->assertSame(['foo', 'bar'], $request->getAccepts());
-        $this->assertTrue($request->isAccept('foo'));
-        $this->assertFalse($request->isAccept('baz'));
-        $this->assertTrue($request->isSecure());
-        $this->assertSame('https', $request->getScheme());
-        $this->assertSame('text/html', $request->getContentType());
-    }
-
-    public function testGetHeader()
-    {
-        $request = new Request([
-            '_SERVER' => [
-                'HTTP_FOO' => 'foo',
-                'HTTP_BAR' => 'bar',
-            ]
-        ]);
-
-        $this->assertSame(['Foo' => 'foo', 'Bar' => 'bar'], $request->getHeaders());
-        $this->assertTrue($request->hasHeader('foo'));
-
-        $expected = "Foo: foo\r\nBar: bar";
-        $this->assertSame($expected, $request->getHeaderAsString());
-    }
-
-    public function testHasVar()
-    {
-        $request = new Request([
-            '_GET' => ['foo' => 'foo'],
-            '_POST' => ['bar' => 'bar'],
-            '_COOKIE' => ['baz' => 'baz'],
-            '_FILES' => ['qux' => 'qux']
-        ]);
-
-        $this->assertTrue($request->hasGetVar('foo'));
-        $this->assertFalse($request->hasGetVar('bar'));
-        $this->assertTrue($request->hasPostVar('bar'));
-        $this->assertFalse($request->hasPostVar('foo'));
-        $this->assertTrue($request->hasCookieVar('baz'));
-        $this->assertFalse($request->hasCookieVar('foo'));
-        $this->assertTrue($request->hasFileVar('qux'));
-        $this->assertFalse($request->hasFileVar('foo'));
-        $this->assertTrue($request->hasVar('foo'));
-        $this->assertTrue($request->hasVar('bar'));
-        $this->assertTrue($request->hasVar('baz'));
-        $this->assertTrue($request->hasVar('qux'));
-        $this->assertFalse($request->hasVar('xxxx'));
-    }
-
-    public function testGetVar()
-    {
-        $request = new Request([
-            '_REQUEST' => ['foo' => 'bar']
-        ]);
-
-        $this->assertSame('bar', $request->getVar('foo'));
-    }
-
-    public function testGetVars()
-    {
-        $request = new Request([
-            '_GET' => ['foo' => 'bar', 'bar' => 'baz'],
-            '_POST' => ['baz' => 'qux']
-        ]);
-
-        $this->assertSame(['foo' => 'bar', 'bar' => 'baz', 'baz' => 'qux'], $request->getVars());
-    }
-
-    public function testGetGetVar()
-    {
-        $request = new Request([
-            '_GET' => ['foo' => 'bar']
-        ]);
-
-        $this->assertSame('bar', $request->getGetVar('foo'));
-    }
-
-    public function testGetGetVars()
-    {
-        $vars = ['foo' => 'bar', 'bar' => 'baz'];
-        $request = new Request([
-            '_GET' => $vars
-        ]);
-
-        $this->assertSame($vars, $request->getGetVars());
-    }
-
-    public function testGetPostVar()
-    {
-        $request = new Request([
-            '_POST' => ['foo' => 'bar']
-        ]);
-
-        $this->assertSame('bar', $request->getPostVar('foo'));
-    }
-
-    public function testGetPostVars()
-    {
-        $vars = ['foo' => 'bar', 'bar' => 'baz'];
-        $request = new Request([
-            '_POST' => $vars
-        ]);
-
-        $this->assertSame($vars, $request->getPostVars());
-    }
-
-
-    public function testGetCookieVar()
-    {
-        $request = new Request([
-            '_COOKIE' => ['foo' => 'bar']
-        ]);
-
-        $this->assertSame('bar', $request->getCookieVar('foo'));
-    }
-
-    public function testGetCookieVars()
-    {
-        $vars = ['foo' => 'bar', 'bar' => 'baz'];
-        $request = new Request([
-            '_COOKIE' => $vars
-        ]);
-
-        $this->assertSame($vars, $request->getCookieVars());
-    }
-
-    public function testGetFileVar()
-    {
-        $request = new Request([
-            '_FILES' => ['foo' => 'bar']
-        ]);
-
-        $this->assertSame('bar', $request->getFileVar('foo'));
-    }
-
-    public function testGetFileVars()
-    {
-        $vars = ['foo' => 'bar', 'bar' => 'baz'];
-        $request = new Request([
-            '_FILES' => $vars
-        ]);
-
-        $this->assertSame($vars, $request->getFileVars());
-    }
-
-    public function testIsHead()
-    {
-        $request = new Request([
-            '_SERVER' => ['REQUEST_METHOD' => 'HEAD']
-        ]);
-
-        return $this->assertTrue($request->isHead());
-    }
-
-    public function testIsGet()
-    {
-        $request = new Request([
-            '_SERVER' => ['REQUEST_METHOD' => 'GET']
-        ]);
-
-        return $this->assertTrue($request->isGet());
-    }
-
-    public function testIsPost()
-    {
-        $request = new Request([
-            '_SERVER' => ['REQUEST_METHOD' => 'POST']
-        ]);
-
-        return $this->assertTrue($request->isPost());
-    }
-
-    public function testIsPut()
-    {
-        $request = new Request([
-            '_SERVER'   => ['REQUEST_METHOD' => 'POST'],
-            '_GET'      => ['_method' => 'PUT']
-        ]);
-
-        return $this->assertTrue($request->isPut());
-    }
-
-    public function testIsPatch()
-    {
-        $request = new Request([
-            '_SERVER'   => ['REQUEST_METHOD' => 'POST'],
-            '_GET'      => ['_method' => 'PATCH']
-        ]);
-
-        return $this->assertTrue($request->isPatch());
-    }
-
-    public function testIsDelete()
-    {
-        $request = new Request([
-            '_SERVER' => ['REQUEST_METHOD' => 'POST'],
-            '_GET'      => ['_method' => 'DELETE']
-        ]);
-
-        return $this->assertTrue($request->isDelete());
-    }
-
-    public function testIsOptions()
-    {
-        $request = new Request([
-            '_SERVER' => ['REQUEST_METHOD' => 'OPTIONS']
-        ]);
-
-        return $this->assertTrue($request->isOptions());
-    }
-
-    public function testIsXhr()
-    {
-        $request = new Request([
-            '_SERVER' => ['HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest']
-        ]);
-
-        $this->assertTrue($request->isXhr());
-    }
-
-    public function testDefaultGetMethodCallback()
-    {
-        Request::setDefaultGetMethodCallback(function() {
-            return 'foo';
-        });
-
-        $this->assertSame('foo', (new Request())->getMethod());
-    }
-
-    public function testCustomGetMethodCallback()
-    {
-        $request = new Request([
-            '_SERVER' => ['REQUEST_METHOD' => 'POST'],
-            '_POST' => ['__method__' => 'PUT']
-        ]);
-
-        $request->setGetMethodCallback(function($request) {
-            $method = $originalMethod = $request->getOriginalMethod();
-            if ('POST' == $originalMethod) {
-                $method = $request->getVar('__method__')?: $originalMethod;
-            }
-            return $method;
-        });
-
-        $this->assertSame('PUT', $request->getMethod());
-    }
-
-    public function testMethodParams()
-    {
-        $request = $this->getMock('Sloths\Http\Request', ['getVars']);
-        $request->expects($this->once())->method('getVars')->willReturn(['foo' => 'foo']);
-
-        $params = $request->params();
-
-        $this->assertInstanceOf('Sloths\Misc\ArrayContainer', $params);
-        $this->assertSame($params, $request->params());
-        $this->assertSame(['foo' => 'foo'], $params->toArray());
-    }
-
-    public function testMethodParamsGet()
-    {
-        $request = $this->getMock('Sloths\Http\Request', ['getGetVars']);
-        $request->expects($this->once())->method('getGetVars')->willReturn(['foo' => 'foo']);
-
-        $params = $request->paramsGet();
-
-        $this->assertInstanceOf('Sloths\Misc\ArrayContainer', $params);
-        $this->assertSame($params, $request->paramsGet());
-        $this->assertSame(['foo' => 'foo'], $params->toArray());
-    }
-
-    public function testMethodParamsPost()
-    {
-        $request = $this->getMock('Sloths\Http\Request', ['getPostVars']);
-        $request->expects($this->once())->method('getPostVars')->willReturn(['foo' => 'foo']);
-
-        $params = $request->paramsPost();
-
-        $this->assertInstanceOf('Sloths\Misc\ArrayContainer', $params);
-        $this->assertSame($params, $request->paramsPost());
-        $this->assertSame(['foo' => 'foo'], $params->toArray());
-    }
-
-    public function testMethodParamsCookie()
-    {
-        $request = $this->getMock('Sloths\Http\Request', ['getCookieVars']);
-        $request->expects($this->once())->method('getCookieVars')->willReturn(['foo' => 'foo']);
-
-        $params = $request->paramsCookie();
-
-        $this->assertInstanceOf('Sloths\Misc\ArrayContainer', $params);
-        $this->assertSame($params, $request->paramsCookie());
-        $this->assertSame(['foo' => 'foo'], $params->toArray());
-    }
-
-    public function testMethodHeaders()
-    {
-        $request = $this->getMock('Sloths\Http\Request', ['getHeaders']);
-        $request->expects($this->once())->method('getHeaders')->willReturn(['foo' => 'foo']);
-
-        $headers = $request->headers();
-
-        $this->assertInstanceOf('Sloths\Misc\ArrayContainer', $headers);
-        $this->assertSame($headers, $request->headers());
-        $this->assertSame(['foo' => 'foo'], $headers->toArray());
+        $this->assertInstanceOf('Sloths\Http\Message\Parameters', $request->getServerVars());
+
+        $serverVars = new Parameters();
+        $request->setServerVars($serverVars);
+        $this->assertSame($serverVars, $request->getServerVars());
     }
 
     /**
      * @expectedException \InvalidArgumentException
      */
-    public function testGetUndefinedPropertyShouldThrowAnException()
+    public function testSetInvalidServerVarsShouldThrowAnException()
     {
         $request = new Request();
-        $request->foo;
+        $request->setServerVars('foo');
+    }
+
+    public function testHeaders()
+    {
+        $request = new Request();
+        $request->setServerVars(['HTTP_FOO' => 'bar']);
+        $this->assertSame('bar', $request->getHeaders()->Foo);
+    }
+
+    public function testGetReferrer()
+    {
+        $request = new Request();
+        $request->setServerVars(['HTTP_REFERER' => 'bar']);
+        $this->assertSame('bar', $request->getReferrer());
+    }
+
+    /**
+     * @dataProvider dataProviderTestGetPath
+     */
+    public function testGetPath($expected, $uri)
+    {
+        $request = new Request();
+        $request->setServerVars(['REQUEST_URI' => $uri]);
+        $this->assertSame($expected, $request->getPath());
+    }
+
+    public function dataProviderTestGetPath()
+    {
+        return [
+            ['/', '/'],
+            ['/', '//'],
+            ['/', '// '],
+            ['/foo', '/foo'],
+            ['/foo', '/foo/'],
+            ['/foo', '/foo//'],
+            ['/foo', '/foo// '],
+            ['/foo', '/foo?foo=1&bar=2'],
+            ['/foo', '/foo//?foo=1&bar=2'],
+        ];
+    }
+
+    public function testGetOriginalMethod()
+    {
+        $request = new Request();
+        $request->setServerVars(['REQUEST_METHOD' => 'POST']);
+        $this->assertSame('POST', $request->getOriginalMethod());
+    }
+
+    /**
+     * @dataProvider dataProviderTestGetMethod
+     */
+    public function testGetMethod($expected, $request)
+    {
+        $this->assertSame($expected, $request->getMethod());
+    }
+
+    public function dataProviderTestGetMethod()
+    {
+        return [
+            ['POST', (new Request())->setServerVars(['REQUEST_METHOD' => 'POST'])],
+            ['PUT', (new Request())->setServerVars(['REQUEST_METHOD' => 'POST'])->setPostParams(['_method' => 'PUT'])],
+            ['PUT', (new Request())->setServerVars(['REQUEST_METHOD' => 'POST', 'HTTP_X_HTTP_METHOD_OVERRIDE' => 'PUT'])],
+        ];
+    }
+
+    /**
+     * @dataProvider dataProviderTestGetHost
+     */
+    public function testGetHost($expected, $request, $withPort = false)
+    {
+        $this->assertSame($expected, $request->getHost($withPort));
+    }
+
+    public function dataProviderTestGetHost()
+    {
+        return [
+            ['example.com', (new Request())->setServerVars(['HTTP_HOST' => 'example.com'])],
+            ['example.com', (new Request())->setServerVars(['HTTP_HOST' => 'example.com:80'])],
+            ['example.com', (new Request())->setServerVars(['SERVER_NAME' => 'example.com'])],
+            ['example.com:80', (new Request())->setServerVars(['HTTP_HOST' => 'example.com:80', 'SERVER_PORT' => '80']), true],
+        ];
+    }
+
+    public function testGetClientIp()
+    {
+        $request = new Request();
+        $request->setServerVars(['REMOTE_ADDR' => '127.0.0.1']);
+        $this->assertSame('127.0.0.1', $request->getClientIp());
+    }
+
+    public function testGetUserAgent()
+    {
+        $request = new Request();
+        $request->setServerVars(['USER_AGENT' => 'foo']);
+        $this->assertSame('foo', $request->getUserAgent());
+    }
+
+    public function testAccepts()
+    {
+        $request = new Request();
+        $request->setServerVars(['HTTP_ACCEPT' => 'foo,bar']);
+        $this->assertSame(['foo', 'bar'], $request->getAccepts());
+        $this->assertTrue($request->isAccept('foo'));
+    }
+
+    public function testGetContentType()
+    {
+        $request = new Request();
+        $request->setServerVars(['HTTP_CONTENT_TYPE' => 'text/xml']);
+        $this->assertSame('text/xml', $request->getContentType());
+    }
+
+    public function testIsXhr()
+    {
+        $request = new Request();
+        $request->setServerVars(['HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest']);
+        $this->assertTrue($request->isXhr());
+    }
+
+    /**
+     * @dataProvider dataProviderTestIsMethod
+     */
+    public function testIsMethod($requestMethod, $method)
+    {
+        $request = new Request();
+        $request->setServerVars(['REQUEST_METHOD' => $requestMethod]);
+        $this->assertTrue($request->{$method}());
+    }
+
+    public function dataProviderTestIsMethod()
+    {
+        return [
+            ['HEAD', 'isHead'],
+            ['GET', 'isGet'],
+            ['POST', 'isPost'],
+            ['PUT', 'isPut'],
+            ['PATCH', 'isPatch'],
+            ['DELETE', 'isDelete'],
+            ['OPTIONS', 'isOptions'],
+            ['TRACE', 'isTrace'],
+            ['CONNECT', 'isConnect'],
+        ];
+    }
+
+    /**
+     * @dataProvider dataProviderTestGetUrl
+     */
+    public function testGetUrl($expected, $request)
+    {
+        $this->assertSame($expected, $request->getUrl());
+    }
+
+    public function dataProviderTestGetUrl()
+    {
+        return [
+            ['http://example.com', (new Request())->setServerVars(['HTTP_HOST' => 'example.com', 'SERVER_PORT' => '80'])],
+            ['https://example.com', (new Request())->setServerVars(['HTTP_HOST' => 'example.com', 'SERVER_PORT' => '443', 'HTTPS' => 'on'])],
+            ['http://example.com:8080', (new Request())->setServerVars(['HTTP_HOST' => 'example.com', 'SERVER_PORT' => '8080'])],
+            ['http://example.com/foo', (new Request())->setServerVars(['HTTP_HOST' => 'example.com', 'SERVER_PORT' => '80', 'REQUEST_URI' => '/foo'])],
+            ['http://example.com:8080/foo', (new Request())->setServerVars(['HTTP_HOST' => 'example.com:8080', 'SERVER_PORT' => '8080', 'REQUEST_URI' => '/foo'])],
+        ];
+    }
+
+    public function testQueryParams()
+    {
+        $_GET = ['foo' => 'bar'];
+        $request = new Request();
+        $this->assertSame('bar', $request->getQueryParams()->foo);
+    }
+
+    public function testParams()
+    {
+        $_POST = ['foo' => 'bar'];
+        $request = new Request();
+        $this->assertSame('bar', $request->getParams()->foo);
+    }
+
+    public function testCookieParams()
+    {
+        $_COOKIE = ['foo' => 'bar'];
+        $request = new Request();
+        $this->assertSame('bar', $request->getCookieParams()->foo);
+    }
+
+    /**
+     * @dataProvider dataProviderTestFileParams
+     */
+    public function testFileParams($files, $expectedFiles)
+    {
+        $_FILES = $files;
+        $request = new Request();
+        $this->assertSame($expectedFiles, $request->getFileParams()->toArray());
+    }
+
+    public function dataProviderTestFileParams()
+    {
+        return [
+            // single file: name="foo", name="bar"
+            [
+                [
+                    'foo' => ['name' => 'foo.txt', 'type' => 'text/plain', 'tmp_name' => '/tmp/fooxxx', 'error' => 0, 'size' => 1],
+                    'bar' => ['name' => 'bar.jpg', 'type' => 'image/jpg', 'tmp_name' => '/tmp/barxxx', 'error' => 0, 'size' => 2],
+                ],
+                [
+                    'foo' => ['name' => 'foo.txt', 'type' => 'text/plain', 'tmp_name' => '/tmp/fooxxx', 'error' => 0, 'size' => 1],
+                    'bar' => ['name' => 'bar.jpg', 'type' => 'image/jpg', 'tmp_name' => '/tmp/barxxx', 'error' => 0, 'size' => 2],
+                ]
+            ],
+            // name with brackets and int keys
+            [
+                [
+                    'foo' => [
+                        'name' => ['foo.txt', 'bar.jpg'],
+                        'type' => ['text/plain', 'image/jpg'],
+                        'tmp_name' => ['/tmp/fooxxx', '/tmp/barxxx'],
+                        'error' => [0, 0],
+                        'size' => [1, 2]
+                    ]
+                ],
+                [
+                    'foo' => [
+                        ['name' => 'foo.txt', 'type' => 'text/plain', 'tmp_name' => '/tmp/fooxxx', 'error' => 0, 'size' => 1],
+                        ['name' => 'bar.jpg', 'type' => 'image/jpg', 'tmp_name' => '/tmp/barxxx', 'error' => 0, 'size' => 2],
+                    ]
+                ]
+            ],
+            // name with brackets and string keys: foo[one], foo[two]
+            [
+                [
+                    'foo' => [
+                        'name' => ['one' => 'foo.txt', 'two' => 'bar.jpg'],
+                        'type' => ['one' => 'text/plain', 'two' => 'image/jpg'],
+                        'tmp_name' => ['one' => '/tmp/fooxxx', 'two' => '/tmp/barxxx'],
+                        'error' => ['one' => 0, 'two' => 0],
+                        'size' => ['one' => 1, 'two' => 2]
+                    ]
+                ],
+                [
+                    'foo' => [
+                        'one' => ['name' => 'foo.txt', 'type' => 'text/plain', 'tmp_name' => '/tmp/fooxxx', 'error' => 0, 'size' => 1],
+                        'two' => ['name' => 'bar.jpg', 'type' => 'image/jpg', 'tmp_name' => '/tmp/barxxx', 'error' => 0, 'size' => 2],
+                    ]
+                ]
+            ],
+
+            // name with multiple level brackets foo[], foo[][], foo[][][]
+            [
+                [
+                    'foo' => [
+                        'name' => [
+                            'foo.txt',
+                            ['bar.jpg'],
+                            [['baz.css']]
+                        ],
+                        'type' => [
+                            'text/plain',
+                            ['image/jpg'],
+                            [['text/css']]
+                        ],
+                        'tmp_name' => [
+                            '/tmp/fooxxx',
+                            ['/tmp/barxxx'],
+                            [['/tmp/bazxxx']]
+                        ],
+                        'error' => [
+                            0,
+                            [0],
+                            [[0]]
+                        ],
+                        'size' => [
+                            1,
+                            [2],
+                            [[3]]
+                        ]
+                    ]
+                ],
+                [
+                    'foo' => [
+                        ['name' => 'foo.txt', 'type' => 'text/plain', 'tmp_name' => '/tmp/fooxxx', 'error' => 0, 'size' => 1],
+                        [['name' => 'bar.jpg', 'type' => 'image/jpg', 'tmp_name' => '/tmp/barxxx', 'error' => 0, 'size' => 2]],
+                        [[['name' => 'baz.css', 'type' => 'text/css', 'tmp_name' => '/tmp/bazxxx', 'error' => 0, 'size' => 3]]]
+                    ]
+                ]
+            ]
+        ];
     }
 }
