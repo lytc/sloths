@@ -226,7 +226,7 @@ class SelectTag extends InputTag
     /**
      * @return $this
      */
-    public function processValue()
+    protected function processValue()
     {
         if ($this->options) {
             $values = $this->value? $this->value : [];
