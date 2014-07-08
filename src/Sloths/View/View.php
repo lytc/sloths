@@ -280,8 +280,8 @@ class View
     }
 
     /**
-     * @param string [$file=null]
-     * @param array [$variables=null]
+     * @param string $file
+     * @param array $variables
      * @return string
      * @throws ViewException
      */

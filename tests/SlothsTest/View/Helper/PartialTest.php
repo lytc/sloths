@@ -4,6 +4,9 @@ namespace SlothsTest\View\Helper;
 
 use Sloths\View\View;
 
+/**
+ * @covers \Sloths\View\Helper\Partial
+ */
 class PartialTest extends \PHPUnit_Framework_TestCase
 {
     protected $viewPath;

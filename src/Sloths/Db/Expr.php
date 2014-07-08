@@ -11,8 +11,13 @@ class Expr
         $this->expr = $expr;
     }
 
-    public function toString()
+    public function getValue()
     {
         return $this->expr;
+    }
+
+    public function __toString()
+    {
+        return (string) $this->expr;
     }
 }

@@ -31,21 +31,25 @@ class Generator
     protected $abstractModelClassName;
 
     /**
-     * @param string $tableName
+     * @param string $table
      * @param string $namespaceName
      * @param Connection $connection
      * @return static
      */
-    public static function fromTable($tableName, $namespaceName, Connection $connection)
+    public static function fromTable($tableSchema, $namespaceName, Connection $connection)
     {
+        if (!$tableSchema instanceof Table) {
+            $table = Table::fromCache($tableSchema, $connection);
+        }
+
+        $tableName = $tableSchema->getName();
+
         $className = Inflector::classify(Inflector::singularize($tableName));
         if ($namespaceName) {
             $className = $namespaceName . '\\' . $className;
         }
 
         $generator = new static($className);
-
-        $tableSchema = Table::fromCache($tableName, $connection);
 
         # primary key
         $generator->setPrimaryKey($tableSchema->getPrimaryKeyColumn());
@@ -66,10 +70,10 @@ class Generator
         # $hasMany
         $belongsToConstraints = $tableSchema->getHasManyConstraints();
         $hasMany = [];
-        foreach ($belongsToConstraints as $tableName => $meta) {
-            $constraintName = Inflector::classify(Inflector::pluralize($tableName));
+        foreach ($belongsToConstraints as $table => $meta) {
+            $constraintName = Inflector::classify(Inflector::pluralize($table));
             $hasMany[$constraintName] = [
-                'model' => '\\' . $generator->classGenerator->getNamespaceName() . '\\' . Inflector::classify(Inflector::singularize($tableName)),
+                'model' => '\\' . $generator->classGenerator->getNamespaceName() . '\\' . Inflector::classify(Inflector::singularize($table)),
                 'foreignKey' => $meta['foreignKey']
             ];
         }
@@ -79,10 +83,10 @@ class Generator
         # $hasOne
         $belongsToConstraints = $tableSchema->getHasOneConstraints();
         $hasOne = [];
-        foreach ($belongsToConstraints as $tableName => $meta) {
-            $constraintName = Inflector::classify(Inflector::singularize($tableName));
+        foreach ($belongsToConstraints as $table => $meta) {
+            $constraintName = Inflector::classify(Inflector::singularize($table));
             $hasOne[$constraintName] = [
-                'model' => '\\' . $generator->classGenerator->getNamespaceName() . '\\' . Inflector::classify(Inflector::singularize($tableName)),
+                'model' => '\\' . $generator->classGenerator->getNamespaceName() . '\\' . Inflector::classify(Inflector::singularize($table)),
                 'foreignKey' => $meta['foreignKey']
             ];
         }
@@ -342,9 +346,7 @@ class Generator
 
     public function getAbstractModelFileName()
     {
-        if ($this->abstractModelClassName) {
-            return $this->getDirectory() . '/' . $this->abstractModelClassName . '.php';
-        }
+        return $this->abstractModelClassName? $this->getDirectory() . '/' . $this->abstractModelClassName . '.php' : null;
     }
 
     /**

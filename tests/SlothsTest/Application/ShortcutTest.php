@@ -7,15 +7,18 @@ use Sloths\Application\Service\ServiceInterface;
 use Sloths\Application\Service\ServiceTrait;
 use SlothsTest\TestCase;
 
+/**
+ * @covers \Sloths\Application\Application
+ */
 class ShortcutTest extends TestCase
 {
     public function testAddShortcutMethod()
     {
-        $service = $this->mock(new BarService());
-        $service->shouldReceive('foo')->with('foo')->andReturn(1);
-        $service->shouldReceive('bar')->with('bar')->andReturn(2);
-        $service->shouldReceive('baz')->with('baz')->andReturn(3);
-        $service->shouldReceive('qux')->with('qux')->andReturn(4);
+        $service = $this->getMock(__NAMESPACE__ . '\BarService', ['foo', 'bar', 'baz', 'qux']);
+        $service->expects($this->once())->method('foo')->with('foo')->willReturn(1);
+        $service->expects($this->once())->method('bar')->with('bar')->willReturn(2);
+        $service->expects($this->once())->method('baz')->with('baz')->willReturn(3);
+        $service->expects($this->once())->method('qux')->with('qux')->willReturn(4);
 
         $application = new Application();
         $application->addService('foo', $service);
@@ -28,9 +31,10 @@ class ShortcutTest extends TestCase
     }
 
     public function testSetShortcutMethod()
-    {$service = $this->mock(new BarService());
-        $service->shouldReceive('foo')->with('foo')->andReturn(1);
-        $service->shouldReceive('bar')->with('foo')->andReturn(2);
+    {
+        $service = $this->getMock(__NAMESPACE__ . '\BarService', ['foo', 'bar']);
+        $service->expects($this->once())->method('foo')->with('foo')->willReturn(1);
+        $service->expects($this->exactly(2))->method('bar')->with('foo')->willReturn(2);
 
         $application = new Application();
         $application->addService('service', $service);
@@ -74,9 +78,8 @@ class ShortcutTest extends TestCase
     public function testDefaultShortcutMethods($method, $serviceName, $originMethod)
     {
         $application = new Application();
-        $service = $this->mock('Sloths\Application\Service\ServiceInterface');
-        $service->shouldReceive('setApplication');
-        $service->shouldReceive($originMethod)->once();
+        $service = $this->getMock('Sloths\Application\Service\ServiceInterface', ['setApplication', 'getApplication', $originMethod]);
+        $service->expects($this->once())->method($originMethod);
 
         $application->setService($serviceName, $service);
 
@@ -125,8 +128,8 @@ class ShortcutTest extends TestCase
      */
     public function testAddDuplicateShortcutMethodShouldThrowAnException()
     {
-        $application = $this->mock('Sloths\Application\Application[hasShortcutMethod]');
-        $application->shouldReceive('hasShortcutMethod')->once()->with('foo')->andReturn(true);
+        $application = $this->getMock('Sloths\Application\Application', ['hasShortcutMethod']);
+        $application->expects($this->once())->method('hasShortcutMethod')->with('foo')->willReturn(true);
 
         $application->addShortcutMethod('foo', 'foo');
     }
@@ -136,8 +139,8 @@ class ShortcutTest extends TestCase
      */
     public function testAddDuplicateShortcutPropertyShouldThrowAnException()
     {
-        $application = $this->mock('Sloths\Application\Application[hasShortcutProperty]');
-        $application->shouldReceive('hasShortcutProperty')->once()->with('foo')->andReturn(true);
+        $application = $this->getMock('Sloths\Application\Application', ['hasShortcutProperty']);
+        $application->expects($this->once())->method('hasShortcutProperty')->with('foo')->willReturn(true);
 
         $application->addShortcutProperty('foo', 'foo');
     }

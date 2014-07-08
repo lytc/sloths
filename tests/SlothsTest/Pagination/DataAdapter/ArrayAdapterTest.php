@@ -4,6 +4,9 @@ namespace SlothsTest\Pagination\DataAdapter;
 
 use Sloths\Pagination\DataAdapter\ArrayAdapter;
 
+/**
+ * @covers \Sloths\Pagination\DataAdapter\ArrayAdapter
+ */
 class ArrayAdapterTest extends \PHPUnit_Framework_TestCase
 {
     public function test()

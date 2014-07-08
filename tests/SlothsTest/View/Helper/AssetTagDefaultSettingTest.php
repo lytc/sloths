@@ -8,6 +8,9 @@ use Sloths\View\Helper\ScriptTag;
 use Sloths\View\Helper\StylesheetTag;
 use SlothsTest\TestCase;
 
+/**
+ * @covers \Sloths\View\Helper\AssetTag
+ */
 class AssetTagDisableCachingTest extends TestCase
 {
     public function testDefaultDisableCaching()

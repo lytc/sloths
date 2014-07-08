@@ -5,12 +5,16 @@ namespace SlothsTest\Application;
 use Sloths\Application\Application;
 use SlothsTest\TestCase;
 
+/**
+ * @covers \Sloths\Application\Application
+ * @runTestsInSeparateProcesses
+ */
 class ApplicationConfigTest extends TestCase
 {
     public function testLoadApplicationConfig()
     {
-        $application = $this->mock('Sloths\Application\Application[notFound]');
-        $application->shouldReceive('notFound');
+        $application = $this->getMock('Sloths\Application\Application', ['send']);
+        $application->expects($this->once())->method('send');
 
         $application->setDirectory(__DIR__ . '/fixtures');
         $application->setEnv('development');

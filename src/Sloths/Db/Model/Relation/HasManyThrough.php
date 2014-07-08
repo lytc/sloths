@@ -66,6 +66,7 @@ class HasManyThrough extends Collection
         } else {
             $collection->where("$throughTableName.$leftForeignKey" . ' = ' . $model->id());
         }
+
         parent::__construct($collection->getSqlSelect(), $modelClassName);
     }
 }

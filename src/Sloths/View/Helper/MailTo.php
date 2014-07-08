@@ -4,6 +4,11 @@ namespace Sloths\View\Helper;
 
 class MailTo extends Tag
 {
+    /**
+     * @param string|array $addresses
+     * @param bool $escape
+     * @return string
+     */
     protected function buildAddress($addresses, $escape = false)
     {
         is_array($addresses) || ($addresses = [$addresses]);
@@ -22,6 +27,12 @@ class MailTo extends Tag
         return implode(',', $result);
     }
 
+    /**
+     * @param string|array $addresses
+     * @param string $name
+     * @param array $options
+     * @return $this
+     */
     public function mailTo($addresses, $name = null, array $options = null)
     {
         if (is_array($name)) {

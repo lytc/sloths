@@ -4,8 +4,15 @@ namespace Sloths\View\Helper;
 
 class InputTextTag extends InputTag
 {
+    /**
+     * @var string
+     */
     protected $tagName = 'input';
-    protected static $defaultAttributes = [
+
+    /**
+     * @var array
+     */
+    protected $defaultAttributes = [
         'type' => 'text'
     ];
 }

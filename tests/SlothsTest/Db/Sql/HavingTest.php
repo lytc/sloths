@@ -4,6 +4,9 @@ namespace SlothsTest\Db\Sql;
 use Sloths\Db\Db;
 use Sloths\Db\Sql\Having;
 
+/**
+ * @covers \Sloths\Db\Sql\Having
+ */
 class HavingTest extends \PHPUnit_Framework_TestCase
 {
     public function testSimpleConditions()

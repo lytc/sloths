@@ -4,6 +4,7 @@ namespace Sloths\Db\Schema;
 
 use Sloths\Db\Sql\Select;
 use Sloths\Db\Connection;
+use Sloths\Util\ArrayUtils;
 
 class Table
 {
@@ -71,6 +72,11 @@ class Table
         $this->connection = $connection;
     }
 
+    protected function _fromCache($tableName)
+    {
+        return static::fromCache($tableName, $this->connection);
+    }
+
     /**
      * @return string
      */
@@ -86,9 +92,12 @@ class Table
     {
         foreach ($this->getColumns() as $name => $meta) {
             if ($meta['isPrimaryKey']) {
-                return $name;
+                $result = $name;
+                break;
             }
         }
+
+        return $result;
     }
 
     /**
@@ -146,7 +155,7 @@ class Table
 
             foreach ($rows as $row) {
                 # filter again, if the column is primary key, it is one to one
-                if (static::fromCache($row['TABLE_NAME'], $this->connection)->getPrimaryKeyColumn() == $row['COLUMN_NAME']) {
+                if ($this->_fromCache($row['TABLE_NAME'])->getPrimaryKeyColumn() == $row['COLUMN_NAME']) {
                     continue;
                 }
 
@@ -179,7 +188,7 @@ class Table
 
             foreach ($rows as $row) {
                 # filter again, if the column isn't primary key, it is one to many
-                if (static::fromCache($row['TABLE_NAME'], $this->connection)->getPrimaryKeyColumn() != $row['COLUMN_NAME']) {
+                if ($this->_fromCache($row['TABLE_NAME'], $this->connection)->getPrimaryKeyColumn() != $row['COLUMN_NAME']) {
                     continue;
                 }
 
@@ -232,10 +241,10 @@ class Table
         if (null === $this->hasManyThroughConstraints) {
             $constraints = [];
             $hasManyConstraints = $this->getHasManyConstraints();
-            $belongsToTables = array_column($this->getBelongsToConstraints(), 'table');
+            $belongsToTables =  ArrayUtils::column($this->getBelongsToConstraints(), 'table');
 
             foreach ($hasManyConstraints as $tableName => $hasManyMeta) {
-                $table = static::fromCache($tableName, $this->connection);
+                $table = $this->_fromCache($tableName);
                 $belongsToConstraints = $table->getBelongsToConstraints();
 
                 foreach ($belongsToConstraints as $columnName => $belongToMeta) {

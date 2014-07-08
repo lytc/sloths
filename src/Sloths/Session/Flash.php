@@ -2,7 +2,7 @@
 
 namespace Sloths\Session;
 
-class Flash implements \IteratorAggregate, \ArrayAccess
+class Flash implements \IteratorAggregate, \ArrayAccess, \Countable
 {
     /**
      * @var array
@@ -18,7 +18,7 @@ class Flash implements \IteratorAggregate, \ArrayAccess
      * @param string $name
      * @param Session $session
      */
-    public function __construct($name = '__LAZY_FLASH_SESSION__', Session $session = null)
+    public function __construct($name = '__SLOTHS_FLASH_SESSION__', Session $session = null)
     {
         if (!$session) {
             $session = Session::getInstance();
@@ -31,9 +31,25 @@ class Flash implements \IteratorAggregate, \ArrayAccess
     /**
      * @return array
      */
+    public function getCurrentData()
+    {
+        return $this->currentData;
+    }
+
+    /**
+     * @return array
+     */
     public function getNextData()
     {
         return $this->nextData;
+    }
+
+    /**
+     * @return int
+     */
+    public function count()
+    {
+        return count($this->currentData);
     }
 
     /**

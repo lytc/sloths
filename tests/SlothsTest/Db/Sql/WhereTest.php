@@ -4,6 +4,9 @@ namespace SlothsTest\Db\Sql;
 use Sloths\Db\Db;
 use Sloths\Db\Sql\Where;
 
+/**
+ * @covers \Sloths\Db\Sql\Where<extended>
+ */
 class WhereTest extends \PHPUnit_Framework_TestCase
 {
     public function testItShouldReturnsAnEmptyStringWithNoCondition()
@@ -126,5 +129,16 @@ class WhereTest extends \PHPUnit_Framework_TestCase
 
         $expected = "WHERE (foo = 'bar') AND (bar IS NULL) AND (baz IS NOT NULL) AND (baz IN(1, 1, 'foo')) AND (qux LIKE '%q\\\"ux%')";
         $this->assertSame($expected, $where->toString());
+    }
+
+    public function testReset()
+    {
+        $where = new Where();
+        $where->where(['foo' => 'bar', 'bar' => 'baz']);
+        $expected = "WHERE (foo = 'bar' AND bar = 'baz')";
+        $this->assertSame($expected, $where->toString());
+
+        $where->reset();
+        $this->assertSame('', $where->toString());
     }
 }

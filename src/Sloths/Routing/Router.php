@@ -21,6 +21,11 @@ class Router
     /**
      * @var string
      */
+    protected $defaultRouteFile = 'index.php';
+
+    /**
+     * @var string
+     */
     protected $basePath;
 
     /**
@@ -59,6 +64,24 @@ class Router
     public function getDirectory()
     {
         return $this->directory;
+    }
+
+    /**
+     * @param string $file
+     * @return $this
+     */
+    public function setDefaultRouteFile($file)
+    {
+        $this->defaultRouteFile = $file;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDefaultRouteFile()
+    {
+        return $this->defaultRouteFile;
     }
 
     /**
@@ -111,41 +134,81 @@ class Router
         return $this;
     }
 
+    /**
+     * @param string $pattern
+     * @param callable $callback
+     * @return $this
+     */
     public function head($pattern, \Closure $callback)
     {
         return $this->map(self::HEAD, $pattern, $callback);
     }
 
+    /**
+     * @param string $pattern
+     * @param callable $callback
+     * @return $this
+     */
     public function get($pattern, \Closure $callback)
     {
         return $this->map(self::GET, $pattern, $callback);
     }
 
+    /**
+     * @param string $pattern
+     * @param callable $callback
+     * @return $this
+     */
     public function post($pattern, \Closure $callback)
     {
         return $this->map(self::POST, $pattern, $callback);
     }
 
+    /**
+     * @param string $pattern
+     * @param callable $callback
+     * @return $this
+     */
     public function put($pattern, \Closure $callback)
     {
         return $this->map(self::PUT, $pattern, $callback);
     }
 
+    /**
+     * @param string $pattern
+     * @param callable $callback
+     * @return $this
+     */
     public function patch($pattern, \Closure $callback)
     {
         return $this->map(self::PATCH, $pattern, $callback);
     }
 
+    /**
+     * @param string $pattern
+     * @param callable $callback
+     * @return $this
+     */
     public function delete($pattern, \Closure $callback)
     {
         return $this->map(self::DELETE, $pattern, $callback);
     }
 
+    /**
+     * @param string $pattern
+     * @param callable $callback
+     * @return $this
+     */
     public function options($pattern, \Closure $callback)
     {
         return $this->map(self::OPTIONS, $pattern, $callback);
     }
 
+    /**
+     * @param string $pattern
+     * @param callable $callback
+     * @return $this
+     */
     public function trace($pattern, \Closure $callback)
     {
         return $this->map(self::TRACE, $pattern, $callback);
@@ -168,8 +231,12 @@ class Router
             }
         }
 
-        if (!$routeFile) {
-            $routeFile = $this->directory . '/index.php';
+        if (!$routeFile && $this->defaultRouteFile) {
+            if ('/' == $this->defaultRouteFile[0]) {
+                $routeFile = $this->defaultRouteFile;
+            } else {
+                $routeFile = $this->directory . '/' . $this->defaultRouteFile;
+            }
         }
 
         if (file_exists($routeFile)) {
@@ -194,13 +261,20 @@ class Router
     {
         $dispatchPath = $this->loadRouteFromFile($dispatchPath);
 
+        $result = null;
+
         for ($i = $this->position, $count = count($this->routes); $i < $count; $i++) {
             $route = $this->routes[$i];
-            if (is_array($route->match($requestMethod, $dispatchPath))) {
+            $params = $route->match($requestMethod, $dispatchPath);
+
+            if (is_array($params)) {
                 $this->position = $i;
-                return $route;
+                $result = $route;
+                break;
             }
         }
+
+        return $result;
     }
 
 }

@@ -6,6 +6,9 @@ use Sloths\View\View;
 use Sloths\View\Helper\AssetTag;
 use Sloths\View\Helper\ImageTag;
 
+/**
+ * @covers \Sloths\View\Helper\ImageTag<extended>
+ */
 class ImageTagTest extends \PHPUnit_Framework_TestCase
 {
     public function setup()

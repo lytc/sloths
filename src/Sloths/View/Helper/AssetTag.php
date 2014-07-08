@@ -141,7 +141,7 @@ abstract class AssetTag extends Tag
     /**
      * @return string
      */
-    public function build()
+    public function render()
     {
         $attributes = $this->buildAttributes();
         $children = implode('', $this->children);

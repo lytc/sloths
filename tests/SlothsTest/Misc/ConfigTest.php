@@ -5,6 +5,9 @@ namespace SlothsTest\Misc;
 use Sloths\Misc\Config;
 use SlothsTest\TestCase;
 
+/**
+ * @covers \Sloths\Misc\Config
+ */
 class ConfigTest extends TestCase
 {
     public function testFromFile()

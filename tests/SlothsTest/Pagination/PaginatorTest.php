@@ -8,6 +8,9 @@ use Sloths\Db\Sql\Select;
 use Sloths\Pagination\Paginator;
 use SlothsTest\TestCase;
 
+/**
+ * @covers \Sloths\Pagination\Paginator
+ */
 class PaginatorTest extends TestCase
 {
     public function testDataAdapter()
@@ -44,20 +47,31 @@ class PaginatorTest extends TestCase
         $this->assertSame($pageRange, $paginator->getLastPageInRange());
         $this->assertFalse($paginator->getPrevPageNumber());
         $this->assertSame(2, $paginator->getNextPageNumber());
+        $this->assertSame(0, $paginator->getFromIndex());
+        $this->assertSame(1, $paginator->getToIndex());
 
         $paginator->setCurrentPage(6);
         $this->assertSame(1, $paginator->getFirstPageInRange());
         $this->assertSame($pageRange, $paginator->getLastPageInRange());
         $this->assertSame(5, $paginator->getPrevPageNumber());
         $this->assertSame(7, $paginator->getNextPageNumber());
+        $this->assertSame(10, $paginator->getFromIndex());
+        $this->assertSame(11, $paginator->getToIndex());
 
         $paginator->setCurrentPage(7);
         $this->assertSame(2, $paginator->getFirstPageInRange());
         $this->assertSame(11, $paginator->getLastPageInRange());
+        $this->assertSame(12, $paginator->getFromIndex());
+        $this->assertSame(13, $paginator->getToIndex());
 
         $paginator->setCurrentPage(13);
         $this->assertSame(7, $paginator->getFirstPageInRange());
         $this->assertSame(16, $paginator->getLastPageInRange());
+        $this->assertSame(24, $paginator->getFromIndex());
+        $this->assertSame(25, $paginator->getToIndex());
+
+        $paginator->setCurrentPage(16);
+        $this->assertFalse($paginator->getNextPageNumber());
     }
 
     public function testWithFewRows()
@@ -94,10 +108,10 @@ class PaginatorTest extends TestCase
 
     public function testModelCollectionAdapter()
     {
-        $collection = $this->mock('Sloths\Db\Model\Collection');
-        $collection->shouldReceive('calcFoundRows')->once()->andReturnSelf();
-        $collection->shouldReceive('foundRows')->once();
-        $collection->shouldReceive('limit')->once();
+        $collection = $this->getMock('Sloths\Db\Model\Collection', ['calcFoundRows', 'foundRows', 'limit'], [], '', false);
+        $collection->expects($this->once())->method('calcFoundRows')->willReturnSelf();
+        $collection->expects($this->once())->method('foundRows');
+        $collection->expects($this->once())->method('limit');
         $paginator = new Paginator($collection);
 
         $this->assertSame($collection, $paginator->getIterator());

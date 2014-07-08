@@ -12,14 +12,14 @@ class TestCase extends \SlothsTest\TestCase
         return $connection;
     }
 
-    public function mockConnection()
-    {
-        return $this->mock('Sloths\Db\Connection', ['', '', '', '', '']);
-    }
-
     public function mockPdo()
     {
-        return $this->mock(new PDOMock, []);
+        return $this->getMock(__NAMESPACE__ . '\PDOMock', func_get_args());
+    }
+
+    public function mockConnection()
+    {
+        return $this->getMock('Sloths\Db\Connection', func_get_args(), [], '', false);
     }
 }
 

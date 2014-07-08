@@ -179,7 +179,11 @@ class Connection
             return $value;
         }
 
-        if ($value instanceof Expr || $value instanceof Select) {
+        if ($value instanceof Expr) {
+            return (string) $value;
+        }
+
+        if ($value instanceof Select) {
             return $value->toString();
         }
 
@@ -294,7 +298,7 @@ class Connection
 
     /**
      * @param Select $sql
-     * @param int [$index=0]
+     * @param int $index
      * @return string
      */
     public function selectColumn(Select $sql, $index = 0)

@@ -11,6 +11,9 @@ use Sloths\Db\Connection;
 use Sloths\Db\Db;
 use Sloths\Db\Sql\Select;
 
+/**
+ * @covers \Sloths\Db\Connection
+ */
 class ConnectionTest extends TestCase
 {
     public function testGetPdoShouldReturnsTheSamePdoInstance()
@@ -44,10 +47,10 @@ class ConnectionTest extends TestCase
 
     public function testQuoteWithType()
     {
-        $pdo = $this->mockPdo();
-        $pdo->shouldReceive('quote')->once()->with(1, \PDO::PARAM_INT)->andReturn(1);
-        $pdo->shouldReceive('quote')->once()->with('foo', \PDO::PARAM_STR)->andReturn("'foo'");
-        $pdo->shouldReceive('quote')->once()->with('bar', \PDO::PARAM_STR)->andReturn("'bar'");
+        $pdo = $this->mockPdo('quote');
+        $pdo->expects($this->at(0))->method('quote')->with(1, \PDO::PARAM_INT)->willReturn(1);
+        $pdo->expects($this->at(1))->method('quote')->with('foo', \PDO::PARAM_STR)->willReturn("'foo'");
+        $pdo->expects($this->at(2))->method('quote')->with('bar', \PDO::PARAM_STR)->willReturn("'bar'");
 
         $connection = $this->createConnection($pdo);
         $this->assertSame(1, $connection->quote(1, \PDO::PARAM_INT));
@@ -57,10 +60,10 @@ class ConnectionTest extends TestCase
 
     public function testQuoteWithStringTypeShouldFallbackToPdoQuote()
     {
-        $pdo = $this->mockPdo();
-        $pdo->shouldReceive('quote')->with('foo')->andReturn("'foo'");
+        $pdo = $this->mockPdo('quote');
+        $pdo->expects($this->once())->method('quote')->with('foo')->willReturn("'foo'");
         $connection = $this->createConnection($pdo);
-        $this->assertSame($pdo->quote('foo'), $connection->quote('foo'));
+        $this->assertSame("'foo'", $connection->quote('foo'));
     }
 
     public function testEscape()
@@ -73,10 +76,10 @@ class ConnectionTest extends TestCase
         $this->assertSame('NULL', $connection->escape(null));
         $this->assertSame([1, 0, 2, 2.1, 'NULL'], $connection->escape([true, false, 2, 2.1, null]));
 
-        $pdo = $this->mockPdo();
-        $pdo->shouldReceive('quote')->with("foo'bar")->andReturn("'foo\'bar'");
+        $pdo = $this->mockPdo('quote');
+        $pdo->expects($this->any())->method('quote')->with("foo'bar")->willReturn("'foo\'bar'");
         $connection = $this->createConnection($pdo);
-        $this->assertSame(substr($connection->quote("foo'bar"), 1, -1), $connection->escape("foo'bar"));
+        $this->assertSame("foo\'bar", $connection->escape("foo'bar"));
 
         $values = [true, false, 0, 2, 2.1, null, "foo'bar"];
         $quoted = $connection->quote($values);
@@ -92,68 +95,68 @@ class ConnectionTest extends TestCase
 
     public function testInsertShouldReturnsInsertedId()
     {
-        $pdo = $this->mockPdo();
-        $pdo->shouldReceive('exec')->once()->andReturn(1);
-        $pdo->shouldReceive('lastInsertId')->once()->andReturn(1);
+        $pdo = $this->mockPdo('exec', 'lastInsertId');
+        $pdo->expects($this->once())->method('exec')->willReturn(1);
+        $pdo->expects($this->once())->method('lastInsertId')->willReturn(1);
         $connection = $this->createConnection($pdo);
 
-        $insert = $this->mock('\Sloths\Db\Sql\Insert');
-        $insert->shouldReceive('toString');
+        $insert = $this->getMock('\Sloths\Db\Sql\Insert', ['toString']);
+        $insert->expects($this->once())->method('toString');
 
         $this->assertSame(1, $connection->insert($insert));
     }
 
     public function testUpdateShouldReturnsAffectedRows()
     {
-        $pdo = $this->mockPdo();
-        $pdo->shouldReceive('exec')->once()->andReturn(2);
+        $pdo = $this->mockPdo('exec');
+        $pdo->expects($this->once())->method('exec')->willReturn(2);
         $connection = $this->createConnection($pdo);
 
-        $update = $this->mock('\Sloths\Db\Sql\Update');
-        $update->shouldReceive('toString')->once();
+        $update = $this->getMock('\Sloths\Db\Sql\Update', ['toString']);
+        $update->expects($this->once())->method('toString');
 
         $this->assertSame(2, $connection->update($update));
     }
 
     public function testDeleteShouldReturnsAffectedRows()
     {
-        $pdo = $this->mockPdo();
-        $pdo->shouldReceive('exec')->once()->andReturn(2);
+        $pdo = $this->mockPdo('exec');
+        $pdo->expects($this->once())->method('exec')->willReturn(2);
         $connection = $this->createConnection($pdo);
 
-        $delete = $this->mock('\Sloths\Db\Sql\Delete');
-        $delete->shouldReceive('toString')->once();
+        $delete = $this->getMock('\Sloths\Db\Sql\Delete', ['toString']);
+        $delete->expects($this->once())->method('toString');
 
         $this->assertSame(2, $connection->delete($delete));
     }
 
     public function testSelect()
     {
-        $stmt = $this->mockPdo('PDOStatement');
-        $stmt->shouldReceive('fetch')->once()->andReturn([]);
+        $stmt = $this->getMock('PDOStatement', ['fetch']);
+        $stmt->expects($this->once())->method('fetch')->willReturn([]);
 
-        $pdo = $this->mockPdo();
-        $pdo->shouldReceive('query')->once()->andReturn($stmt);
+        $pdo = $this->mockPdo('query');
+        $pdo->expects($this->once())->method('query')->willReturn($stmt);
 
         $connection = $this->createConnection($pdo);
 
-        $select = $this->mock('\Sloths\Db\Sql\Select');
-        $select->shouldReceive('toString')->once();
+        $select = $this->getMock('\Sloths\Db\Sql\Select', ['toString']);
+        $select->expects($this->once())->method('toString');
 
         $this->assertSame([], $connection->select($select));
     }
 
     public function testSelectAll()
     {
-        $stmt = $this->mock('PDOStatement');
-        $stmt->shouldReceive('fetchAll')->once()->with(\PDO::FETCH_ASSOC)->andReturn([[]]);
-        $pdo = $this->mockPdo();
-        $pdo->shouldReceive('query')->once()->andReturn($stmt);
+        $stmt = $this->getMock('PDOStatement', ['fetchAll']);
+        $stmt->expects($this->once())->method('fetchAll')->with(\PDO::FETCH_ASSOC)->willReturn([[]]);
+        $pdo = $this->mockPdo('query');
+        $pdo->expects($this->once())->method('query')->willReturn($stmt);
 
         $connection = $this->createConnection($pdo);
 
-        $select = $this->mock('\Sloths\Db\Sql\Select');
-        $select->shouldReceive('toString');
+        $select = $this->getMock('\Sloths\Db\Sql\Select', ['toString']);
+        $select->expects($this->once())->method('toString');
 
         $this->assertSame([[]], $connection->selectAll($select));
     }
@@ -163,15 +166,15 @@ class ConnectionTest extends TestCase
         $select = new Select();
         $select->from('foo')->limit(1);
 
-        $stmt1 = $this->mock('PDOStatement');
-        $stmt1->shouldReceive('fetchAll')->once()->with(\PDO::FETCH_ASSOC)->andReturn([]);
+        $stmt1 = $this->getMock('PDOStatement', ['fetchAll']);
+        $stmt1->expects($this->once())->method('fetchAll')->with(\PDO::FETCH_ASSOC)->willReturn([]);
 
-        $stmt2 = $this->mock('PDOStatement');
-        $stmt2->shouldReceive('fetchColumn')->once()->andReturn(10);
+        $stmt2 = $this->getMock('PDOStatement', ['fetchColumn']);
+        $stmt2->expects($this->once())->method('fetchColumn')->willReturn(10);
 
-        $pdo = $this->mockPdo();
-        $pdo->shouldReceive('query')->once()->with('SELECT SQL_CALC_FOUND_ROWS foo.* FROM foo LIMIT 1')->andReturn($stmt1);
-        $pdo->shouldReceive('query')->once()->with('SELECT FOUND_ROWS()')->andReturn($stmt2);
+        $pdo = $this->mockPdo('query');
+        $pdo->expects($this->at(0))->method('query')->with('SELECT SQL_CALC_FOUND_ROWS foo.* FROM foo LIMIT 1')->willReturn($stmt1);
+        $pdo->expects($this->at(1))->method('query')->with('SELECT FOUND_ROWS()')->willReturn($stmt2);
 
         $connection = $this->createConnection($pdo);
         $this->assertSame(['rows' => [], 'foundRows' => 10], $connection->selectAllWithFoundRows($select));
@@ -180,12 +183,12 @@ class ConnectionTest extends TestCase
     public function testSelectColumn()
     {
         $select = new Select('foo');
-        $stmt = $this->mock('PDOStatement');
-        $stmt->shouldReceive('fetchColumn')->once()->with(0)->andReturn('bar');
-        $stmt->shouldReceive('fetchColumn')->once()->with(1)->andReturn('baz');
+        $stmt = $this->getMock('PDOStatement', ['fetchColumn']);
+        $stmt->expects($this->at(0))->method('fetchColumn')->with(0)->willReturn('bar');
+        $stmt->expects($this->at(1))->method('fetchColumn')->with(1)->willReturn('baz');
 
-        $pdo = $this->mockPdo();
-        $pdo->shouldReceive('query')->twice()->with($select->toString())->andReturn($stmt);
+        $pdo = $this->mockPdo('query');
+        $pdo->expects($this->exactly(2))->method('query')->with($select->toString())->willReturn($stmt);
 
         $connection = $this->createConnection($pdo);
         $this->assertSame('bar', $connection->selectColumn($select));
@@ -194,9 +197,9 @@ class ConnectionTest extends TestCase
 
     public function testNestedTransactionWithCommit()
     {
-        $pdo = $this->mockPdo();
-        $pdo->shouldReceive('beginTransaction')->once()->andReturn(true);
-        $pdo->shouldReceive('commit')->once()->andReturn(true);
+        $pdo = $this->mockPdo('beginTransaction', 'commit');
+        $pdo->expects($this->once())->method('beginTransaction')->willReturn(true);
+        $pdo->expects($this->once())->method('commit')->willReturn(true);
         $connection = $this->createConnection($pdo);
 
         $connection->beginTransaction();
@@ -207,9 +210,9 @@ class ConnectionTest extends TestCase
 
     public function testNestedTransactionWithRollBack()
     {
-        $pdo = $this->mockPdo();
-        $pdo->shouldReceive('beginTransaction')->once()->andReturn(true);
-        $pdo->shouldReceive('rollBack')->once()->andReturn(true);
+        $pdo = $this->mockPdo('beginTransaction', 'rollBack');
+        $pdo->expects($this->once())->method('beginTransaction')->willReturn(true);
+        $pdo->expects($this->once())->method('rollBack')->willReturn(true);
         $connection = $this->createConnection($pdo);
 
         $connection->beginTransaction();
@@ -220,10 +223,10 @@ class ConnectionTest extends TestCase
 
     public function testNestedTransactionWithRollBackAndCommit()
     {
-        $pdo = $this->mockPdo();
-        $pdo->shouldReceive('beginTransaction')->once()->andReturn(true);
-        $pdo->shouldReceive('commit')->never();
-        $pdo->shouldReceive('rollBack')->once()->andReturn(true);
+        $pdo = $this->mockPdo('beginTransaction', 'commit', 'rollBack');
+        $pdo->expects($this->once())->method('beginTransaction')->willReturn(true);
+        $pdo->expects($this->never())->method('commit');
+        $pdo->expects($this->once())->method('rollBack')->willReturn(true);
         $connection = $this->createConnection($pdo);
 
         $connection->beginTransaction();
@@ -234,10 +237,10 @@ class ConnectionTest extends TestCase
 
     public function testTransactionShouldRunAndTheScopeOfClosureCallbackShouldBeConnection()
     {
-        $pdo = $this->mockPdo();
-        $pdo->shouldReceive('beginTransaction')->once();
-        $pdo->shouldReceive('commit')->once();
-        $pdo->shouldReceive('rollBack')->never();
+        $pdo = $this->mockPdo('beginTransaction', 'commit', 'rollBack');
+        $pdo->expects($this->once())->method('beginTransaction');
+        $pdo->expects($this->once())->method('commit');
+        $pdo->expects($this->never())->method('rollBack');
 
         $connection = $this->createConnection($pdo);
 
@@ -250,15 +253,15 @@ class ConnectionTest extends TestCase
 
     public function testTransactionShouldAllowCallable()
     {
-        $pdo = $this->mockPdo();
-        $pdo->shouldReceive('beginTransaction')->once();
-        $pdo->shouldReceive('commit')->once();
-        $pdo->shouldReceive('rollBack')->never();
+        $pdo = $this->mockPdo('beginTransaction', 'commit', 'rollBack');
+        $pdo->expects($this->once())->method('beginTransaction');
+        $pdo->expects($this->once())->method('commit');
+        $pdo->expects($this->never())->method('rollBack');
 
         $connection = $this->createConnection($pdo);
 
-        $foo = $this->mock('Foo');
-        $foo->shouldReceive('bar')->once()->with($connection)->andReturn($connection);
+        $foo = $this->getMock('Foo', ['bar']);
+        $foo->expects($this->once())->method('bar')->with($connection)->willReturn($connection);
 
         $result = $connection->transaction([$foo, 'bar']);
 
@@ -267,10 +270,10 @@ class ConnectionTest extends TestCase
 
     public function testTransactionShouldRollbackWhenThrowAnException()
     {
-        $pdo = $this->mockPdo();
-        $pdo->shouldReceive('beginTransaction')->once();
-        $pdo->shouldReceive('rollBack')->once();
-        $pdo->shouldReceive('commit')->never();
+        $pdo = $this->mockPdo('beginTransaction', 'commit', 'rollBack');
+        $pdo->expects($this->once())->method('beginTransaction');
+        $pdo->expects($this->once())->method('rollBack');
+        $pdo->expects($this->never())->method('commit');
 
         $connection = $this->createConnection($pdo);
 

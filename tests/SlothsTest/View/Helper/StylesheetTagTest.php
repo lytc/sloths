@@ -6,6 +6,9 @@ use Sloths\View\View;
 use Sloths\View\Helper\AssetTag;
 use Sloths\View\Helper\StylesheetTag;
 
+/**
+ * @covers \Sloths\View\Helper\StyleSheetTag<extended>
+ */
 class StylesheetTagTest extends \PHPUnit_Framework_TestCase
 {
     public function setup()

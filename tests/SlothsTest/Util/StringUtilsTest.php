@@ -5,29 +5,71 @@ namespace SlothsTest\Util;
 use Sloths\Util\StringUtils;
 use SlothsTest\TestCase;
 
+/**
+ * @covers \Sloths\Util\StringUtils
+ */
 class StringUtilsTest extends TestCase
 {
-    public function testRandom()
+    /**
+     * @dataProvider randomDataProvider
+     */
+    public function testRandom($format, $flags = StringUtils::RANDOM_ALNUM)
     {
-        $str = StringUtils::random(10);
-        $this->assertSame(10, strlen($str));
+        $str = StringUtils::random(100, $flags);
+        $this->assertSame(100, strlen($str));
+        $this->assertRegExp($format, $str);
     }
 
-    public function testRandomAlphaOnly()
+    public function randomDataProvider()
     {
-        $str = StringUtils::random(10, false);
-        $this->assertSame(1, preg_match('/^([a-zA-Z]+)$/', $str));
+        return [
+            ['/^[a-z]+$/', StringUtils::RANDOM_ALPHA_LOWER],
+            ['/^[A-Z]+$/', StringUtils::RANDOM_ALPHA_UPPER],
+            ['/^\d+$/', StringUtils::RANDOM_NUMERIC],
+            ['/^[\W]+$/', StringUtils::RANDOM_SPECIAL_CHAR],
+            ['/^[a-zA-Z]+$/', StringUtils::RANDOM_ALPHA],
+            ['/^[\w]+$/', StringUtils::RANDOM_ALNUM],
+            ['/^[\w\W]+$/', StringUtils::RANDOM_ALL],
+            ['/^[a-z0-9]+$/', StringUtils::RANDOM_ALPHA_LOWER|StringUtils::RANDOM_NUMERIC],
+            ['/^[A-Z0-9]+$/', StringUtils::RANDOM_ALPHA_UPPER|StringUtils::RANDOM_NUMERIC],
+            ['/^[\W0-9]+$/', StringUtils::RANDOM_SPECIAL_CHAR|StringUtils::RANDOM_NUMERIC],
+
+        ];
     }
 
-    public function testRandomAlphaOnlyWithoutUpperCase()
+    public function testGetNamespace()
     {
-        $str = StringUtils::random(10, false, false);
-        $this->assertSame(1, preg_match('/^([a-zA-Z]+)$/', $str));
+        $this->assertSame('Foo\Bar', StringUtils::getNamespace('Foo\Bar\Baz'));
+        $this->assertNull(StringUtils::getNamespace('Foo'));
     }
 
-    public function testRandomWithSpecialChar()
+    public function testGetClassNameWithoutNamspace()
     {
-        $str = StringUtils::random(100, false, false, true);
-        $this->assertSame(0, preg_match('/^([a-z]+)$/', $str));
+        $this->assertSame('Baz', StringUtils::getClassNameWithoutNamespaceName('Foo\Bar\Baz'));
+        $this->assertSame('Foo', StringUtils::getClassNameWithoutNamespaceName('Foo'));
+    }
+
+    /**
+     * @dataProvider formatDataProvider
+     */
+    public function testFormat($expected, $str, $data = [])
+    {
+        $this->assertSame($expected, StringUtils::format($str, $data));
+    }
+
+    public function formatDataProvider()
+    {
+        return [
+            ['foo', ':name', ['name' => 'foo']],
+            ['foo', ':0', ['foo']],
+            ['foo foo', ':name :name', ['name' => 'foo']],
+            ['foo ', ':name :foo', ['name' => 'foo']],
+            ['foo ', ':name :namefoo', ['name' => 'foo']],
+            ['foo :name', ':name ::name', ['name' => 'foo']],
+            ['::', '::::'],
+            [':foo', ':::name', ['name' => 'foo']],
+            ['::name', '::::name', ['name' => 'foo']],
+            ['', ':name', ['name' => null]],
+        ];
     }
 }

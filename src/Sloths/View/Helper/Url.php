@@ -6,18 +6,32 @@ use Sloths\Util\UrlUtils;
 
 class Url extends AbstractHelper
 {
+    /**
+     * @var string
+     */
     protected static $defaultUrl = '';
 
+    /**
+     * @param $url
+     */
     public static function setDefaultUrl($url)
     {
         static::$defaultUrl = $url;
     }
 
+    /**
+     * @return string
+     */
     public static function getDefaultUrl()
     {
         return static::$defaultUrl;
     }
 
+    /**
+     * @param string $url
+     * @param array $params
+     * @return string
+     */
     public function __invoke($url = null, array $params = [])
     {
         if (!$url) {

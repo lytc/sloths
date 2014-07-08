@@ -6,14 +6,17 @@ use Sloths\Db\Sql\Select;
 use Sloths\Pagination\DataAdapter\DbSelect;
 use SlothsTest\TestCase;
 
+/**
+ * @covers \Sloths\Pagination\DataAdapter\DbSelect
+ */
 class DbSelectTest extends \SlothsTest\Db\TestCase
 {
     public function test()
     {
         $select = new Select('foo');
 
-        $connection = $this->mockConnection();
-        $connection->shouldReceive('selectAllWithFoundRows')->with($select)->andReturn([
+        $connection = $this->mockConnection('selectAllWithFoundRows');
+        $connection->expects($this->once())->method('selectAllWithFoundRows')->with($select)->willReturn([
             'foundRows' => 100,
             'rows' => []
         ]);

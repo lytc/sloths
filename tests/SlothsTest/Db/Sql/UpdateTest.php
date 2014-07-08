@@ -4,6 +4,9 @@ namespace SlothsTest\Db\Sql;
 
 use Sloths\Db\Sql\Update;
 
+/**
+ * @covers \Sloths\Db\Sql\Update
+ */
 class UpdateTest extends \PHPUnit_Framework_TestCase
 {
     public function test()

@@ -2,9 +2,12 @@
 
 namespace SlothsTest\Application;
 use Sloths\Application\Application;
-use Sloths\Http\Request;
+use Sloths\Http\Response;
 use SlothsTest\TestCase;
 
+/**
+ * @covers \Sloths\Application\Application
+ */
 class ApplicationTest extends TestCase
 {
     public function testEnvMethod()
@@ -50,94 +53,65 @@ class ApplicationTest extends TestCase
         $this->assertSame($expected, $application->getConfigDirectories());
     }
 
-    public function testRedirectTo()
-    {
-        $response = $this->mock('Sloths\Http\Response[redirect,send]');
-        $response->shouldReceive('redirect')->once()->with('foo');
-        $response->shouldReceive('send')->once();
-
-        $application = $this->getMock('Sloths\Application\Application', ['stop']);
-        $application->expects($this->once())->method('stop');
-        $application->setService('response', $response);
-        $application->redirectTo('foo');
-    }
-
-    public function testRedirectBack()
-    {
-        $response = $this->mock('\Sloths\Http\Response[redirect,send]');
-        $response->shouldReceive('redirect')->once()->with('foo');
-        $response->shouldReceive('send')->once();
-
-        $application = $this->getMock('Sloths\Application\Application', ['stop']);
-        $application->expects($this->once())->method('stop');
-        $application->setService('response', $response);
-
-        $request = new Request([
-            '_SERVER' => ['HTTP_REFERER' => 'foo']
-        ]);
-        $application->setService('request', $request);
-
-        $application->redirectBack('foo');
-    }
-
     public function testRun()
     {
-        $response = $this->mock('Sloths\Http\Response[setBody,send]');
-        $response->shouldReceive('setBody')->once()->with('foo')->andReturnSelf();
-        $response->shouldReceive('send')->once();
-
-        $application = new Application();
-        $application->setService('response', $response);
+        $application = $this->getMock('Sloths\Application\Application', ['send']);
+        $application->expects($this->once())->method('send');
 
         $application->get('/foo', function() {
             return 'foo';
         });
-
-
-        $request = new Request([
-            '_SERVER' => ['REQUEST_METHOD' => 'GET', 'PATH_INFO' => '/foo']
-        ]);
-        $application->setService('request', $request);
+        $application->request->setServerVars(['REQUEST_METHOD' => 'GET', 'PATH_INFO' => '/foo']);
         $application->run();
+
+        $this->assertSame('foo', $application->response->getBody());
     }
 
     public function testWithRequestBasePath()
     {
-        $response = $this->mock('Sloths\Http\Response[setBody,send]');
-        $response->shouldReceive('setBody')->once()->with('foo')->andReturnSelf();
-        $response->shouldReceive('send')->once();
-
-        $application = new Application('/bar');
-        $application->setService('response', $response);
+        $application = $this->getMock('Sloths\Application\Application', ['send'], ['/bar']);
+        $application->expects($this->once())->method('send');
 
         $application->get('/foo', function() {
             return 'foo';
         });
+        $application->request->setServerVars(['REQUEST_METHOD' => 'GET', 'PATH_INFO' => '/bar/foo']);
+        $application->run();
 
-
-        $request = new Request([
-            '_SERVER' => ['REQUEST_METHOD' => 'GET', 'PATH_INFO' => '/bar/foo']
-        ]);
-        $application->setService('request', $request);
-        $application->run($request);
+        $this->assertSame('foo', $application->response->getBody());
     }
 
-    /**
-     * @expectedException \Sloths\Application\Exception\NotFound
-     */
     public function testNotFound()
     {
-        $application = new Application();
+        $application = $this->getMock('Sloths\Application\Application', ['send']);
+        $application->run();
+        $this->assertSame(404, $application->response->getStatusCode());
+    }
 
-        $application->get('/bar', function() {
-            return 'foo';
+    public function testCallNotFoundInRoute()
+    {
+        $route = $this->getMock('Sloths\Routing\Route', ['getParams', 'getCallback']);
+        $route->expects($this->once())->method('getParams')->willReturn([]);
+        $a = false;
+        $b = false;
+
+        $route->expects($this->once())->method('getCallback')->willReturn(function() use (&$a, &$b) {
+            $a = true;
+            $this->notFound();
+            $b = true;
         });
 
+        $router = $this->getMock('Sloths\Application\Service\Router', ['matches']);
+        $router->expects($this->once())->method('matches')->willReturn($route);
 
-        $request = new Request([
-            '_SERVER' => ['REQUEST_METHOD' => 'GET', 'PATH_INFO' => '/foo']
-        ]);
-        $application->run($request);
+        $application = $this->getMock('Sloths\Application\Application', ['send']);
+        $application->setService('router', $router);
+
+        $application->run();
+
+        $this->assertTrue($a);
+        $this->assertFalse($b);
+        $this->assertSame(404, $application->response->getStatusCode());
     }
 
     /**
@@ -151,34 +125,30 @@ class ApplicationTest extends TestCase
 
     public function testPassToNextRoute()
     {
-        $route1 = $this->mock('Sloths\Routing\Route');
-        $route1->shouldReceive('getCallback')->once()->andReturn(function() {
+        $route1 = $this->getMock('Sloths\Routing\Route', ['getCallback', 'getParams']);
+        $route1->expects($this->once())->method('getCallback')->willReturn(function() {
             $this->pass();
         });
 
-        $route1->shouldReceive('getParams')->once()->andReturn([]);
+        $route1->expects($this->once())->method('getParams')->willReturn([]);
 
-        $route2 = $this->mock('Sloths\Routing\Route');
-        $route2->shouldReceive('getCallback')->once()->andReturn(function() use (&$output) {
-            $output = 1;
+        $route2 = $this->getMock('Sloths\Routing\Route', ['getCallback', 'getParams']);
+        $route2->expects($this->once())->method('getCallback')->willReturn(function() {
+            return 'foo';
         });
-        $route2->shouldReceive('getParams')->once()->andReturn([]);
+        $route2->expects($this->once())->method('getParams')->willReturn([]);
 
         $router = $this->getMock('Sloths\Application\Service\Router', ['matches']);
         $router->expects($this->at(0))->method('matches')->willReturn($route1);
         $router->expects($this->at(1))->method('matches')->willReturn($route2);
 
-        $application = new Application();
+        $application = $this->getMock('Sloths\Application\Application', ['send']);
+        $application->expects($this->once())->method('send');
+
         $application->setService('router', $router);
 
-
-        $response = $this->mock('Sloths\Http\Response[setBody,send]');
-        $response->shouldReceive('setBody')->andReturnSelf();
-        $response->shouldReceive('send');
-        $application->setService('response', $response);
-
         $application->run();
-        $this->assertSame(1, $output);
+        $this->assertSame('foo', $application->response->getBody());
     }
 
     /**
@@ -190,60 +160,71 @@ class ApplicationTest extends TestCase
         $application->badMethod();
     }
 
-    public function testBeforeMethodReturnsFalseShouldNotCallAfterMethod()
+    public function testBeforeMethodReturnsResponseObjectShouldRunThatResponseObject()
     {
-        $application = $this->getMock('Sloths\Application\Application', ['before', 'after']);
-        $application->expects($this->once())->method('before')->willReturn(false);
-        $application->expects($this->never())->method('after');
+        $response = new Response();
+        $application = $this->getMock('Sloths\Application\Application', ['before', 'send']);
+        $application->expects($this->once())->method('before')->willReturn($response);
+        $application->expects($this->once())->method('send');
         $application->run();
+        $this->assertSame($response, $application->response);
     }
 
-    public function testBeforeMethodAndAfterMethod()
+    public function testBeforeAndAfter()
     {
-        $application = $this->getMock('Sloths\Application\Application', ['before', 'after', 'notFound']);
+        $route = $this->getMock('Sloths\Routing\Route', ['getParams'], ['GET', '/', function() {}]);
+        $route->expects($this->once())->method('getParams')->willReturn([]);
+
+        $router = $this->getMock('Sloths\Routing\Router', ['matches', 'getParams']);
+        $router->expects($this->once())->method('matches')->willReturn($route);
+
+        $response = new Response();
+
+        $application = $this->getMock('Sloths\Application\Application', ['before', 'after', 'notify', 'send']);
+        $application->setService('router', $router);
+        $application->setService('response', $response);
+
         $application->expects($this->once())->method('before');
+        $application->expects($this->once())->method('send');
         $application->expects($this->once())->method('after');
-        $application->expects($this->once())->method('notFound');
+        $application->expects($this->at(1))->method('notify')->with('run');
+        $application->expects($this->at(4))->method('notify')->with('ran');
         $application->run();
+
+        $this->assertSame($response, $application->response);
     }
 
-    public function testListenerRunAndRan()
+    public function testListenerRunReturnsResponseObjectShouldRunThatResponse()
     {
-        $application = $this->getMock('Sloths\Application\Application', ['notFound']);
-        $application->expects($this->once())->method('notFound');
+        $response = new Response();
+        $application = $this->getMock('Sloths\Application\Application', ['send']);
+        $application->expects($this->once())->method('send');
 
-        $application->addListener('run', function() use (&$runCalled) {
-            $runCalled = true;
-        });
-
-        $application->addListener('ran', function() use (&$ranCalled) {
-            $ranCalled = true;
+        $application->addListener('run', function() use ($response) {
+            return $response;
         });
 
         $application->run();
-
-        $this->assertTrue($runCalled);
-        $this->assertTrue($ranCalled);
+        $this->assertSame($response, $application->response);
     }
 
-    public function testListenerRunReturnsFalseShouldNotTriggerRan()
+    public function testReturnResponseInRoute()
     {
-        $application = new Application();
-
-        $application->addListener('run', function() use (&$runCalled) {
-            $runCalled = true;
-            return false;
+        $response = new Response();
+        $route = $this->getMock('Sloths\Routing\Route', ['getCallback', 'getParams']);
+        $route->expects($this->once())->method('getCallback')->willReturn(function () use ($response) {
+            return $response;
         });
+        $route->expects($this->once())->method('getParams')->willReturn([]);
 
-        $ranCalled = false;
-        $application->addListener('ran', function() use (&$ranCalled) {
-            $ranCalled = true;
-        });
+        $router = $this->getMock('Sloths\Routing\Router', ['matches']);
+        $router->expects($this->once())->method('matches')->willReturn($route);
 
+        $application = $this->getMock('Sloths\Application\Application', ['send']);
+        $application->setService('router', $router);
         $application->run();
 
-        $this->assertTrue($runCalled);
-        $this->assertFalse($ranCalled);
+        $this->assertSame($response, $application->response);
     }
 
     /**
@@ -253,5 +234,41 @@ class ApplicationTest extends TestCase
     {
         $application = new Application();
         $application->non_existing_property;
+    }
+
+    /**
+     * @runInSeparateProcess
+     * @dataProvider dataProviderTestSend
+     */
+    public function testSend($expectedBody, $expectedHeaders, $response)
+    {
+        $this->expectOutputString($expectedBody);
+
+        $route = $this->getMock('Sloths\Routing\Route', ['getCallback', 'getParams']);
+        $route->expects($this->once())->method('getCallback')->willReturn(function () use ($response) {
+            return $response;
+        });
+        $route->expects($this->once())->method('getParams')->willReturn([]);
+
+        $router = $this->getMock('Sloths\Routing\Router', ['matches']);
+        $router->expects($this->once())->method('matches')->willReturn($route);
+
+        $application = new Application();
+        $application->setService('router', $router);
+
+        $application->run();
+
+        if (!extension_loaded('xdebug')) {
+            $this->markTestSkipped('Require xdebug extension for testing headers');
+        }
+
+        $this->assertSame($expectedHeaders, array_intersect($expectedHeaders, xdebug_get_headers()));
+    }
+
+    public function dataProviderTestSend()
+    {
+        return [
+            ['foo', ['Foo: bar'], (new Response())->setBody('foo')->setHeaders(['Foo' => 'bar'])]
+        ];
     }
 }

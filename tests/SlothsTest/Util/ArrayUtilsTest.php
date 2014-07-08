@@ -3,24 +3,35 @@
 namespace SlothsTest\Util;
 use Sloths\Util\ArrayUtils;
 
+/**
+ * @covers \Sloths\Util\ArrayUtils
+ */
 class ArrayUtilsTest extends \PHPUnit_Framework_TestCase
 {
-    public function testPick()
+    public function testMethodOnly()
     {
         $values = ['foo' => 1, 'bar' => 2, 'baz' => 3, 'qux' => 4];
-        $pickKeys = 'bar qux wot';
+        $keys = 'bar qux wot';
         $expected = ['bar' => 2, 'qux' => 4];
 
-        $this->assertSame($expected, ArrayUtils::pick($values, $pickKeys));
+        $this->assertSame($expected, ArrayUtils::only($values, $keys));
     }
 
-    public function testPickWithDefaultValue()
+    public function testMethodOnlyWithDefaultValue()
     {
         $values = ['foo' => 1, 'bar' => 2, 'baz' => 3, 'qux' => 4];
-        $pickKeys = 'bar qux wot';
+        $keys = 'bar qux wot';
         $expected = ['bar' => 2, 'qux' => 4, 'wot' => null];
 
-        $this->assertSame($expected, ArrayUtils::pick($values, $pickKeys, null));
+        $this->assertSame($expected, ArrayUtils::only($values, $keys, null));
+    }
+
+    public function testMethodExcept()
+    {
+        $values = ['foo' => 1, 'bar' => 2, 'baz' => 3];
+
+        $this->assertSame(['foo' => 1], ArrayUtils::except($values, 'bar baz'));
+        $this->assertSame(['foo' => 1], ArrayUtils::except($values, ['bar', 'baz']));
     }
 
     public function testHasOnlyInts()
@@ -30,5 +41,37 @@ class ArrayUtilsTest extends \PHPUnit_Framework_TestCase
         $this->assertFalse(ArrayUtils::hasOnlyInts([1.1]));
         $this->assertFalse(ArrayUtils::hasOnlyInts(['1.1']));
         $this->assertFalse(ArrayUtils::hasOnlyInts([1, '']));
+    }
+
+    public function testMethodColumnWithColumnKeyNull()
+    {
+        $this->assertSame(['foo' => 'bar'], ArrayUtils::column(['foo' => 'bar'], null));
+
+        $result = ArrayUtils::column([
+            ['name' => 'foo'],
+            ['foo' => 'bar'],
+        ], null, 'name');
+
+        $expected = [
+            'foo' => ['name' => 'foo'],
+            ['foo' => 'bar'],
+        ];
+
+        $this->assertSame($expected, $result);
+    }
+
+    public function testMethodColumnWithColumnKeyNotNull()
+    {
+        $this->assertSame(['foo' => 'bar'], ArrayUtils::column(['foo' => 'bar'], null));
+
+        $result = ArrayUtils::column([
+            ['name' => 'foo'],
+            ['id' => 10, 'name' => 'bar'],
+            ['foo' => 'baz'],
+        ], 'name', 'id');
+
+        $expected = ['foo', 10 => 'bar'];
+
+        $this->assertSame($expected, $result);
     }
 }

@@ -17,7 +17,7 @@ class Tag extends AbstractHelper
     /**
      * @var array
      */
-    protected static $defaultAttributes = [];
+    protected $defaultAttributes = [];
 
     /**
      * @var string|array|Tag
@@ -35,24 +35,30 @@ class Tag extends AbstractHelper
         return $this;
     }
 
-    public static function setDefaultAttributes(array $attributes)
+    /**
+     * @return array
+     */
+    public function getAttributes()
     {
-        static::$defaultAttributes = $attributes;
+        return $this->attributes;
     }
 
-    public static function getDefaultAttributes()
+    /**
+     * @param string $name
+     * @return bool
+     */
+    public function hasAttribute($name)
     {
-        return static::$defaultAttributes;
+        return isset($this->attributes[$name]);
     }
 
-    public function setDefaultAttribute($name, $value)
+    /**
+     * @param string $name
+     * @return null
+     */
+    public function getAttribute($name)
     {
-        static::$defaultAttributes[$name] = $value;
-    }
-
-    public function addDefaultAttributes($attributes)
-    {
-        static::$defaultAttributes = array_merge(static::$defaultAttributes, $attributes);
+        return $this->hasAttribute($name)? $this->attributes[$name] : null;
     }
 
     /**
@@ -92,7 +98,7 @@ class Tag extends AbstractHelper
      */
     public function removeAttribute($name)
     {
-        if (array_key_exists($this->attributes, $name)) {
+        if (array_key_exists($name, $this->attributes)) {
             unset($this->attributes[$name]);
         }
 
@@ -110,6 +116,14 @@ class Tag extends AbstractHelper
         }
         $this->children = $children;
         return $this;
+    }
+
+    /**
+     * @return array|Tag|string
+     */
+    public function getChildren()
+    {
+        return $this->children;
     }
 
     /**
@@ -139,7 +153,7 @@ class Tag extends AbstractHelper
      */
     protected function buildAttributes()
     {
-        $attributes = array_merge(static::$defaultAttributes, $this->attributes);
+        $attributes = array_merge($this->defaultAttributes, $this->attributes);
 
         $attrs = [];
         foreach ($attributes as $key => $value) {
@@ -166,7 +180,7 @@ class Tag extends AbstractHelper
     /**
      * @return string
      */
-    protected function build()
+    public function render()
     {
         $attributes = $this->buildAttributes();
         $children = implode('', $this->children);
@@ -184,7 +198,7 @@ class Tag extends AbstractHelper
      */
     public function __toString()
     {
-        return $this->build();
+        return $this->render();
 
     }
 }

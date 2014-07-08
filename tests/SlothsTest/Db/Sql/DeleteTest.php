@@ -4,6 +4,9 @@ namespace SlothsTest\Db\Sql;
 
 use Sloths\Db\Sql\Delete;
 
+/**
+ * @covers \Sloths\Db\Sql\Delete
+ */
 class DeleteTest extends \PHPUnit_Framework_TestCase
 {
     public function test()

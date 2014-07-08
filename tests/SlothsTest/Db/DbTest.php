@@ -7,6 +7,9 @@ use Sloths\Db\Sql\Insert;
 use Sloths\Db\Sql\Select;
 use Sloths\Db\Sql\Update;
 
+/**
+ * @covers \Sloths\Db\Db
+ */
 class DbTest extends TestCase
 {
     public function testQuoteIdentifier()
@@ -32,8 +35,8 @@ class DbTest extends TestCase
     {
         $this->assertSame(1, Db::escape(1));
 
-        $pdo = $this->mockPdo();
-        $pdo->shouldReceive('quote')->with('foo"bar')->andReturn("'foo\\\"bar'");
+        $pdo = $this->mockPdo('quote');
+        $pdo->expects($this->once())->method('quote')->with('foo"bar')->willReturn("'foo\\\"bar'");
 
         Db::setQuoter([$pdo, 'quote']);
         $this->assertSame("foo\\\"bar", Db::escape('foo"bar'));
@@ -43,8 +46,8 @@ class DbTest extends TestCase
 
     public function testSetQuoter()
     {
-        $pdo = $this->mockPdo();
-        $pdo->shouldReceive('quote')->with('foo')->andReturn("'foo'");
+        $pdo = $this->mockPdo('quote');
+        $pdo->expects($this->once())->method('quote')->with('foo')->willReturn("'foo'");
 
         Db::setQuoter([$pdo, 'quote']);
         $this->assertSame("'foo'", Db::quote('foo'));

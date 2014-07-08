@@ -5,6 +5,9 @@ namespace SlothsTest\Exception;
 use Sloths\Exception\Handler;
 use SlothsTest\TestCase;
 
+/**
+ * @covers \Sloths\Exception\Handler
+ */
 class HandlerTest extends TestCase
 {
     public function testWithExactlyExceptionName()
@@ -40,6 +43,12 @@ class HandlerTest extends TestCase
         $this->assertSame($bar, $expected[1]);
 
         $handler->restore()->clear();
+    }
+
+    public function testGetInstance()
+    {
+        $handler = Handler::getInstance();
+        $this->assertSame($handler, Handler::getInstance());
     }
 }
 

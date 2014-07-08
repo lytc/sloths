@@ -6,6 +6,9 @@ use Sloths\View\View;
 use Sloths\View\Helper\AssetTag;
 use Sloths\View\Helper\ScriptTag;
 
+/**
+ * @covers \Sloths\View\Helper\ScriptTag<extended>
+ */
 class ScriptTagTest extends \PHPUnit_Framework_TestCase
 {
     public function setup()
