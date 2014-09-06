@@ -2,110 +2,52 @@
 
 namespace Sloths\Db\Sql;
 
-use Sloths\Db\Db;
-
-class Update implements SqlInterface
+/**
+ * @method Update values(array $values)
+ * @method Update where($condition, $params = null)
+ * @method Update orWhere($condition, $params = null)
+ * @method Update orderBy($columns)
+ * @method Update limit(int $limit)
+ */
+class Update extends AbstractSql implements SqlWriteInterface
 {
+    const SPEC_SET      = 'Set';
+    const SPEC_WHERE    = 'Where';
+    const SPEC_ORDER_BY = 'OrderBy';
+    const SPEC_LIMIT    = 'Limit';
+    /**
+     * @var array
+     */
+    protected $specs = [
+        self::SPEC_SET      => null,
+        self::SPEC_WHERE    => null,
+        self::SPEC_ORDER_BY => null,
+        self::SPEC_LIMIT    => null
+    ];
+
+    /**
+     * @var array
+     */
+    protected $methods = [
+        'values'    => [self::SPEC_SET, 'values'],
+        'where'     => [self::SPEC_WHERE, 'and'],
+        'orWhere'   => [self::SPEC_WHERE, 'or'],
+        'orderBy'   => [self::SPEC_ORDER_BY, 'add'],
+        'limit'     => [self::SPEC_LIMIT, 'limit'],
+    ];
+
     /**
      * @var string
      */
-    protected $table;
+    protected $tableName;
 
     /**
-     * @var string
-     */
-    protected $set;
-
-    /**
-     * @var string
-     */
-    protected $where;
-
-    /**
-     * @var int
-     */
-    protected $limit;
-
-    /**
-     * @var bool
-     */
-    protected $ignore = false;
-
-    /**
-     * @param string [$table]
-     */
-    public function __construct($table = null)
-    {
-        !$table || $this->from($table);
-    }
-
-    /**
-     * @param bool $state
+     * @param string $tableName
      * @return $this
      */
-    public function ignore($state = true)
+    public function table($tableName)
     {
-        $this->ignore = $state;
-        return $this;
-    }
-
-    /**
-     * @param string $table
-     * @return $this
-     */
-    public function from($table)
-    {
-        $this->table = $table;
-        return $this;
-    }
-
-    /**
-     * @param array $values
-     * @return $this
-     */
-    public function set(array $values)
-    {
-        $this->set = $values;
-        return $this;
-    }
-
-    /**
-     * @return $this|Where
-     */
-    public function where()
-    {
-        $this->where || $this->where = new Where();
-
-        if (0 == func_num_args()) {
-            return $this->where;
-        }
-
-        call_user_func_array([$this->where, 'where'], func_get_args());
-        return $this;
-    }
-
-    /**
-     * @return $this|Where
-     */
-    public function orWhere()
-    {
-        $this->where || $this->where = new Where();
-
-        if (0 == func_num_args()) {
-            return $this->where;
-        }
-
-        call_user_func_array([$this->where, 'orWhere'], func_get_args());
-        return $this;
-    }
-
-    /**
-     * @param $limit
-     * @return $this
-     */
-    public function limit($limit)
-    {
-        $this->limit = $limit;
+        $this->tableName = $tableName;
         return $this;
     }
 
@@ -114,25 +56,6 @@ class Update implements SqlInterface
      */
     public function toString()
     {
-        $parts = ['UPDATE'];
-
-        !$this->ignore || $parts[] = 'IGNORE';
-        $parts[] = $this->table;
-
-        #set part
-        $set = [];
-        foreach ($this->set as $key => $value) {
-            $set[] = $key . ' = ' . Db::quote($value);
-        }
-
-        $parts[] = 'SET ' . implode(', ', $set);
-
-        if ($this->where && ($wherePart = $this->where->toString())) {
-            $parts[] = $wherePart;
-        }
-
-        !$this->limit || $parts[] = 'LIMIT ' . (int) $this->limit;
-
-        return implode(' ', $parts);
+        return 'UPDATE ' . $this->tableName . ' ' . parent::toString();
     }
 }

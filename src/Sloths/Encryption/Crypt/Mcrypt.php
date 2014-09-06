@@ -2,7 +2,7 @@
 
 namespace Sloths\Encryption\Crypt;
 
-use Sloths\Util\StringUtils;
+use Sloths\Misc\StringUtils;
 
 if (!extension_loaded('mcrypt')) {
     throw new \RuntimeException(
@@ -41,9 +41,6 @@ class Mcrypt implements CryptInterface
     const MODE_OFB      = 'ofb';
     const MODE_STREAM   = 'stream';
 
-    const DEFAULT_ALGO = self::ALGO_RIJNDAEL_128;
-    const DEFAULT_MODE = self::MODE_CBC;
-
     /**
      * @var
      */
@@ -53,43 +50,6 @@ class Mcrypt implements CryptInterface
      * @var
      */
     protected static $listModes;
-
-    /**
-     * @var
-     */
-    protected static $defaultAlgorithm;
-
-    /**
-     * @var
-     */
-    protected static $defaultMode;
-
-    /**
-     * @var
-     */
-    protected static $defaultKey;
-
-    /**
-     * @var
-     */
-    protected static $defaultIv;
-
-    /**
-     * @var Mcrypt
-     */
-    protected static $instance;
-
-    /**
-     * @return Mcrypt
-     */
-    public static function getInstance()
-    {
-        if (!self::$instance) {
-            self::$instance = new self();
-        }
-
-        return self::$instance;
-    }
 
     /**
      * @return array
@@ -133,73 +93,6 @@ class Mcrypt implements CryptInterface
     public static function isSupportedMode($mode)
     {
         return isset(self::listModes()[$mode]);
-    }
-
-    public static function setDefaultAlgorithm($algorithm)
-    {
-        if (!self::isSupportedAlgorithm($algorithm)) {
-            throw new \InvalidArgumentException(sprintf('The algorithm %s is not supported', $algorithm));
-        }
-        self::$defaultAlgorithm = $algorithm;
-    }
-
-    public static function getDefaultAlgorithm()
-    {
-        if (!self::$defaultAlgorithm) {
-            self::setDefaultAlgorithm(self::DEFAULT_ALGO);
-        }
-
-        return self::$defaultAlgorithm;
-    }
-
-    public static function setDefaultMode($mode)
-    {
-        if (!self::isSupportedMode($mode)) {
-            throw new \InvalidArgumentException(sprintf('The mode %s is not supported', $mode));
-        }
-
-        self::$defaultMode = $mode;
-    }
-
-    public static function getDefaultMode()
-    {
-        if (!self::$defaultMode) {
-            self::setDefaultMode(self::DEFAULT_MODE);
-        }
-
-        return self::$defaultMode;
-    }
-
-    /**
-     * @param $key
-     */
-    public static function setDefaultKey($key)
-    {
-        self::$defaultKey = $key;
-    }
-
-    /**
-     * @return mixed
-     */
-    public static function getDefaultKey()
-    {
-        return self::$defaultKey;
-    }
-
-    /**
-     * @param $iv
-     */
-    public static function setDefaultIv($iv)
-    {
-        self::$defaultIv = $iv;
-    }
-
-    /**
-     * @return mixed
-     */
-    public static function getDefaultIv()
-    {
-        return self::$defaultIv;
     }
 
     /**
@@ -293,10 +186,6 @@ class Mcrypt implements CryptInterface
      */
     public function getAlgorithm()
     {
-        if (!$this->algorithm) {
-            $this->setAlgorithm(self::getDefaultAlgorithm());
-        }
-
         return $this->algorithm;
     }
 
@@ -320,9 +209,6 @@ class Mcrypt implements CryptInterface
      */
     public function getMode()
     {
-        if (!$this->mode) {
-            $this->setMode(self::getDefaultMode());
-        }
         return $this->mode;
     }
 
@@ -374,10 +260,6 @@ class Mcrypt implements CryptInterface
      */
     public function getKey()
     {
-        if (!$this->key) {
-            $this->setKey(self::getDefaultKey());
-        }
-
         return $this->key;
     }
 
@@ -414,10 +296,6 @@ class Mcrypt implements CryptInterface
      */
     public function getIv()
     {
-        if (!$this->iv) {
-            $this->setIv(self::getDefaultIv());
-        }
-
         return $this->iv;
     }
 

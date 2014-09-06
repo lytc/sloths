@@ -2,19 +2,16 @@
 
 namespace Sloths\Application\Service;
 
-use Sloths\Application\Application;
-
 class View extends \Sloths\View\View implements ServiceInterface
 {
     use ServiceTrait;
 
-    public function setApplication(Application $application)
+    /**
+     * @return $this
+     */
+    public function boot()
     {
-        if (!$this->directory) {
-            $this->setDirectory($application->getDirectory() . '/views');
-        }
-        $this->application = $application;
-
+        $this->setDirectory($this->getApplication()->getPath('views'));
         return $this;
     }
 }

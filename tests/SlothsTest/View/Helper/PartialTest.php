@@ -1,38 +1,22 @@
 <?php
 
-namespace SlothsTest\View\Helper;
+namespace Sloths\View\Helper;
 
 use Sloths\View\View;
+use SlothsTest\TestCase;
 
 /**
- * @covers \Sloths\View\Helper\Partial
+ * @covers Sloths\View\Helper\Partial
  */
-class PartialTest extends \PHPUnit_Framework_TestCase
+class PartialTest extends TestCase
 {
-    protected $viewPath;
-
-    protected function setUp()
-    {
-        $this->viewPath = __DIR__ . '/../fixtures/partial-test';
-    }
-
     public function test()
     {
         $view = new View();
-        $view->setDirectory($this->viewPath);
-        $view->setVar('foo', 'bar');
-        $expected = 'foo partial bar';
+        $view->setDirectory(__DIR__ . '/fixtures');
 
-        $this->assertSame($expected, $view->render('template'));
-    }
+        $result = $view->render('test-partial', ['foo' => 'foo']);
 
-    public function testOverrideVar()
-    {
-        $view = new View();
-        $view->setDirectory($this->viewPath);
-        $view->setVar('foo', 'bar');
-        $expected = 'foo partial barbaz';
-
-        $this->assertSame($expected, $view->render('template2'));
+        $this->assertSame('template partial foo bar', $result);
     }
 }

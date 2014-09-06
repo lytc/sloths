@@ -3,113 +3,56 @@
 namespace SlothsTest\Routing;
 
 use Sloths\Routing\Router;
+use Sloths\Routing\Route;
 use SlothsTest\TestCase;
-use Sloths\Application\Application;
+use Sloths\Http\RequestInterface;
 
-/**
- * @covers \Sloths\Routing\Router
- */
 class RouterTest extends TestCase
 {
-    public function testGetAndSetDirectory()
+    public function testAdd()
     {
         $router = new Router();
-        $router->setDirectory('foo');
-        $this->assertSame('foo', $router->getDirectory());
-    }
 
-    public function testContext()
-    {
-        $application = new Application();
-        $application->setDirectory(__DIR__ . '/fixtures');
-        $router = $application->router;
-        $this->assertSame($application, $router->getContext());
+        $route = new Route('GET', '/', function() {});
+        $router->add($route);
 
-        $route = $router->matches('GET', '/context-test');
-        $this->assertSame($application, call_user_func($route->getCallback()));
+        $this->assertSame($route, $router->getRoutes()[0]);
     }
 
     public function testMap()
     {
         $router = new Router();
-        $callback = function() {};
-        $router->map('GET', '/foo', $callback);
+        $router->map(RequestInterface::METHOD_POST, 'pattern', $callback = function() {});
 
-        $this->assertCount(1, $router->getRoutes());
         $route = $router->getRoutes()[0];
 
-        $this->assertSame(['GET' => 'GET'], $route->getMethod());
-        $this->assertSame('/foo', $route->getPattern());
+        $this->assertSame([ RequestInterface::METHOD_POST], $route->getMethods());
+        $this->assertSame('pattern', $route->getPattern());
         $this->assertSame($callback, $route->getCallback());
-
-        $callback2 = function() {};
-        $router->map('POST /bar', $callback2);
-
-        $this->assertCount(2, $router->getRoutes());
-        $route = $router->getRoutes()[1];
-
-        $this->assertSame(['POST' => 'POST'], $route->getMethod());
-        $this->assertSame('/bar', $route->getPattern());
-        $this->assertSame($callback2, $route->getCallback());
-    }
-
-    public function testLoadRoutesFromFile()
-    {
-        $router = new Router();
-        $router->setDirectory(__DIR__ . '/fixtures/routes');
-
-        $route = $router->matches('GET', '/foo/bar');
-        $this->assertSame(['GET' => 'GET'], $route->getMethod());
-        $this->assertSame('/bar', $route->getPattern());
-
-        $this->assertCount(2, $router->getRoutes());
-
     }
 
     /**
-     * @dataProvider dataProvider
+     * @dataProvider dataProviderTestShorthandMethods
      */
-    public function testMethods($method, $requestMethod, $requestPath)
+    public function testShorthandMethods($method, $requestMethod, $pattern, $callback)
     {
-        $callback = function() {};
         $router = $this->getMock('Sloths\Routing\Router', ['map']);
-        $router->expects($this->once())->method('map')->with($requestMethod, $requestPath, $callback);
-
-        $router->{$method}($requestPath, $callback);
+        $router->expects($this->once())->method('map')->with($requestMethod, $pattern, $callback);
+        $router->$method($pattern, $callback);
     }
 
-    public function dataProvider()
+    public function dataProviderTestShorthandMethods()
     {
         return [
-            ['head', 'HEAD', '/head'],
-            ['get', 'GET', '/get'],
-            ['post', 'POST', '/post'],
-            ['put', 'PUT', '/put'],
-            ['patch', 'PATCH', '/patch'],
-            ['delete', 'DELETE', '/delete'],
-            ['options', 'OPTIONS', '/options'],
-            ['trace', 'TRACE', '/trace'],
+            ['head', RequestInterface::METHOD_HEAD, 'pattern', function() {}],
+            ['get', RequestInterface::METHOD_GET, 'pattern', function() {}],
+            ['post', RequestInterface::METHOD_POST, 'pattern', function() {}],
+            ['put', RequestInterface::METHOD_PUT, 'pattern', function() {}],
+            ['patch', RequestInterface::METHOD_PATCH, 'pattern', function() {}],
+            ['delete', RequestInterface::METHOD_DELETE, 'pattern', function() {}],
+            ['options', RequestInterface::METHOD_OPTIONS, 'pattern', function() {}],
+            ['trace', RequestInterface::METHOD_TRACE, 'pattern', function() {}],
+            ['connect', RequestInterface::METHOD_CONNECT, 'pattern', function() {}],
         ];
-    }
-
-    public function testDefaultRouteFile()
-    {
-        $router = new Router();
-        $router->setDirectory(__DIR__ . '/fixtures/routes');
-        $this->assertSame('index.php', $router->getDefaultRouteFile());
-        $route = $router->matches('GET', '/');
-        $this->assertSame(1, call_user_func($route->getCallback()));
-
-        $router = new Router();
-        $router->setDirectory(__DIR__ . '/fixtures/routes');
-        $router->setDefaultRouteFile('default-routes.php');
-        $this->assertSame('default-routes.php', $router->getDefaultRouteFile());
-        $route =$router->matches('GET', '/');
-        $this->assertSame(2, call_user_func($route->getCallback()));
-
-        $router = new Router();
-        $router->setDefaultRouteFile(__DIR__ . '/fixtures/routes/default-routes.php');
-        $route =$router->matches('GET', '/');
-        $this->assertSame(2, call_user_func($route->getCallback()));
     }
 }

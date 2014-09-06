@@ -2,39 +2,28 @@
 
 namespace SlothsTest\Db\Model\Stub;
 
-use Sloths\Db\Model\Model;
+use Sloths\Db\Model\AbstractModel;
 
-class User extends Model
+class User extends AbstractModel
 {
     protected static $columns = [
         'id' => self::INT,
-        'name' => self::VARCHAR,
+        'username' => self::VARCHAR,
         'password' => self::VARCHAR,
-        'profile' => self::TEXT,
-        'created_time' => self::DATETIME
-    ];
-
-    protected static $hiddenColumns = ['password'];
-
-    protected static $hasMany = [
-        'Posts' => [
-            'model' => 'Post',
-            'foreignKey' => 'created_user_id'
-        ]
+        'created_time' => self::DATETIME,
+        'modified_time' => self::DATETIME
     ];
 
     protected static $hasOne = [
-        'Professor'
+        'Profile'
     ];
 
-    protected static $hasManyThrough = [
-        'Roles' => [
-            'model' => 'Role',
-            'leftPrimaryKey' => 'id',
-            'leftForeignKey' => 'user_id',
-            'rightPrimaryKey' => 'id',
-            'rightForeignKey' => 'role_id',
-            'throughModel' => 'UserRole'
-        ]
+    protected static $belongsTo = [
+        'Group'
+    ];
+
+    protected static $hasMany = [
+        'Posts',
+        'Roles' => ['through' => 'UserRole']
     ];
 }

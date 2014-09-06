@@ -9,45 +9,36 @@ use Sloths\Authentication\Storage\StorageInterface;
 class Authenticator
 {
     /**
-     * @var Adapter\AdapterInterface
+     * @var AdapterInterface
      */
     protected $adapter;
 
     /**
-     * @var Storage\StorageInterface
+     * @var StorageInterface
      */
     protected $storage;
 
     /**
      * @param AdapterInterface $adapter
-     * @param StorageInterface $storage
-     */
-    public function __construct(AdapterInterface $adapter = null, StorageInterface $storage = null)
-    {
-        if ($adapter) {
-            $this->setAdapter($adapter);
-        }
-
-        if ($storage) {
-            $this->setStorage($storage);
-        }
-    }
-
-    /**
-     * @param AdapterInterface $adapter
      * @return $this
      */
-    public function setAdapter(AdapterInterface $adapter)
+    public function setAdapter(AdapterInterface $adapter = null)
     {
         $this->adapter = $adapter;
         return $this;
     }
 
     /**
+     * @param bool $strict
      * @return AdapterInterface
+     * @throws \RuntimeException
      */
-    public function getAdapter()
+    public function getAdapter($strict = true)
     {
+        if (!$this->adapter && $strict) {
+            throw new \RuntimeException('An authentication adapter is required');
+        }
+
         return $this->adapter;
     }
 
@@ -74,38 +65,6 @@ class Authenticator
     }
 
     /**
-     * @param AdapterInterface $adapter
-     * @return Result
-     * @throws \RuntimeException|\UnexpectedValueException
-     */
-    public function authenticate(AdapterInterface $adapter = null)
-    {
-        if ($adapter) {
-            $this->setAdapter($adapter);
-        }
-
-        if (!$this->getAdapter()) {
-            throw new \RuntimeException('A authentication adapter required');
-        }
-
-        $result = $this->adapter->authenticate();
-
-        if (!$result instanceof Result) {
-            throw new \UnexpectedValueException(
-                sprintf('Authentication result must be a instance of %s\Result, %s given', __NAMESPACE__, gettype($result))
-            );
-        }
-
-        $this->clear();
-
-        if ($result->isSuccess()) {
-            $this->getStorage()->write($result->getData());
-        }
-
-        return $result;
-    }
-
-    /**
      * @return bool
      */
     public function exists()
@@ -114,7 +73,7 @@ class Authenticator
     }
 
     /**
-     * @return mixed|null
+     * @return mixed
      */
     public function getData()
     {
@@ -129,4 +88,32 @@ class Authenticator
         $this->getStorage()->clear();
         return $this;
     }
+
+    /**
+     * @param mixed $identity
+     * @param mixed $credential
+     * @return Result
+     */
+    public function authenticate($identity = null, $credential = null)
+    {
+        $adapter = $this->getAdapter();
+
+        if ($identity) {
+            $adapter->setIdentity($identity);
+        }
+
+        if ($credential) {
+            $adapter->setCredential($credential);
+        }
+
+        $result = $adapter->authenticate();
+
+        if ($result->isSuccess()) {
+            $this->getStorage()->write($result->getData());
+        }
+
+        return $result;
+    }
+
+
 }

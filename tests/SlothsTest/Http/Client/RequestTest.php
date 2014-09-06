@@ -18,15 +18,4 @@ class RequestTest extends TestCase
         $this->assertSame(['foo' => 'bar'], $request->getParams()->toArray());
         $this->assertSame(['Foo' => 'bar'], $request->getHeaders()->toArray());
     }
-
-    public function testFileParams()
-    {
-        $request = new Request();
-
-        $request->setFileParams('foo');
-        $this->assertSame(['foo'], $request->getFileParams()->toArray());
-
-        $request->setFileParams(['foo' => 'bar']);
-        $this->assertSame(['foo' => 'bar'], $request->getFileParams()->toArray());
-    }
 }

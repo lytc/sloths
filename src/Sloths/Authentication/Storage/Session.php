@@ -9,35 +9,35 @@ class Session implements StorageInterface
     const DEFAULT_NAME = '__SLOTHS_AUTH__';
 
     /**
-     * @var mixed|\Sloths\Session\Session
+     * @var SessionManager
      */
-    protected $manager;
+    protected $sessionManager;
 
     /**
      * @var string
      */
-    protected $name;
+    protected $sessionName;
 
     /**
      * @param SessionManager $manager
-     * @param string $name
+     * @param string $sessionName
      */
-    public function __construct(SessionManager $manager = null, $name = self::DEFAULT_NAME)
+    public function __construct(SessionManager $manager = null, $sessionName = self::DEFAULT_NAME)
     {
         if (!$manager) {
-            $manager = SessionManager::getInstance();
+            $manager = new SessionManager();
         }
 
-        $this->manager = $manager;
-        $this->name = $name;
+        $this->sessionManager = $manager;
+        $this->sessionName = $sessionName;
     }
 
     /**
-     * @return mixed|SessionManager
+     * @return SessionManager
      */
     public function getSessionManager()
     {
-        return $this->manager;
+        return $this->sessionManager;
     }
 
     /**
@@ -45,15 +45,15 @@ class Session implements StorageInterface
      */
     public function exists()
     {
-        return $this->manager->has($this->name);
+        return $this->getSessionManager()->has($this->sessionName);
     }
 
     /**
-     * @return mixed|null
+     * @return mixed
      */
     public function read()
     {
-        return $this->manager->get($this->name);
+        return $this->getSessionManager()->get($this->sessionName);
     }
 
     /**
@@ -62,7 +62,7 @@ class Session implements StorageInterface
      */
     public function write($data)
     {
-        $this->manager->set($this->name, $data);
+        $this->getSessionManager()->set($this->sessionName, $data);
         return $this;
     }
 
@@ -71,7 +71,8 @@ class Session implements StorageInterface
      */
     public function clear()
     {
-        $this->manager->remove($this->name);
+        $this->getSessionManager()->remove($this->sessionName);
         return $this;
     }
+
 }

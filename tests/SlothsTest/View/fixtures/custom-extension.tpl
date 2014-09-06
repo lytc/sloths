@@ -1,0 +1,1 @@
+custom extension <?= $foo ?>

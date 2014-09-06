@@ -2,43 +2,32 @@
 
 namespace SlothsTest\Authentication;
 
-use Sloths\Authentication\Result;
 use SlothsTest\TestCase;
+use Sloths\Authentication\Result;
+
 
 /**
  * @covers Sloths\Authentication\Result
  */
 class ResultTest extends TestCase
 {
-    /**
-     * @dataProvider dataProvider
-     */
-    public function test($expectedSuccess, $expectedError, $expectedMessage, $code, $data, $message = '')
+    public function test()
     {
-        $result = new Result($code, $data, $message);
+        $result = new Result(Result::ERROR_IDENTITY_NOT_FOUND);
+        $this->assertSame(Result::ERROR_IDENTITY_NOT_FOUND, $result->getCode());
+        $this->assertSame('Identity not found', $result->getMessage());
 
-        $this->assertSame($code, $result->getCode());
+        $this->assertFalse($result->isSuccess());
+        $this->assertTrue($result->isError());
+
+        $data = 'foo';
+        $result = new Result(Result::SUCCESS, $data);
         $this->assertSame($data, $result->getData());
-        $this->assertSame($expectedMessage, $result->getMessage());
-        $this->assertSame($expectedSuccess, $result->isSuccess());
-        $this->assertSame($expectedError, $result->isError());
     }
 
-    public function dataProvider()
+    public function testCustomMessages()
     {
-        return [
-            [true, false, null, 1, 'foo', 'bar'],
-            [false, true, 'bar', 0, 'foo', 'bar'],
-            [false, true, 'bar', -1, 'foo', 'bar'],
-            [false, true, 'bar', -2, 'foo', 'bar'],
-        ];
-    }
-
-    /**
-     * @expectedException \InvalidArgumentException
-     */
-    public function testInvalidCodeShouldThrowAnException()
-    {
-        new Result(2, 'foo');
+        $result = new Result('foo', '', ['foo' => 'foo message']);
+        $this->assertSame('foo message', $result->getMessage());
     }
 }

@@ -4,57 +4,42 @@ namespace Sloths\Db\Model;
 
 use Sloths\Db\Sql\Select;
 use Sloths\Observer\ObserverTrait;
-use Sloths\Util\ArrayUtils;
+use Sloths\Misc\ArrayUtils;
 
 /**
- * @method distinct
- * @method calcFoundRows
- * @method select
- * @method where
- * @method orWhere
- * @method having
- * @method orHaving
- * @method orderBy
- * @method groupBy
- * @method limit
- * @method offset
- * @method join
- * @method leftJoin
- * @method rightJoin
+ * @method Collection select($columns)
+ * @method Collection where($condition, $params = null)
+ * @method Collection orWhere($condition, $params = null)
+ * @method Collection having($condition, $params = null)
+ * @method Collection orHaving($condition, $params = null)
+ * @method Collection groupBy($columns)
+ * @method Collection orderBy($columns)
+ * @method Collection limit(int $limit)
+ * @method Collection offset(int $offset)
  */
-class Collection implements \Countable, \IteratorAggregate, \JsonSerializable, \ArrayAccess
+class Collection implements \Countable, \IteratorAggregate, \JsonSerializable
 {
     use ObserverTrait;
 
     /**
-     * @var array
+     * @var Select
      */
-    protected static $fallbackToSelectMethods = [
-        'distinct', 'calcFoundRows', 'select', 'where', 'orWhere', 'having', 'orHaving',
-        'orderBy', 'groupBy',
-        'limit', 'offset',
-        'join', 'leftJoin', 'rightJoin'
-    ];
+    protected $select;
 
     /**
-     * @var array
-     */
-    protected static $compositeMethods = ['save', 'delete'];
-
-    /**
-     * @var \Sloths\Db\Sql\Select
-     */
-    protected $sqlSelect;
-
-    /**
-     * @var Model
+     * @var string
      */
     protected $modelClassName;
 
     /**
-     * @var array
+     * @var \PDOStatement
      */
-    protected $models;
+    protected $stmt;
+
+    /**
+     * @var int
+     */
+    protected $count;
 
     /**
      * @var int
@@ -62,139 +47,109 @@ class Collection implements \Countable, \IteratorAggregate, \JsonSerializable, \
     protected $foundRows;
 
     /**
-     * @param Select $select
-     * @param string $modelClassName
+     * @var AbstractModel[]
      */
-    public function __construct(Select $select, $modelClassName)
+    protected $models;
+
+    /**
+     * @param Select|array $data
+     * @param $modelClassName
+     */
+    public function __construct($data, $modelClassName)
     {
-        $this->sqlSelect = $select;
         $this->modelClassName = $modelClassName;
+
+        if ($data instanceof Select) {
+            $this->select = $data;
+        } else {
+            $this->setRows($data);
+        }
     }
 
     /**
-     * @param string $method
-     * @param array $args
+     * @return string
+     */
+    public function getModelClassName()
+    {
+        return $this->modelClassName;
+    }
+
+    /**
+     * @param $method
+     * @param $args
      * @return $this
-     * @throws \BadMethodCallException
      */
     public function __call($method, $args)
     {
-        if (in_array($method, static::$fallbackToSelectMethods)) {
-            call_user_func_array([$this->sqlSelect, $method], $args);
-            return $this;
-        }
-
-        if (in_array($method, static::$compositeMethods)) {
-            foreach ($this as $model) {
-                call_user_func_array([$model, $method], $args);
-            }
-            return $this;
-        }
-
-        throw new \BadMethodCallException(sprintf('Call to undefined method %s', $method));
+        call_user_func_array([$this->select, $method], $args);
+        return $this;
     }
 
     /**
-     * @param string $name
-     * @param mixed $value
+     * @return \Sloths\Db\Database
      */
-    public function __set($name, $value)
-    {
-        foreach ($this as $model) {
-            $model->set($name, $value);
-        }
-    }
-
-    /**
-     * @return Select
-     */
-    public function getSqlSelect()
-    {
-        return $this->sqlSelect;
-    }
-
-    /**
-     * @return \Sloths\Db\Connection
-     */
-    public function getConnection()
+    public function getDatabase()
     {
         $modelClassName = $this->modelClassName;
-        return $modelClassName::getConnection();
-    }
-
-    /**
-     * @param array $rows
-     */
-    public function fromArray(array $rows)
-    {
-        $this->models = [];
-
-        $modelClassName = $this->modelClassName;
-
-        foreach ($rows as $row) {
-            $this->models[] = new $modelClassName($row, $this);
-        }
+        return $modelClassName::getDatabase();
     }
 
     /**
      * @param bool $reload
+     * @return $this
      */
-    protected function load($reload = false)
+    public function load($reload = false)
     {
-        if ($reload || null === $this->models) {
-            $connection = $this->getConnection();
+        if (null === $this->models || $reload) {
+            $this->stmt = $this->getDatabase()->run($this->select);
 
-            if ($this->sqlSelect->isCalcFoundRows()) {
-                $result = $connection->selectAllWithFoundRows($this->sqlSelect);
-                $this->foundRows = $result['foundRows'];
-                $rows = $result['rows'];
-            } else {
-                $rows = $connection->selectAll($this->sqlSelect);
-            }
+            $rows = $this->stmt->fetchAll(\PDO::FETCH_ASSOC);
+            $this->triggerEventListener('load', [&$rows]);
 
-            $this->notify('loaded', [&$rows]);
-
-            $this->fromArray($rows);
-        }
-    }
-
-    /**
-     * @return int
-     */
-    public function count()
-    {
-        $this->load();
-        return count($this->models);
-    }
-
-    /**
-     * @return int
-     */
-    public function foundRows()
-    {
-        if (null === $this->foundRows) {
-            if (null === $this->models) {
-                $this->calcFoundRows();
-                $this->load();
-            } else {
-                $sqlSelect = clone $this->sqlSelect;
-                $sqlSelect->calcFoundRows()->limit(0);
-
-                $result = $this->getConnection()->selectAllWithFoundRows($sqlSelect);
-                $this->foundRows = $result['foundRows'];
-            }
+            $this->setRows($rows);
         }
 
-        return $this->foundRows;
+        return $this;
+    }
+
+    protected function setRows(array $rows)
+    {
+        $modelClassName = $this->modelClassName;
+
+        $this->models = [];
+
+        foreach ($rows as $index => $row) {
+            $this->models[$index] = new $modelClassName($row, $this);
+        }
+
+        $this->count = count($rows);
+        $this->foundRows = null;
     }
 
     /**
-     * @return \Generator
+     * @return $this
      */
-    public function getIterator()
+    public function reload()
+    {
+        return $this->load(true);
+    }
+
+    /**
+     * @param int $index
+     * @return null|AbstractModel
+     */
+    public function getAt($index)
     {
         $this->load();
-        return new \ArrayIterator($this->models);
+        return isset($this->models[$index])? $this->models[$index] : null;
+    }
+
+    /**
+     * @return AbstractModel|null
+     */
+    public function first()
+    {
+        return $this->getAt(0);
     }
 
     /**
@@ -213,30 +168,64 @@ class Collection implements \Countable, \IteratorAggregate, \JsonSerializable, \
     public function ids()
     {
         $modelClassName = $this->modelClassName;
-        return $this->column($modelClassName::getPrimaryKey());
+        $primaryKeyColumn = $modelClassName::getPrimaryKey();
+
+        return $this->column($primaryKeyColumn);
     }
 
     /**
+     * @param $withRelations
      * @return array
      */
-    public function toArray()
+    public function toArray($withRelations = false)
     {
+        $this->load();
         $result = [];
 
-        foreach ($this as $model) {
-            $result[] = $model->toArray();
+        foreach ($this->models as $model) {
+            $result[] = $model->toArray($withRelations);
         }
 
         return $result;
     }
 
     /**
-     * @param int $options
-     * @return string
+     * @return int
      */
-    public function toJson($options = 0)
+    public function count()
     {
-        return json_encode($this, $options);
+        $this->load();
+        return $this->count;
+    }
+
+    /**
+     * @return int
+     */
+    public function foundRows()
+    {
+        if (null === $this->foundRows) {
+            $select = clone $this->select;
+
+            if (!$select->hasSpecInstance('Having')) {
+                $select->getSpec('Select')->resetColumns();
+                $select->select('COUNT(*)');
+            }
+
+            $select->limit(null);
+
+            $this->foundRows = (int) $this->getDatabase()->run($select)->fetchColumn();
+        }
+
+        return $this->foundRows;
+    }
+
+    /**
+     * @return AbstractModel[]|\Traversable
+     */
+    public function getIterator()
+    {
+        $this->load();
+        return new \ArrayIterator($this->models);
     }
 
     /**
@@ -247,46 +236,49 @@ class Collection implements \Countable, \IteratorAggregate, \JsonSerializable, \
         return $this->toArray();
     }
 
-    /**
-     * @param mixed $offset
-     * @return bool
-     */
-    public function offsetExists($offset)
+    public function callEach($method, array $args = [])
     {
         $this->load();
-        return isset($this->models[$offset]);
-    }
 
-    /**
-     * @param mixed $offset
-     * @return null
-     */
-    public function offsetGet($offset)
-    {
-        return $this->offsetExists($offset)? $this->models[$offset] : null;
-    }
-
-    /**
-     * @param mixed $offset
-     * @param mixed $model
-     * @throws \InvalidArgumentException
-     */
-    public function offsetSet($offset, $model)
-    {
-        $modelClassName = $this->modelClassName;
-
-        if (!$model instanceof $modelClassName) {
-            throw new \InvalidArgumentException(sprintf('Model class should be an instanceof %s', $modelClassName));
+        foreach ($this->models as $model) {
+            call_user_func_array([$model, $method], $args);
         }
 
-        $this->models[] = $model;
+        return $this;
     }
 
     /**
-     * @param mixed $offset
+     * @param string $name
+     * @param mixed $value
+     * @return $this
      */
-    public function offsetUnset($offset)
+    public function set($name, $value)
     {
-        // TODO: Implement offsetUnset() method.
+        return $this->callEach('set', func_get_args());
+    }
+
+    /**
+     * @param string $name
+     * @param mixed $value
+     */
+    public function __set($name, $value)
+    {
+        $this->set($name, $value);
+    }
+
+    /**
+     * @return $this
+     */
+    public function save()
+    {
+        return $this->callEach('save');
+    }
+
+    /**
+     * @return $this
+     */
+    public function delete()
+    {
+        return $this->callEach('delete');
     }
 }

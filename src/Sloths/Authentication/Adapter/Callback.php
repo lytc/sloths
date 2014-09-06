@@ -20,17 +20,11 @@ class Callback extends AbstractAdapter
     }
 
     /**
-     * @return \Sloths\Authentication\Result
+     * @return Result
      */
     public function authenticate()
     {
-        $callback = $this->callback;
-
-        if ($callback instanceof \Closure) {
-            $callback = $callback->bindTo($this);
-        }
-
-        $result = call_user_func($callback, $this, $this->identity, $this->credential);
+        $result = call_user_func($this->callback, $this, $this->identity, $this->credential);
 
         if ($result instanceof Result) {
             return $result;

@@ -2,6 +2,8 @@
 
 namespace Sloths\Routing;
 
+use Sloths\Http\AbstractRequest;
+
 class Route
 {
     /**
@@ -20,72 +22,49 @@ class Route
     protected $callback;
 
     /**
-     * @var
+     * @param $methods
+     * @param $pattern
+     * @param callable $callback
      */
-    protected $params;
-
-    /**
-     * @param string $methods
-     * @param string $pattern
-     * @param array $conditions
-     */
-    public function __construct($methods = null, $pattern = null, callable $callback = null)
+    public function __construct($methods, $pattern, callable $callback)
     {
-        !$methods || $this->setMethod($methods);
-        !$pattern || $this->setPattern($pattern);
-        $this->callback = $callback;
-    }
-
-    /**
-     * @param string|array $methods
-     * @return $this
-     */
-    public function setMethod($methods)
-    {
-        if (!is_array($methods)) {
-            $methods = (String) $methods;
-            $methods = preg_split('/\s+/', trim($methods));
+        if ('*' == $methods) {
+            $methods = AbstractRequest::getSupportedMethods();
+        } else {
+            if (!is_array($methods)) {
+                $methods = [$methods];
+            }
         }
 
-        $this->methods = array_combine($methods, $methods);
+        $this->methods = array_values($methods);
 
-        return $this;
+        $this->pattern = $pattern;
+        $this->callback = $callback;
     }
 
     /**
      * @return array
      */
-    public function getMethod()
+    public function getMethods()
     {
         return $this->methods;
     }
 
     /**
-     * @param string$pattern
-     * @return $this
+     * @param $method
+     * @return bool
      */
-    public function setPattern($pattern)
+    public function hasMethod($method)
     {
-        $this->pattern = $pattern;
-        return $this;
+        return false !== array_search($method, $this->getMethods());
     }
 
     /**
-     * @return string
+     * @return mixed
      */
     public function getPattern()
     {
         return $this->pattern;
-    }
-
-    /**
-     * @param callable $callback
-     * @return $this
-     */
-    public function setCallback(callable $callback)
-    {
-        $this->callback = $callback;
-        return $this;
     }
 
     /**
@@ -140,9 +119,9 @@ class Route
     }
 
     /**
-     * @param $method
-     * @param $path
-     * @return array|bool
+     * @param string $method
+     * @param string $path
+     * @return bool|MathResult
      */
     public function match($method, $path)
     {
@@ -181,15 +160,7 @@ class Route
         }
 
         $params || $params = $matches;
-        $this->params = $params;
-        return $params;
-    }
 
-    /**
-     * @return array
-     */
-    public function getParams()
-    {
-        return $this->params;
+        return $params;
     }
 }

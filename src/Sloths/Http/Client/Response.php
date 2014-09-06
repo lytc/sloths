@@ -2,8 +2,8 @@
 
 namespace Sloths\Http\Client;
 
-use Sloths\Http\Message\AbstractResponse;
-use Sloths\Http\Message\Headers;
+use Sloths\Http\AbstractResponse;
+use Sloths\Http\Headers;
 
 class Response extends AbstractResponse
 {
@@ -49,7 +49,7 @@ class Response extends AbstractResponse
         $headers = [];
         foreach ($lines as $line) {
             $header = explode(':', $line, 2);
-            $headerName = Headers::processHeaderName($header[0]);
+            $headerName = Headers::processName($header[0]);
             $headers[$headerName] = trim($header[1]);
         }
 

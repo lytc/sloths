@@ -1,0 +1,10 @@
+{
+    "require": {
+        "doctrine/inflector": "1.0.*@dev"
+    },
+    "autoload": {
+        "psr-4": {
+            "Application\\Model\\": "models"
+        }
+    }
+}

@@ -3,42 +3,24 @@
 namespace SlothsTest\Db\Sql;
 
 use Sloths\Db\Sql\Delete;
+use SlothsTest\TestCase;
 
 /**
- * @covers \Sloths\Db\Sql\Delete
+ * @covers Sloths\Db\Sql\Delete
  */
-class DeleteTest extends \PHPUnit_Framework_TestCase
+class DeleteTest extends TestCase
 {
     public function test()
     {
-        $delete = new Delete('foo');
-        $delete->where("bar = 'baz'");
-
-        $expected = "DELETE FROM foo WHERE (bar = 'baz')";
-        $this->assertSame($expected, $delete->toString());
-    }
-
-    public function testIgnore()
-    {
-        $delete = new Delete('foo');
-        $delete->ignore()->where("bar = 'baz'");
-
-        $expected = "DELETE IGNORE FROM foo WHERE (bar = 'baz')";
-        $this->assertSame($expected, $delete->toString());
-    }
-
-    public function testGetWhere()
-    {
         $delete = new Delete();
-        $this->assertInstanceOf('Sloths\Db\Sql\Where', $delete->where());
-        $this->assertInstanceOf('Sloths\Db\Sql\Where', $delete->orWhere());
-    }
+        $delete
+            ->table('users')
+            ->where('id IN(?)', [1, 2])
+            ->orderBy('id')
+            ->limit(10)
+        ;
 
-    public function testOrWhere()
-    {
-        $delete = new Delete('foo');
-        $delete->where("foo = 'bar'")->orWhere("bar = 'baz'");
-        $expected = "DELETE FROM foo WHERE (foo = 'bar') OR (bar = 'baz')";
+        $expected = "DELETE FROM users WHERE (id IN (1, 2)) ORDER BY id LIMIT 10";
         $this->assertSame($expected, $delete->toString());
     }
 }

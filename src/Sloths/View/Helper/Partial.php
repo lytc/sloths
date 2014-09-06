@@ -5,19 +5,15 @@ namespace Sloths\View\Helper;
 class Partial extends AbstractHelper
 {
     /**
-     * @param string $file
-     * @param array $vars
-     * @return \Sloths\View\View
+     * @param $template
+     * @param array $variables
+     * @return string
      */
-    public function partial($file, $vars = [])
+    public function __invoke($template, array $variables = [])
     {
-        $view = clone $this->view;
-        $view->setLayout(false)->setFile($file);
+        $view = clone $this->getView();
+        $view->setLayout(false);
 
-        if ($vars) {
-            $view->addVars($vars);
-        }
-
-        return $view;
+        return $view->render($template, $variables);
     }
 }

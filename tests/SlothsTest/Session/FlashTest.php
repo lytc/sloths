@@ -2,105 +2,39 @@
 
 namespace SlothsTest\Session;
 
-use Sloths\Session\Flash;
-use Sloths\Session\Session;
 use SlothsTest\TestCase;
-
-@session_start();
+use Sloths\Session\Flash;
 
 /**
- * @covers \Sloths\Session\Flash
+ * @covers Sloths\Session\Flash
  */
 class FlashTest extends TestCase
 {
     public function test()
     {
-        $session = new Session(null, []);
-        $flash = new Flash('flash', $session);
-        $this->assertFalse($flash->has('foo'));
+        $data = ['foo' => 'foo'];
 
-        $flash['foo'] = 1;
-        $this->assertFalse($flash->has('foo'));
-        $this->assertSame(['foo' => 1], $flash->getNextData());
-        foreach ($flash as $k => $v) {
-            $this->assertSame('foo', $k);
-            $this->assertSame(1, $v);
-        }
+        $flash = new Flash($data);
+        $this->assertSame('foo', $flash->get('foo'));
 
-        $next = new Flash('flash', $session);
-        $this->assertSame(1, $next['foo']);
+        $flash->set('foo', 'bar');
+        $this->assertSame('foo', $flash->get('foo'));
 
-        $next = new Flash('flash', $session);
-        $this->assertFalse($next->has('foo'));
+        $flash->now();
+        $this->assertSame('bar', $flash->get('foo'));
 
-        $flash->set('foo', 1);
-        $this->assertSame(1, $flash->getNextData()['foo']);
-
-        $flash->set(null, 'bar');
-        $this->assertSame('bar', $flash->getNextData()[0]);
-
-        $flash->clear();
-        $this->assertSame([], $flash->getNextData());
-    }
-
-    public function testRemoveAndUnset()
-    {
-        $session = new Session(null, []);
-        $flash = new Flash('flash', $session);
-        $flash['foo'] = 1;
-        $flash['bar'] = 2;
-        $flash['baz'] = 3;
-
-        $flash->remove('foo');
-        unset($flash['bar']);
-
-        $next = new Flash('flash', $session);
-
-        $this->assertFalse($next->has('foo'));
-        $this->assertFalse($next->has('bar'));
-        $this->assertSame(3, $next['baz']);
+        $this->assertNull($flash->get('bar'));
     }
 
     public function testKeep()
     {
-        $session = new Session(null, []);
-        $flash = new Flash('flash', $session);
-        $flash['foo'] = 1;
+        $data = ['foo' => 'bar'];
+        $flash = new Flash($data);
 
-        $next = new Flash('flash', $session);
-        $this->assertSame(1, $next->foo);
-        $next->keep();
+        $this->assertSame([], $data);
 
-        $next = new Flash('flash', $session);
-        $this->assertSame(1, $next->foo);
-    }
+        $flash->keep();
+        $this->assertSame(['foo' => 'bar'], $data);
 
-    public function testNow()
-    {
-        $session = new Session(null, []);
-        $flash = new Flash('flash', $session);
-        $flash['foo'] = 1;
-
-        $this->assertFalse($flash->has('foo'));
-        $flash->now();
-
-        $this->assertSame(1, $flash->foo);
-    }
-
-    public function testMagicMethods()
-    {
-        $session = new Session(null, [Session::DEFAULT_NAMESPACE => ['flash' => ['foo' => 2]]]);
-        $flash = new Flash('flash', $session);
-
-        $this->assertSame(['foo' => 2], $flash->getCurrentData());
-        $this->assertCount(1, $flash);
-
-        $flash->foo = 1;
-        $this->assertSame(['foo' => 1], $flash->getNextData());
-        $this->assertTrue(isset($flash['foo']));
-        $this->assertSame(2, $flash->foo);
-        unset($flash->foo);
-
-        $this->assertSame([], $flash->getNextData());
     }
 }

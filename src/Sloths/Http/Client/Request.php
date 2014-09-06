@@ -2,8 +2,7 @@
 
 namespace Sloths\Http\Client;
 
-use Sloths\Http\Message\AbstractRequest;
-use Sloths\Util\UrlUtils;
+use Sloths\Http\AbstractRequest;
 
 class Request extends AbstractRequest
 {
@@ -28,18 +27,5 @@ class Request extends AbstractRequest
         if ($headers) {
             $this->setHeaders($headers);
         }
-    }
-
-    /**
-     * @param array|\Sloths\Http\Message\Parameters $files
-     * @return $this
-     */
-    public function setFileParams($files)
-    {
-        if (!is_array($files)) {
-            $files = [$files];
-        }
-
-        return parent::setFileParams($files);
     }
 }

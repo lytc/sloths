@@ -2,9 +2,9 @@
 
 namespace SlothsTest\Authentication;
 
-use Sloths\Authentication\Authenticator;
 use Sloths\Authentication\Result;
 use SlothsTest\TestCase;
+use Sloths\Authentication\Authenticator;
 
 /**
  * @covers Sloths\Authentication\Authenticator
@@ -13,62 +13,65 @@ class AuthenticatorTest extends TestCase
 {
     public function testAuthenticateSuccess()
     {
-        $result = new Result(Result::SUCCESS, 'foo');
+        $data = 'user data';
+        $result = new Result(Result::SUCCESS, $data);
 
-        $adapter = $this->getMock('Sloths\Authentication\Adapter\AdapterInterface', ['authenticate']);
+        $adapter = $this->getMock('Sloths\Authentication\Adapter\AdapterInterface');
+        $adapter->expects($this->once())->method('setIdentity')->with('username');
+        $adapter->expects($this->once())->method('setCredential')->with('pass');
         $adapter->expects($this->once())->method('authenticate')->willReturn($result);
 
-        $storage = $this->getMock('Sloths\Authentication\Storage\StorageInterface', ['exists', 'read', 'clear', 'write']);
-        $storage->expects($this->once())->method('exists')->willReturn(true);
-        $storage->expects($this->once())->method('read')->willReturn('foo');
-        $storage->expects($this->once())->method('clear');
-        $storage->expects($this->once())->method('write')->with('foo');
 
-        $authenticator = new Authenticator($adapter, $storage);
-        $this->assertSame($result, $authenticator->authenticate());
+        $storage = $this->getMock('Sloths\Authentication\Storage\StorageInterface');
+        $storage->expects($this->once())->method('write')->with($data);
+        $storage->expects($this->once())->method('exists')->willReturn(true);
+        $storage->expects($this->once())->method('read')->willReturn($data);
+        $storage->expects($this->once())->method('clear');
+
+        $authenticator = new Authenticator();
+        $authenticator->setAdapter($adapter);
+        $authenticator->setStorage($storage);
+
+        $this->assertSame($result, $authenticator->authenticate('username', 'pass'));
+
         $this->assertTrue($authenticator->exists());
-        $this->assertSame('foo', $authenticator->getData());
+        $this->assertSame($data, $authenticator->getData());
+        $this->assertSame($authenticator, $authenticator->clear());
+
     }
 
-    public function testAuthenticateFailure()
+    public function testAuthenticateFail()
     {
-        $result = new Result(Result::ERROR_FAILURE);
+        $result = new Result(Result::ERROR_IDENTITY_NOT_FOUND);
 
-        $adapter = $this->getMock('Sloths\Authentication\Adapter\AdapterInterface', ['authenticate']);
+        $adapter = $this->getMock('Sloths\Authentication\Adapter\AdapterInterface');
+        $adapter->expects($this->once())->method('setIdentity')->with('username');
+        $adapter->expects($this->once())->method('setCredential')->with('pass');
         $adapter->expects($this->once())->method('authenticate')->willReturn($result);
 
-        $storage = $this->getMock('Sloths\Authentication\Storage\StorageInterface', ['exists', 'read', 'clear', 'write']);
-        $storage->expects($this->once())->method('clear');
+
+        $storage = $this->getMock('Sloths\Authentication\Storage\StorageInterface');
         $storage->expects($this->never())->method('write');
 
-        $authenticator = new Authenticator($adapter, $storage);
-        $this->assertSame($result, $authenticator->authenticate());
+        $authenticator = new Authenticator();
+        $authenticator->setAdapter($adapter);
+        $authenticator->setStorage($storage);
+
+        $this->assertSame($result, $authenticator->authenticate('username', 'pass'));
     }
 
     /**
-     * @expectedException \RuntimeException
+     * @expectedException RuntimeException
      */
-    public function testAuthenticateWithoutAdapterShouldThrowAnException()
+    public function testGetAdapterShouldThrowAnExceptionIfHaveNoAdapter()
     {
         $authenticator = new Authenticator();
-        $authenticator->authenticate();
+        $authenticator->getAdapter();
     }
 
-    /**
-     * @expectedException \UnexpectedValueException
-     */
-    public function testAdapterAuthenticateReturnInvalidResultShouldThrowAnException()
+    public function testDefaultStorage()
     {
-        $adapter = $this->getMock('Sloths\Authentication\Adapter\AdapterInterface', ['authenticate']);
-        $adapter->expects($this->once())->method('authenticate')->willReturn(new \stdClass());
-
-        $authenticator = new Authenticator();
-        $authenticator->authenticate($adapter);
-    }
-
-    public function testGetStorageShouldReturnInstanceOfStorageIfNoStorageProvide()
-    {
-        $authenticator = new Authenticator();
-        $this->assertInstanceOf('Sloths\Authentication\Storage\Session', $authenticator->getStorage());
+        $authentication = new Authenticator();
+        $this->assertInstanceOf('Sloths\Authentication\Storage\Session', $authentication->getStorage());
     }
 }

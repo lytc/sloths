@@ -76,7 +76,7 @@ class ClientTest extends TestCase
         $this->assertSame($request, $client->getRequest());
     }
 
-    public function testNewInstanceWithUri()
+    public function testNewInstanceWithUrl()
     {
         $client = new Client('http://example.com/foo');
         $this->assertSame('http://example.com/foo', $client->getRequest()->getUrl());
@@ -86,6 +86,14 @@ class ClientTest extends TestCase
     {
         $client = new Client();
         $this->assertSame($client->getCurl(), $client->getCurl());
+    }
+
+    public function testBaseUrl()
+    {
+        $client = new Client();
+        $client->setBaseUrl('http://example.com/foo');
+        $client->get('bar');
+        $this->assertSame('http://example.com/foo/bar', $client->getRequest()->getUrl());
     }
 
     public function testSendSimpleGet()
@@ -112,7 +120,7 @@ class ClientTest extends TestCase
     {
         $url = self::getScriptUrl('test-query.php');
         $client = new Client($url);
-        $client->getRequest()->setQueryParams(['foo' => 'bar']);
+        $client->getRequest()->setParamsQuery(['foo' => 'bar']);
         $this->assertSame('bar', $client->send()->getBody());
     }
 
@@ -155,7 +163,7 @@ class ClientTest extends TestCase
 
         $this->assertSame('http://example.com?foo=bar', $request->getUrl());
         $this->assertSame(Client\Request::METHOD_GET, $request->getMethod());
-        $this->assertSame(['foo' => 'bar'], $request->getQueryParams()->toArray());
+        $this->assertSame(['foo' => 'bar'], $request->getParamsQuery()->toArray());
         $this->assertSame(['Foo' => 'bar'], $request->getHeaders()->toArray());
     }
 
@@ -167,7 +175,7 @@ class ClientTest extends TestCase
 
         $this->assertSame('http://example.com?foo=bar', $request->getUrl());
         $this->assertSame(Client\Request::METHOD_HEAD, $request->getMethod());
-        $this->assertSame(['foo' => 'bar'], $request->getQueryParams()->toArray());
+        $this->assertSame(['foo' => 'bar'], $request->getParamsQuery()->toArray());
         $this->assertSame(['Foo' => 'bar'], $request->getHeaders()->toArray());
     }
 
@@ -215,7 +223,7 @@ class ClientTest extends TestCase
 
         $this->assertSame('http://example.com?foo=bar', $request->getUrl());
         $this->assertSame(Client\Request::METHOD_DELETE, $request->getMethod());
-        $this->assertSame(['foo' => 'bar'], $request->getQueryParams()->toArray());
+        $this->assertSame(['foo' => 'bar'], $request->getParamsQuery()->toArray());
         $this->assertSame(['Foo' => 'bar'], $request->getHeaders()->toArray());
     }
 
@@ -227,7 +235,7 @@ class ClientTest extends TestCase
 
         $this->assertSame('http://example.com?foo=bar', $request->getUrl());
         $this->assertSame(Client\Request::METHOD_OPTIONS, $request->getMethod());
-        $this->assertSame(['foo' => 'bar'], $request->getQueryParams()->toArray());
+        $this->assertSame(['foo' => 'bar'], $request->getParamsQuery()->toArray());
         $this->assertSame(['Foo' => 'bar'], $request->getHeaders()->toArray());
     }
 

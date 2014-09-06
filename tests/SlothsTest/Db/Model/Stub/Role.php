@@ -2,13 +2,12 @@
 
 namespace SlothsTest\Db\Model\Stub;
 
-use Sloths\Db\Model\Model;
+use Sloths\Db\Model\AbstractModel;
 
-class Role extends Model
+class Role extends AbstractModel
 {
     protected static $columns = [
         'id' => self::INT,
-        'name' => self::VARCHAR,
-        'description' => self::TEXT
+        'name' => self::VARCHAR
     ];
 }

@@ -2,74 +2,49 @@
 
 namespace Sloths\Db\Sql;
 
-class Delete implements SqlInterface
+/**
+ * @method Delete where($condition, $params = null)
+ * @method Delete orWhere($condition, $params = null)
+ * @method Delete orderBy($columns)
+ * @method Delete limit(int $limit)
+ */
+class Delete extends AbstractSql implements SqlWriteInterface
 {
+    const SPEC_WHERE = 'Where';
+    const SPEC_ORDER_BY = 'OrderBy';
+    const SPEC_LIMIT = 'Limit';
+
     /**
-     * @var string
+     * @var array
      */
-    protected $table;
+    protected $specs = [
+        self::SPEC_WHERE    => null,
+        self::SPEC_ORDER_BY => null,
+        self::SPEC_LIMIT    => null
+    ];
+
+    /**
+     * @var array
+     */
+    protected $methods = [
+        'where'     => [self::SPEC_WHERE, 'and'],
+        'orWhere'   => [self::SPEC_WHERE, 'or'],
+        'orderBy'   => [self::SPEC_ORDER_BY, 'add'],
+        'limit'     => [self::SPEC_LIMIT, 'limit'],
+    ];
 
     /**
      * @var
      */
-    protected $where;
+    protected $tableName;
 
     /**
-     * @var bool
-     */
-    protected $ignore = false;
-
-    /**
-     * @param string $table
-     */
-    public function __construct($table = null)
-    {
-        !$table || $this->from($table);
-    }
-
-    public function ignore($state = true)
-    {
-        $this->ignore = $state;
-        return $this;
-    }
-
-    /**
-     * @param string $table
+     * @param string $tableName
      * @return $this
      */
-    public function from($table)
+    public function table($tableName)
     {
-        $this->table = $table;
-        return $this;
-    }
-
-    /**
-     * @return $this|Where
-     */
-    public function where()
-    {
-        $this->where || $this->where = new Where();
-
-        if (0 == func_num_args()) {
-            return $this->where;
-        }
-
-        call_user_func_array([$this->where, 'where'], func_get_args());
-        return $this;
-    }
-
-    /**
-     * @return $this|Where
-     */
-    public function orWhere()
-    {
-        $this->where || $this->where = new Where();
-
-        if (0 == func_num_args()) {
-            return $this->where;
-        }
-
-        call_user_func_array([$this->where, 'orWhere'], func_get_args());
+        $this->tableName = $tableName;
         return $this;
     }
 
@@ -78,14 +53,7 @@ class Delete implements SqlInterface
      */
     public function toString()
     {
-        $parts = ['DELETE'];
-        !$this->ignore || $parts[] = 'IGNORE';
-        $parts[] = 'FROM ' . $this->table;
-
-        if ($this->where && ($wherePart = $this->where->toString())) {
-            $parts[] = $wherePart;
-        }
-
-        return implode(' ', $parts);
+        $sql = parent::toString();
+        return 'DELETE FROM ' . $this->tableName . ($sql? ' ' . $sql : '');
     }
 }
