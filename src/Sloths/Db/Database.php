@@ -2,16 +2,17 @@
 
 namespace Sloths\Db;
 
+use Sloths\Cache\CacheableTrait;
 use Sloths\Db\Sql\Insert;
-use Sloths\Db\Sql\Select;
 use Sloths\Db\Sql\Spec\Raw;
 use Sloths\Db\Sql\SqlInterface;
 use Sloths\Db\Sql\SqlReadInterface;
 use Sloths\Misc\StringUtils;
-use Sloths\Misc\Inflector;
 
 class Database
 {
+    use CacheableTrait;
+
     /**
      * @var Connection
      */
@@ -218,5 +219,21 @@ class Database
     public function now()
     {
         return date('Y-m-d H:i:s');
+    }
+
+    /**
+     * @param string $name
+     * @return Table
+     */
+    public function table($name)
+    {
+        $table = new Table($name);
+        $table->setDatabase($this);
+
+        if ($this->cacheManager) {
+            $table->setCacheManager($this->cacheManager);
+        }
+
+        return $table;
     }
 }

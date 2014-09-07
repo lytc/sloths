@@ -67,10 +67,6 @@ class Memcached implements StorageInterface
      */
     public function set($key, $value, $expiration)
     {
-        if (!is_int($expiration)) {
-            $expiration = strtotime($expiration);
-        }
-
         $this->getMemcachedResource()->set($key, $value, $expiration);
         return $this;
     }

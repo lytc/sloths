@@ -45,7 +45,7 @@ class MemcachedTest extends TestCase
         $memcached = $this->getMock('Sloths\Cache\Storage\Memcached', ['getMemcachedResource']);
         $memcached->expects($this->once())->method('getMemcachedResource')->willReturn($memcachedResource);
 
-        $memcached->set('foo', 'bar', date('Y-m-d H:i:s', $expiration));
+        $memcached->set('foo', 'bar', $expiration);
     }
 
     public function testRemove()

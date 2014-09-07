@@ -46,11 +46,12 @@ class CacheManager
 
     /**
      * @param string $key
+     * @param $success
      * @return mixed
      */
-    public function get($key)
+    public function get($key, &$success = null)
     {
-        return $this->getStorage()->get($key);
+        return $this->getStorage()->get($key, $success);
     }
 
     /**
@@ -61,6 +62,10 @@ class CacheManager
      */
     public function set($key, $value, $expiration)
     {
+        if (is_string($expiration)) {
+            $expiration = strtotime($expiration);
+        }
+
         $this->getStorage()->set($key, $value, $expiration);
         return $this;
     }
@@ -92,6 +97,10 @@ class CacheManager
      */
     public function replace($key, $value, $expiration = 0)
     {
+        if ($expiration && is_string($expiration)) {
+            $expiration = strtotime($expiration);
+        }
+
         $this->getStorage()->replace($key, $value, $expiration);
         return $this;
     }
