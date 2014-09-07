@@ -36,16 +36,6 @@ class Memcached implements StorageInterface
     }
 
     /**
-     * @param string $key
-     * @return bool
-     */
-    public function has($key)
-    {
-        $this->get($key, $success);
-        return $success === true;
-    }
-
-    /**
      * @param $key
      * @param bool $success
      * @return mixed
@@ -54,9 +44,19 @@ class Memcached implements StorageInterface
     {
         $resource = $this->getMemcachedResource();
         $result = $resource->get($key);
-        $success = $resource->getResultCode() == MemcachedResource::RES_SUCCESS;
+        $success = $resource->getResultCode() === 0;
 
         return $result;
+    }
+
+    /**
+     * @param string $key
+     * @return bool
+     */
+    public function has($key)
+    {
+        $this->get($key, $success);
+        return $success === true;
     }
 
     /**
@@ -97,11 +97,11 @@ class Memcached implements StorageInterface
     /**
      * @param string $key
      * @param mixed $value
-     * @return $this
+     * @param int $expiration
+     * @return bool
      */
-    public function replace($key, $value)
+    public function replace($key, $value, $expiration = 0)
     {
-        $this->getMemcachedResource()->replace($key, $value);
+        return $this->getMemcachedResource()->replace($key, $value, $expiration);
     }
-
 }

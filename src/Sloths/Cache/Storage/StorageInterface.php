@@ -39,7 +39,8 @@ interface StorageInterface
     /**
      * @param string $key
      * @param mixed $value
-     * @return $this
+     * @param int $expiration
+     * @return bool
      */
-    public function replace($key, $value);
+    public function replace($key, $value, $expiration = 0);
 }

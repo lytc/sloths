@@ -2,12 +2,23 @@
 
 namespace Sloths\Cache\Storage;
 
+use Sloths\Filesystem\Filesystem;
+
 class File implements StorageInterface
 {
+    const METADATA_FILE_NAME = 'metadata.json';
+    const STORAGE_DIRECTORY_NAME = 'storage';
+
+
     /**
      * @var string
      */
     protected $directory;
+
+    /**
+     * @var Filesystem
+     */
+    protected $filesystem;
 
     /**
      * @param string $directory
@@ -39,12 +50,85 @@ class File implements StorageInterface
     }
 
     /**
+     * @return Filesystem
+     */
+    protected function getFilesystem()
+    {
+        if (!$this->filesystem) {
+            $this->filesystem = new Filesystem();
+        }
+
+        return $this->filesystem;
+    }
+
+    /**
+     * @return string
+     */
+    protected function getMetaDataFilePath()
+    {
+        return $this->getDirectory() . '/metadata.json';
+    }
+
+    protected function getStoragePath()
+    {
+        return $this->getDirectory() . '/' . static::STORAGE_DIRECTORY_NAME;
+    }
+
+    /**
      * @param string $key
+     * @return string
+     */
+    protected function getFilePathByKey($key)
+    {
+        return $this->getStoragePath() . '/' . $key;
+    }
+
+    /**
+     * @return array
+     */
+    protected function getMetaData()
+    {
+        $metadataFile = $this->getMetaDataFilePath();
+
+        if (!$this->getFilesystem()->exists($metadataFile)) {
+            $this->getFilesystem()->setContents($metadataFile, json_encode([]));
+            return [];
+        }
+
+        return json_decode($this->getFilesystem()->getContents($metadataFile), true);
+    }
+
+    /**
+     * @param array $metaData
+     * @return $this
+     */
+    protected function saveMetaData(array $metaData)
+    {
+        $this->getFilesystem()->setContents($this->getMetaDataFilePath(), json_encode($metaData, JSON_PRETTY_PRINT));
+        return $this;
+    }
+
+    /**
+     * @param string $key
+     * @param bool $expireCheck
      * @return bool
      */
-    public function has($key)
+    public function has($key, $expireCheck = true)
     {
-        // TODO: Implement has() method.
+        $metaData = $this->getMetaData();
+
+        if (!isset($metaData[$key])) {
+            return false;
+        }
+
+        $expireTime = $metaData[$key];
+
+        if ($expireCheck && $expireTime < time()) {
+            $this->remove($key);
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -54,18 +138,38 @@ class File implements StorageInterface
      */
     public function get($key, &$success = null)
     {
-        // TODO: Implement get() method.
+        $success = $this->has($key);
+
+        if ($success) {
+            $filePath = $this->getFilePathByKey($key);
+
+            if (!$this->getFilesystem()->exists($filePath)) {
+                $success = false;
+                return;
+            }
+
+            return unserialize($this->getFilesystem()->getContents($filePath));
+        }
     }
 
     /**
      * @param string $key
      * @param mixed $value
-     * @param mixed $expiration
+     * @param int $expiration
      * @return $this
      */
     public function set($key, $value, $expiration)
     {
-        // TODO: Implement set() method.
+        $metaData = $this->getMetaData();
+        $metaData[$key] = $expiration;
+
+        # update metadata
+        $this->saveMetaData($metaData);
+
+        # save content
+        $this->getFilesystem()->setContents($this->getFilePathByKey($key), serialize($value));
+
+        return $this;
     }
 
     /**
@@ -74,7 +178,19 @@ class File implements StorageInterface
      */
     public function remove($key)
     {
-        // TODO: Implement remove() method.
+        if (!$this->has($key, false)) {
+            return $this;
+        }
+
+        # remove file
+        $this->getFilesystem()->remove($this->getFilePathByKey($key));
+
+        # remove metadata key
+        $metaData = $this->getMetaData();
+        unset($metaData[$key]);
+        $this->saveMetaData($metaData);
+
+        return $this;
     }
 
     /**
@@ -82,17 +198,37 @@ class File implements StorageInterface
      */
     public function removeAll()
     {
-        // TODO: Implement removeAll() method.
+        # remove all files
+        $this->getFilesystem()->remove($this->getStoragePath());
+
+        # update metadata
+        $this->saveMetaData([]);
+
+        return $this;
     }
 
     /**
      * @param string $key
      * @param mixed $value
-     * @return $this
+     * @param int $expiration
+     * @return bool
      */
-    public function replace($key, $value)
+    public function replace($key, $value, $expiration = 0)
     {
-        // TODO: Implement replace() method.
+        if (!$this->has($key)) {
+            return false;
+        }
+
+        # update contents
+        $this->getFilesystem()->setContents($this->getFilePathByKey($key), serialize($value));
+
+        if ($expiration) {
+            $metaData = $this->getMetaData();
+            $metaData[$key] = $expiration;
+            $this->saveMetaData($metaData);
+        }
+
+        return true;
     }
 
 }

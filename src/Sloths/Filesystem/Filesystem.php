@@ -59,6 +59,24 @@ class Filesystem
     }
 
     /**
+     * @param string $path
+     * @param bool $clearRealPathCache
+     */
+    public function clearStatCache($path = null, $clearRealPathCache = false)
+    {
+        clearstatcache($clearRealPathCache, $path);
+    }
+
+    /**
+     * @param string $path
+     * @return int
+     */
+    public function getMode($path)
+    {
+        return fileperms($path) & 0777;
+    }
+
+    /**
      * @param string $dir
      * @param int $mode
      * @param bool $recursive
@@ -101,58 +119,11 @@ class Filesystem
         if (!$recursive || $this->isFile($path) || $this->isLink($path)) {
             return chmod($path, $mode);
         }
-
         foreach (new \FilesystemIterator($path) as $f) {
             $this->chmod($f, $mode, $recursive);
         }
 
         return chmod($path, $mode);
-    }
-
-    /**
-     * @param string $path
-     * @param string $user
-     * @param bool $recursive
-     * @return bool
-     */
-    public function chown($path, $user, $recursive = true)
-    {
-        if (is_link($path)) {
-            return lchown($path, $user);
-        }
-
-        if (!$recursive || $this->isFile($path)) {
-            return chown($path, $user);
-        }
-
-        foreach (new \FilesystemIterator($path) as $f) {
-            $this->chown($f, $user, $recursive);
-        }
-
-        return chown($path, $user);
-    }
-
-    /**
-     * @param string $path
-     * @param string $group
-     * @param bool $recursive
-     * @return bool
-     */
-    public function chgrp($path, $group, $recursive = true)
-    {
-        if (is_link($path)) {
-            return lchgrp($path, $group);
-        }
-
-        if (!$recursive || $this->isFile($path)) {
-            return chgrp($path, $group);
-        }
-
-        foreach (new \FilesystemIterator($path) as $f) {
-            $this->chgrp($f, $group, $recursive);
-        }
-
-        return chgrp($path, $group);
     }
 
     /**
@@ -163,20 +134,6 @@ class Filesystem
     public function rename($old, $new)
     {
         return rename($old, $new);
-    }
-
-    /**
-     * @param string $source
-     * @param string $dest
-     * @return bool
-     */
-    public function copy($source, $dest)
-    {
-        if (is_dir($source)) {
-            return $this->copyDir($source, $dest);
-        }
-
-        return copy($source, $dest);
     }
 
     /**
@@ -197,6 +154,20 @@ class Filesystem
     }
 
     /**
+     * @param string $source
+     * @param string $dest
+     * @return bool
+     */
+    public function copy($source, $dest)
+    {
+        if (is_dir($source)) {
+            return $this->copyDir($source, $dest);
+        }
+
+        return copy($source, $dest);
+    }
+
+    /**
      * @param string $path
      * @return string
      */
@@ -213,6 +184,7 @@ class Filesystem
      */
     public function putContents($path, $contents, $flags = 0)
     {
+        $this->mkdir($this->getDirName($path));
         return file_put_contents($path, $contents, $flags);
     }
 
@@ -260,16 +232,16 @@ class Filesystem
      * @param string $dir
      * @return array
      */
-    public function files($dir)
+    public function listFiles($dir)
     {
-        return $this->glob($dir . '/*.*');
+        return array_filter($this->glob($dir . '/*'), 'is_file');
     }
 
     /**
      * @param string $dir
      * @return array
      */
-    public function directories($dir)
+    public function listDirectories($dir)
     {
         return $this->glob($dir . '/*', GLOB_ONLYDIR);
     }
@@ -278,7 +250,7 @@ class Filesystem
      * @param string $path
      * @return string
      */
-    public function dirname($path)
+    public function getDirName($path)
     {
         return pathinfo($path, PATHINFO_DIRNAME);
     }
@@ -287,7 +259,7 @@ class Filesystem
      * @param string $path
      * @return string
      */
-    public function basename($path)
+    public function getBaseName($path)
     {
         return pathinfo($path, PATHINFO_BASENAME);
     }
@@ -296,7 +268,7 @@ class Filesystem
      * @param string $path
      * @return string
      */
-    public function name($path)
+    public function getName($path)
     {
         return pathinfo($path, PATHINFO_FILENAME);
     }
@@ -305,7 +277,7 @@ class Filesystem
      * @param string $path
      * @return string
      */
-    public function extension($path)
+    public function getExtension($path)
     {
         return pathinfo($path, PATHINFO_EXTENSION);
     }
