@@ -122,6 +122,7 @@ class Migrator
 
         $dir->close();
 
+        ksort($migrations);
         return $migrations;
     }
 
