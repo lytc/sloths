@@ -2,7 +2,7 @@
 
 namespace SlothsTest\Db\Migration;
 
-use Sloths\Application\Service\Database;
+use Sloths\Db\ConnectionManager;
 use Sloths\Db\Migration\Migrator;
 use SlothsTest\TestCase;
 
@@ -30,14 +30,14 @@ class MigratorTest extends TestCase
         $connection = $this->getMock('Sloths\Db\Connection', ['getPdo'], ['dsn']);
         $connection->expects($this->atLeast(1))->method('getPdo')->willReturn($pdo);
 
-        $database = new Database();
-        $database->setConnection($connection);
+        $connectionManager = new ConnectionManager();
+        $connectionManager->setConnection($connection);
 
         $migrator = new Migrator();
         $migrator
             ->setDirectory($directory)
             ->setNamespace('MigrationStub\\')
-            ->setDatabase($database)
+            ->setConnectionManager($connectionManager)
         ;
 
         $expectedMigrated = [
@@ -82,14 +82,14 @@ class MigratorTest extends TestCase
         $connection = $this->getMock('Sloths\Db\Connection', ['getPdo'], ['dsn']);
         $connection->expects($this->atLeast(1))->method('getPdo')->willReturn($pdo);
 
-        $database = new Database();
-        $database->setConnection($connection);
+        $connectionManager = new ConnectionManager();
+        $connectionManager->setConnection($connection);
 
         $migrator = new Migrator();
         $migrator
             ->setDirectory($directory)
             ->setNamespace('MigrationStub\\')
-            ->setDatabase($database)
+            ->setConnectionManager($connectionManager)
         ;
 
         $expected = [
@@ -120,8 +120,8 @@ class MigratorTest extends TestCase
         $connection = $this->getMock('Sloths\Db\Connection', ['getPdo'], ['dsn']);
         $connection->expects($this->atLeast(1))->method('getPdo')->willReturn($pdo);
 
-        $database = new Database();
-        $database->setConnection($connection);
+        $connectionManager = new ConnectionManager();
+        $connectionManager->setConnection($connection);
 
         $migrator = $this->getMock('Sloths\Db\Migration\Migrator', ['listPending', 'triggerEventListener']);
         $migrator->expects($this->once())->method('listPending')->willReturn($migrations);
@@ -131,7 +131,7 @@ class MigratorTest extends TestCase
 
         $migrator
             ->setDirectory($directory)
-            ->setDatabase($database)
+            ->setConnectionManager($connectionManager)
         ;
 
         $migrator->migrate();
@@ -153,8 +153,8 @@ class MigratorTest extends TestCase
         $connection = $this->getMock('Sloths\Db\Connection', ['getPdo'], ['dsn']);
         $connection->expects($this->atLeast(1))->method('getPdo')->willReturn($pdo);
 
-        $database = new Database();
-        $database->setConnection($connection);
+        $connectionManager = new ConnectionManager();
+        $connectionManager->setConnection($connection);
 
         $migrator = $this->getMock('Sloths\Db\Migration\Migrator', ['getLastMigrated', 'triggerEventListener']);
         $migrator->expects($this->once())->method('getLastMigrated')->willReturn($migration);
@@ -164,7 +164,7 @@ class MigratorTest extends TestCase
 
         $migrator
             ->setDirectory($directory)
-            ->setDatabase($database)
+            ->setConnectionManager($connectionManager)
         ;
 
         $migrator->rollback();

@@ -23,6 +23,7 @@
         <th>Email</th>
         <th><?= $this->_('Phone number') ?></th>
         <th><?= $this->_('Created time') ?></th>
+        <th><?= $this->_('Role') ?></th>
         <th></th>
     </tr>
     </thead>
@@ -34,6 +35,9 @@
             <td><?= $this->e($user->email) ?></td>
             <td><?= $this->e($user->phone) ?></td>
             <td><?= $this->formatDateTime($user->createdTime) ?></td>
+            <td>
+                <?= implode(', ', $user->Roles->remember('+10 seconds')->column('name')) ?>
+            </td>
             <td>
                <a href="<?= $this->url()->view($user) ?>" class="btn btn-xs btn-info" title="<?= $this->_('View') ?>"><i class="fa fa-file"></i></a>
                <a href="<?= $this->url()->edit($user) ?>" class="btn btn-xs btn-info" title="<?= $this->_('Edit') ?>"><i class="fa fa-edit"></i></a>

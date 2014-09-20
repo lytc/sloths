@@ -2,7 +2,7 @@
 
 namespace Sloths\Db\Migration;
 
-use Sloths\Db\Database;
+use Sloths\Db\ConnectionManager;
 use Sloths\Misc\ArrayUtils;
 use Sloths\Observer\ObserverTrait;
 
@@ -11,9 +11,9 @@ class Migrator
     use ObserverTrait;
 
     /**
-     * @var Database
+     * @var ConnectionManager
      */
-    protected $database;
+    protected $connectionManager;
 
     /**
      * @var string
@@ -31,26 +31,26 @@ class Migrator
     protected $namespace = '';
 
     /**
-     * @param Database $database
+     * @param ConnectionManager $connectionManager
      * @return $this
      */
-    public function setDatabase(Database $database)
+    public function setConnectionManager(ConnectionManager $connectionManager)
     {
-        $this->database = $database;
+        $this->connectionManager = $connectionManager;
         return $this;
     }
 
     /**
-     * @return Database
+     * @return ConnectionManager
      * @throws \RuntimeException
      */
-    public function getDatabase()
+    public function getConnectionManager()
     {
-        if (!$this->database) {
-            throw new \RuntimeException('A database is required');
+        if (!$this->connectionManager) {
+            throw new \RuntimeException('A database connection manager is required');
         }
 
-        return $this->database;
+        return $this->connectionManager;
     }
 
     /**
@@ -58,7 +58,7 @@ class Migrator
      */
     public function getConnection()
     {
-        return $this->getDatabase()->getWriteConnection();
+        return $this->getConnectionManager()->getWriteConnection();
     }
 
     /**

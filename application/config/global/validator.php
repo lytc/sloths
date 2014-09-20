@@ -8,7 +8,7 @@ $this
                 if ($tableName instanceof \Sloths\Db\Model\AbstractModel) {
                     $collection = $tableName::all();
                     if ($tableName->exists()) {
-                        $collection->where($tableName::getPrimaryKey() . ' != ' . $tableName->id());
+                        $collection->where($tableName->getPrimaryKey() . ' != ' . $tableName->id());
                     }
 
                     $tableName = $collection;

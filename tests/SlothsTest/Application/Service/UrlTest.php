@@ -49,26 +49,26 @@ class UrlTest extends TestCase
         ];
     }
 
-    public function testUrlToModel()
-    {
-        $url = $this->getMock('Sloths\Application\Service\Url', ['to']);
-        $url->expects($this->at(0))->method('to')->with('posts/1');
-        $url->expects($this->at(1))->method('to')->with('posts/1/edit');
-        $url->expects($this->at(2))->method('to')->with('posts/1');
-        $url->expects($this->at(3))->method('to')->with('posts/1');
-        $url->expects($this->at(4))->method('to')->with('posts');
-        $url->expects($this->at(5))->method('to')->with('posts/new');
-
-        $post = new Post(['id' => 1]);
-        $posts = Post::all();
-
-        $url->view($post);
-        $url->edit($post);
-        $url->update($post);
-        $url->delete($post);
-        $url->lists($posts);
-        $url->add($posts);
-    }
+//    public function testUrlToModel()
+//    {
+//        $url = $this->getMock('Sloths\Application\Service\Url', ['to']);
+//        $url->expects($this->at(0))->method('to')->with('posts/1');
+//        $url->expects($this->at(1))->method('to')->with('posts/1/edit');
+//        $url->expects($this->at(2))->method('to')->with('posts/1');
+//        $url->expects($this->at(3))->method('to')->with('posts/1');
+//        $url->expects($this->at(4))->method('to')->with('posts');
+//        $url->expects($this->at(5))->method('to')->with('posts/new');
+//
+//        $post = new Post(['id' => 1]);
+//        $posts = Post::all();
+//
+//        $url->view($post);
+//        $url->edit($post);
+//        $url->update($post);
+//        $url->delete($post);
+//        $url->lists($posts);
+//        $url->add($posts);
+//    }
 
     public function test__toString()
     {

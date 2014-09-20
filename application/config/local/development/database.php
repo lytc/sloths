@@ -1,6 +1,6 @@
 <?php
 
-/* @var $this \Sloths\Application\Service\Database */
+/* @var $this \Sloths\Application\Service\ConnectionManager */
 
 $this->setConnection(new \Sloths\Db\Connection(
     'mysql:host=127.0.0.1;dbname=sloths-application', // dsn

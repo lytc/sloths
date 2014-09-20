@@ -2,9 +2,11 @@
 
 namespace SlothsTest\Db\Model;
 
+use Sloths\Db\Model\AbstractModel;
 use Sloths\Db\Model\Collection;
+use Sloths\Db\Sql\Select;
 use SlothsTest\Db\Model\Stub\User;
-use Sloths\Application\Service\Database;
+use Sloths\Application\Service\ConnectionManager;
 use SlothsTest\TestCase;
 
 /**
@@ -12,29 +14,31 @@ use SlothsTest\TestCase;
  */
 class CollectionTest extends TestCase
 {
+    protected $mockModel;
+
+    public function setUp()
+    {
+        parent::setUp();
+        $this->mockModel = $this->getMock('Sloths\Db\Model\AbstractModel');
+    }
+
+    public function testModel()
+    {
+        $collection = new Collection([], $this->mockModel);
+        $this->assertSame($this->mockModel, $collection->getModel());
+        $this->assertSame(get_class($this->mockModel), $collection->getModelClassName());
+    }
+
     public function testLoad()
     {
-        $stmt = $this->getMock('stmt', ['fetchAll']);
-        $stmt->expects($this->exactly(2))->method('fetchAll')->willReturn([]);
+        $select = $this->getMock('Sloths\Db\Table\Sql\Select', ['all']);
+        $select->expects($this->exactly(2))->method('all')->willReturn([]);
 
-        $pdo = $this->getMock('mockpdo', ['query']);
-        $pdo->expects($this->exactly(2))->method('query')
-            ->with("SELECT users.id, users.username, users.password, users.created_time, users.modified_time FROM users")
-            ->willReturn($stmt)
-        ;
+        $collection = new Collection($select, $this->mockModel);
 
-        $connection = $this->getMock('Sloths\Db\Connection', ['getPdo'], ['dsn']);
-        $connection->expects($this->atLeast(1))->method('getPdo')->willReturn($pdo);
-
-        $database = new Database();
-        $database->setConnection($connection);
-
-        User::setDatabase($database);
-
-        $users = User::all();
-        $users->load();
-        $users->load();
-        $users->load(true);
+        $collection->load();
+        $collection->load();
+        $collection->load(true);
     }
 
     public function testReload()
@@ -50,27 +54,14 @@ class CollectionTest extends TestCase
             ['id' => 1],
             ['id' => 2],
         ];
-        $stmt = $this->getMock('stmt', ['fetchAll']);
-        $stmt->expects($this->once())->method('fetchAll')->willReturn($rows);
 
-        $pdo = $this->getMock('mockpdo', ['query']);
-        $pdo->expects($this->once())->method('query')
-            ->with("SELECT users.id, users.username, users.password, users.created_time, users.modified_time FROM users")
-            ->willReturn($stmt)
-        ;
+        $collection = new Collection($rows, $this->mockModel);
+        $modelClassName = get_class($this->mockModel);
 
-        $connection = $this->getMock('Sloths\Db\Connection', ['getPdo'], ['dsn']);
-        $connection->expects($this->atLeast(1))->method('getPdo')->willReturn($pdo);
-
-        $database = new Database();
-        $database->setConnection($connection);
-
-        User::setDatabase($database);
-
-        $users = User::all();
-        $this->assertSame($rows[0], $users->getAt(0)->toArray());
-        $this->assertSame($rows[1], $users->getAt(1)->toArray());
-        $this->assertSame($rows[0], $users->first()->toArray());
+        $this->assertInstanceOf($modelClassName, $collection->getAt(0));
+        $this->assertInstanceOf($modelClassName, $collection->getAt(1));
+        $this->assertInstanceOf($modelClassName, $collection->first());
+        $this->assertNull($collection->getAt(2));
     }
 
     public function testColumn()
@@ -82,8 +73,11 @@ class CollectionTest extends TestCase
 
     public function testIds()
     {
-        $collection = $this->getMock('Sloths\Db\Model\Collection', ['column'], [[], __NAMESPACE__ . '\Stub\User']);
-        $collection->expects($this->once())->method('column')->with('id')->willReturn([1, 2]);
+        $model = $this->getMock('Sloths\Db\Model\AbstractModel');
+        $model->expects($this->once())->method('getPrimaryKey')->willReturn('foo');
+
+        $collection = $this->getMock('Sloths\Db\Model\Collection', ['column'], [[], $model]);
+        $collection->expects($this->once())->method('column')->with('foo')->willReturn([1, 2]);
         $this->assertSame([1, 2], $collection->ids());
     }
 
@@ -91,34 +85,46 @@ class CollectionTest extends TestCase
     {
         $rows = [['id' => 1], ['id' => 2]];
 
-        $collection = new Collection($rows, __NAMESPACE__ . '\Stub\User');
+        $collection = new Collection($rows, new MockModelForTestCollection());
         $this->assertSame($rows, $collection->toArray());
         $this->assertSame(2, $collection->count());
     }
 
+    public function testJsonEncoding()
+    {
+        $rows = [['id' => 1], ['id' => 2]];
+
+        $collection = new Collection($rows, new MockModelForTestCollection());
+        $this->assertSame(json_encode($rows), json_encode($collection));
+    }
+
+    public function testTraversable()
+    {
+        $rows = [['id' => 1], ['id' => 2]];
+
+        $collection = new Collection($rows, new MockModelForTestCollection());
+
+        $count = 0;
+        foreach ($collection as $model) {
+            $this->assertInstanceOf(__NAMESPACE__ . '\MockModelForTestCollection', $model);
+            $count++;
+        }
+
+        $this->assertSame(2, $count);
+    }
+
     public function testFoundRows()
     {
-        $stmt = $this->getMock('stmt', ['fetchColumn']);
-        $stmt->expects($this->once())->method('fetchColumn')->willReturn(10);
+        $select = $this->getMock('Sloths\Db\Table\Sql\Select', ['foundRows']);
+        $select->expects($this->once())->method('foundRows')->willReturn(10);
 
-        $pdo = $this->getMock('mockpdo', ['query']);
-        $pdo->expects($this->at(0))->method('query')->with("SELECT COUNT(*) FROM users")->willReturn($stmt);
-
-        $connection = $this->getMock('Sloths\Db\Connection', ['getPdo'], ['dsn']);
-        $connection->expects($this->once())->method('getPdo')->willReturn($pdo);
-
-        $database = new Database();
-        $database->setConnection($connection);
-
-        User::setDatabase($database);
-        $users = User::all()->select('*')->limit(10);
-
-        $this->assertSame(10, $users->foundRows());
+        $collection = new Collection($select, $this->mockModel);
+        $this->assertSame(10, $collection->foundRows());
     }
 
     public function testSet()
     {
-        $users = new Collection([['id' => 1, 'username' => 'foo'], ['id' => 2, 'username' => 'bar']], __NAMESPACE__ . '\Stub\User');
+        $users = new Collection([['id' => 1, 'username' => 'foo'], ['id' => 2, 'username' => 'bar']], new MockModelForTestCollection());
         $users->username = 'baz';
 
         $this->assertSame('baz', $users->getAt(0)->username);
@@ -134,4 +140,20 @@ class CollectionTest extends TestCase
         $collection->save();
         $collection->delete();
     }
+
+    public function testCallShouldPassToSelectIfMethodNotExists()
+    {
+        $select = $this->getMock('Sloths\Db\Table\Sql\Select', ['foo']);
+        $select->expects($this->once())->method('foo');
+
+        $collection = new Collection($select, $this->mockModel);
+        $collection->foo();
+    }
+}
+
+class MockModelForTestCollection extends AbstractModel
+{
+    protected $columns = [
+        'id' => self::INT
+    ];
 }

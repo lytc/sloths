@@ -7,7 +7,7 @@ use Sloths\Db\Connection;
 abstract class AbstractMigration implements MigrationInterface
 {
     /**
-     * @var Database
+     * @var Connection
      */
     protected $connection;
 
@@ -22,7 +22,7 @@ abstract class AbstractMigration implements MigrationInterface
     }
 
     /**
-     * @return Database
+     * @return Connection
      * @throws \RuntimeException
      */
     public function getConnection()

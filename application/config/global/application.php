@@ -69,6 +69,7 @@ $this->getServiceManager()->setServices([
     'dateTime'          => 'Sloths\Application\Service\DateTime',
     'mcrypt'            => 'Sloths\Application\Service\Mcrypt',
     'password'          => 'Sloths\Application\Service\Password',
+    'cache'             => 'Sloths\Application\Service\CacheManager',
 
 ]);
 
@@ -116,4 +117,4 @@ $this->addEventListeners([
     }
 ]);
 
-\Sloths\Db\Model\AbstractModel::setDatabase($this->database);
+\Sloths\Db\Model\AbstractModel::setDefaultConnectionManager($this->database);

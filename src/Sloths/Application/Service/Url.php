@@ -104,8 +104,8 @@ class Url extends AbstractService
      */
     public function lists(Collection $collection, array $queryParams = [])
     {
-        $modelClassName = $collection->getModelClassName();
-        return $this->to(Inflector::dasherize($modelClassName::getTableName()), $queryParams);
+        $tableName = $collection->getModel()->getTableName();
+        return $this->to(Inflector::dasherize($tableName), $queryParams);
     }
 
     /**
@@ -115,8 +115,8 @@ class Url extends AbstractService
      */
     public function add(Collection $collection, array $queryParams = [])
     {
-        $modelClassName = $collection->getModelClassName();
-        return $this->to(Inflector::dasherize($modelClassName::getTableName()) . '/new', $queryParams);
+        $tableName = $collection->getModel()->getTableName();
+        return $this->to(Inflector::dasherize($tableName) . '/new', $queryParams);
     }
 
     /**

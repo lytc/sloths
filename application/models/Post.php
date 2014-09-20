@@ -6,7 +6,7 @@ use Sloths\Db\Model\AbstractModel;
 
 class Post extends AbstractModel
 {
-    protected static $columns = [
+    protected $columns = [
         'id'            => self::INT,
         'creator_id'    => self::INT,
         'modifier_id'   => self::INT,
@@ -18,7 +18,7 @@ class Post extends AbstractModel
         'modified_time' => self::DATETIME
     ];
 
-    protected static $belongsTo = [
+    protected $belongsTo = [
         'Creator' => 'User',
 //        'Creator' => [
 //            'model' => 'Application\Model\User',

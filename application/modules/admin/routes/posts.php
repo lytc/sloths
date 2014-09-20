@@ -12,6 +12,16 @@ $this->get('/', function() {
 
 });
 
+$this->get('/::id', function($id) {
+    $post = Post::first($id);
+
+    $post || $this->notFound();
+
+    return $this->render('posts/view', [
+        'post' => $post
+    ]);
+});
+
 $this->get('/new', function() {
 
     return $this->render('posts/new');

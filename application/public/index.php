@@ -1,16 +1,17 @@
 <?php
 
-$projectDirectory = realpath(__DIR__ . '/../');
+$applicationDirectory = realpath(__DIR__ . '/../');
+define('APPLICATION_DIRECTORY', $applicationDirectory);
 
-define('MODULE_SHARED_DIRECTORY', $projectDirectory . '/modules/_shared');
-$loader = require_once $projectDirectory . '/vendor/autoload.php';
+define('MODULE_SHARED_DIRECTORY', APPLICATION_DIRECTORY . '/modules/_shared');
+$loader = require_once $applicationDirectory . '/vendor/autoload.php';
 
 
-$loader->add('Sloths\\', $projectDirectory . '/../src');
+$loader->add('Sloths\\', $applicationDirectory . '/../src');
 
 $moduleManager = new \Sloths\Application\ModuleManager();
 $moduleManager
-    ->setDirectory($projectDirectory)
+    ->setDirectory($applicationDirectory)
 
     ->add('content')
     ->add('admin', ['baseUrl' => '/admin/'])
@@ -20,6 +21,6 @@ $moduleManager
 //    ->setDefault('content')
 ;
 
-$moduleManager->resolve(function($application) use ($projectDirectory) {
-    $application->setEnv(require $projectDirectory . '/config/env.php');
+$moduleManager->resolve(function($application) use ($applicationDirectory) {
+    $application->setEnv(require $applicationDirectory . '/config/env.php');
 })->run();

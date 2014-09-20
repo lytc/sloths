@@ -13,7 +13,7 @@ interface MigrationInterface
     public function setConnection(Connection $connection);
 
     /**
-     * @return Database
+     * @return Connection
      * @throws \RuntimeException
      */
     public function getConnection();

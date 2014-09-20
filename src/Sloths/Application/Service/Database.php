@@ -2,7 +2,9 @@
 
 namespace Sloths\Application\Service;
 
-class Database extends \Sloths\Db\Database implements ServiceInterface
+use Sloths\Db\ConnectionManager;
+
+class Database extends ConnectionManager implements ServiceInterface
 {
     use ServiceTrait;
 }

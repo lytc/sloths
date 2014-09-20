@@ -15,6 +15,7 @@ $this->post('/', function() {
     $result = $this->auth->authenticate($email, $password);
 
     if ($result->isSuccess()) {
+
         if ($returnUrl = $this->params->returnUrl) {
             return $this->redirector->to($returnUrl);
         }

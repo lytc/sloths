@@ -2,7 +2,7 @@
 
 namespace Sloths\Db\Sql\Spec;
 
-use Sloths\Db\Database;
+use Sloths\Db\ConnectionManager;
 use Sloths\Db\Sql\SqlInterface;
 
 class Value implements SqlInterface
@@ -28,7 +28,7 @@ class Value implements SqlInterface
     public function toString()
     {
         $values = (array) $this->values;
-        $values = Database::quote($values);
+        $values = ConnectionManager::quote($values);
 
         $sets = [];
         foreach ($values as $column => $value) {

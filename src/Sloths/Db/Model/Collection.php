@@ -2,7 +2,7 @@
 
 namespace Sloths\Db\Model;
 
-use Sloths\Db\Sql\Select;
+use Sloths\Db\Table\Sql\Select;
 use Sloths\Observer\ObserverTrait;
 use Sloths\Misc\ArrayUtils;
 
@@ -25,6 +25,11 @@ class Collection implements \Countable, \IteratorAggregate, \JsonSerializable
      * @var Select
      */
     protected $select;
+
+    /**
+     * @var AbstractModel
+     */
+    protected $model;
 
     /**
      * @var string
@@ -53,17 +58,34 @@ class Collection implements \Countable, \IteratorAggregate, \JsonSerializable
 
     /**
      * @param Select|array $data
-     * @param $modelClassName
+     * @param AbstractModel $model
      */
-    public function __construct($data, $modelClassName)
+    public function __construct($data, AbstractModel $model)
     {
-        $this->modelClassName = $modelClassName;
+        $this->model = $model;
+        $this->modelClassName = get_class($model);
 
         if ($data instanceof Select) {
             $this->select = $data;
         } else {
             $this->setRows($data);
         }
+    }
+
+    /**
+     * @return Select
+     */
+    public function getSqlSelect()
+    {
+        return $this->select;
+    }
+
+    /**
+     * @return AbstractModel
+     */
+    public function getModel()
+    {
+        return $this->model;
     }
 
     /**
@@ -81,17 +103,10 @@ class Collection implements \Countable, \IteratorAggregate, \JsonSerializable
      */
     public function __call($method, $args)
     {
-        call_user_func_array([$this->select, $method], $args);
+        if ($this->select) {
+            call_user_func_array([$this->select, $method], $args);
+        }
         return $this;
-    }
-
-    /**
-     * @return \Sloths\Db\Database
-     */
-    public function getDatabase()
-    {
-        $modelClassName = $this->modelClassName;
-        return $modelClassName::getDatabase();
     }
 
     /**
@@ -100,10 +115,8 @@ class Collection implements \Countable, \IteratorAggregate, \JsonSerializable
      */
     public function load($reload = false)
     {
-        if (null === $this->models || $reload) {
-            $this->stmt = $this->getDatabase()->run($this->select);
-
-            $rows = $this->stmt->fetchAll(\PDO::FETCH_ASSOC);
+        if ((null === $this->models || $reload) && $this->select) {
+            $rows = $this->select->all();
             $this->triggerEventListener('load', [&$rows]);
 
             $this->setRows($rows);
@@ -118,8 +131,8 @@ class Collection implements \Countable, \IteratorAggregate, \JsonSerializable
 
         $this->models = [];
 
-        foreach ($rows as $index => $row) {
-            $this->models[$index] = new $modelClassName($row, $this);
+        foreach ($rows as $row) {
+            $this->models[] = new $modelClassName($row, $this);
         }
 
         $this->count = count($rows);
@@ -167,10 +180,7 @@ class Collection implements \Countable, \IteratorAggregate, \JsonSerializable
      */
     public function ids()
     {
-        $modelClassName = $this->modelClassName;
-        $primaryKeyColumn = $modelClassName::getPrimaryKey();
-
-        return $this->column($primaryKeyColumn);
+        return $this->column($this->model->getPrimaryKey());
     }
 
     /**
@@ -204,16 +214,7 @@ class Collection implements \Countable, \IteratorAggregate, \JsonSerializable
     public function foundRows()
     {
         if (null === $this->foundRows) {
-            $select = clone $this->select;
-
-            if (!$select->hasSpecInstance('Having')) {
-                $select->getSpec('Select')->resetColumns();
-                $select->select('COUNT(*)');
-            }
-
-            $select->limit(null);
-
-            $this->foundRows = (int) $this->getDatabase()->run($select)->fetchColumn();
+            $this->foundRows = $this->select->foundRows();
         }
 
         return $this->foundRows;

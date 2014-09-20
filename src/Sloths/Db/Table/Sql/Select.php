@@ -6,6 +6,7 @@ use Sloths\Cache\CacheableTrait;
 
 class Select extends \Sloths\Db\Sql\Select
 {
+    const CACHE_KEY_PREFIX = 'slothssqlselectcache';
     use SqlTrait;
     use CacheableTrait;
 
@@ -25,14 +26,22 @@ class Select extends \Sloths\Db\Sql\Select
     }
 
     /**
+     * @return int
+     */
+    public function getCacheExpiration()
+    {
+        return $this->cacheExpiration;
+    }
+
+    /**
      * @return array
      */
     public function all()
     {
         $sql = $this->toString();
 
-        if ($this->cacheExpiration) {
-            $key = 'slothssqlselectcache.all.' . md5($sql);
+        if ($cacheExpiration = $this->getCacheExpiration()) {
+            $key = static::CACHE_KEY_PREFIX . '.' . md5($sql);
 
             $result = $this->getCacheManager()->get($key, $success);
 
@@ -41,7 +50,7 @@ class Select extends \Sloths\Db\Sql\Select
             }
 
             $result = $this->getConnection()->query($sql)->fetchAll(\PDO::FETCH_ASSOC);
-            $this->getCacheManager()->set($key, $result, $this->cacheExpiration);
+            $this->getCacheManager()->set($key, $result, $cacheExpiration);
 
             return $result;
         }
@@ -55,12 +64,28 @@ class Select extends \Sloths\Db\Sql\Select
      */
     public function first()
     {
-        $this->limit(1);
+        $rows = $this->limit(1)->all();
+        return reset($rows);
+    }
 
-        $sql = $this->toString();
+    /**
+     * @return int|mixed
+     */
+    public function foundRows()
+    {
+        $select = clone $this;
 
-        if ($this->cacheExpiration) {
-            $key = 'slothssqlselectcache.one.' . md5($sql);
+        if (!$select->hasSpecInstance('Having')) {
+            $select->getSpec('Select')->resetColumns();
+            $select->select('COUNT(*)');
+        }
+
+        $select->limit(null);
+
+        $sql = $select->toString();
+
+        if ($cacheExpiration = $this->getCacheExpiration()) {
+            $key = static::CACHE_KEY_PREFIX . '.' . md5($sql);
 
             $result = $this->getCacheManager()->get($key, $success);
 
@@ -68,12 +93,12 @@ class Select extends \Sloths\Db\Sql\Select
                 return $result;
             }
 
-            $result = $this->getConnection()->query($sql)->fetchAll(\PDO::FETCH_ASSOC);
-            $this->getCacheManager()->set($key, $result, $this->cacheExpiration);
+            $result = (int) $select->getConnection()->query($sql)->fetchColumn();
+            $select->getCacheManager()->set($key, $result, $cacheExpiration);
 
             return $result;
         }
 
-        return $this->getConnection()->query($sql)->fetch(\PDO::FETCH_ASSOC);
+        return (int) $select->getConnection()->query($sql)->fetchColumn();
     }
 }

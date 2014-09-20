@@ -47,7 +47,7 @@ class PaginatorTest extends TestCase
 
         $paginator->setPageParamName('_page');
 
-        $data = new Collection([], '');
+        $data = $this->getMock('Sloths\Db\Model\Collection', [], [], '', false);
         $paginator = $paginator->paginate($data);
         $this->assertInstanceOf('Sloths\Pagination\Paginator', $paginator);
 

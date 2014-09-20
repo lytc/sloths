@@ -2,7 +2,7 @@
 
 namespace Sloths\Db\Sql\Spec;
 
-use Sloths\Db\Database;
+use Sloths\Db\ConnectionManager;
 use Sloths\Db\Sql\SqlInterface;
 
 class Filter implements SqlInterface
@@ -78,7 +78,7 @@ class Filter implements SqlInterface
                 if (is_numeric($k)) {
                     $result[] = $v;
                 } else {
-                    $result[] = Database::bind($k, $v);
+                    $result[] = ConnectionManager::bind($k, $v);
                 }
             }
 

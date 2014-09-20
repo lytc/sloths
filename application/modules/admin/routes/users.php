@@ -3,7 +3,7 @@
 use Application\Model\User;
 
 $this->get('/', function() {
-    $users = User::all();
+    $users = User::all()->remember('+10 seconds');
 
     if ($q = trim($this->params->q)) {
         $users->where(function($select) use ($q) {
@@ -53,10 +53,10 @@ $this->post('/', function() {
         ];
     }
 
-    $data = $data->only('password name avatar phone address birthday');
+    $data = $data->only('email password name avatar phone address birthday');
     $data['password'] = md5($data['password']);
 
-    return $this->user()->fromArray($data)->save();
+    return $user->setData($data)->save();
 });
 
 $this->get('/::id/edit', function($id) {
@@ -96,7 +96,7 @@ $this->put('/::id', function($id) {
         $data = $data->only('name avatar phone address birthday');
     }
 
-    return $user->fromArray($data)->save();
+    return $user->setData($data)->save();
 });
 
 $this->delete('/::id', function($id) {

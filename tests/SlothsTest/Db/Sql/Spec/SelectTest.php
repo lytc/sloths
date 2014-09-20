@@ -2,7 +2,7 @@
 
 namespace SlothsTest\Db\Sql\Spec;
 
-use Sloths\Db\Database;
+use Sloths\Db\ConnectionManager;
 use SlothsTest\TestCase;
 use Sloths\Db\Sql\Spec\Select;
 
@@ -34,7 +34,7 @@ class SelectTest extends TestCase
             ["SELECT f.bar, f.qux AS q FROM foo AS f", 'foo f', ['bar', 'q' => 'qux']],
             ["SELECT COUNT(*) AS c FROM foo AS f", 'foo f', ['c' => 'COUNT(*)']],
             ["SELECT CURRENT_TIMESTAMP, f.bar AS b FROM foo AS f", 'foo f', ['#CURRENT_TIMESTAMP', 'b' => 'bar']],
-            ["SELECT CURRENT_TIMESTAMP, f.bar AS b FROM foo AS f", 'foo f', [Database::raw('CURRENT_TIMESTAMP'), 'b' => 'bar']]
+            ["SELECT CURRENT_TIMESTAMP, f.bar AS b FROM foo AS f", 'foo f', [ConnectionManager::raw('CURRENT_TIMESTAMP'), 'b' => 'bar']]
         ];
     }
 

@@ -7,7 +7,7 @@ use Sloths\Db\Model\AbstractModel;
 
 class User extends AbstractModel
 {
-    protected static $columns = [
+    protected $columns = [
         'id'                => self::INT,
         'email'             => self::VARCHAR,
         'password'          => self::VARCHAR,
@@ -22,7 +22,7 @@ class User extends AbstractModel
         'status'            => self::TINYINT
     ];
 
-    protected static $hasMany = [
+    protected $hasMany = [
         'CreatedPosts' => [
             'model' => 'Post',
             'foreignKey' => 'creator_id'
@@ -50,5 +50,5 @@ class User extends AbstractModel
 //        ],
     ];
 
-    protected static $hiddenColumns = ['password', 'remember_token'];
+    protected $hiddenColumns = ['password', 'remember_token'];
 }

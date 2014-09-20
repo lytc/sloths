@@ -39,3 +39,7 @@
         </tr>
     </table>
 </fieldset>
+
+<? foreach ($user->CreatedPosts as $post): ?>
+<?= $post->title ?>
+<? endforeach ?>

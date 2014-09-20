@@ -3,7 +3,7 @@
 namespace Sloths\Db\Sql;
 
 use Sloths\Db\Connection;
-use Sloths\Db\Database;
+use Sloths\Db\ConnectionManager;
 
 abstract class AbstractSql implements SqlInterface
 {

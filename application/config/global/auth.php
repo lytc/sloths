@@ -8,7 +8,7 @@ use Sloths\Authentication\Result;
 
 $this->setAdapter(
     new Callback(function($adapter, $email, $password) {
-        $user = User::first(['email' => $email]);
+        $user = User::all(['email' => $email])->first();
 
         if (!$user) {
             return Result::ERROR_IDENTITY_NOT_FOUND;

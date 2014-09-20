@@ -2,43 +2,79 @@
 
 namespace Sloths\Db\Model;
 
-use Sloths\Db\Database;
+use Sloths\Db\ConnectionManager;
+use Sloths\Db\Model\Relation\BelongsToTrait;
+use Sloths\Db\Model\Relation\HasManyTrait;
+use Sloths\Db\Model\Relation\HasOneTrait;
 use Sloths\Misc\ArrayUtils;
+use Sloths\Misc\StringUtils;
 
-abstract class AbstractModel implements ModelInterface, \JsonSerializable
+class AbstractModel implements \JsonSerializable, \Serializable
 {
+    use TransformNameTrait;
+    use BelongsToTrait;
+    use HasOneTrait;
+    use HasManyTrait;
+
+    const INT          = 'int';
+    const INTEGER      = self::INT;
+    const TINYINT      = 'tinyint';
+    const SMALLINT     = 'smallint';
+    const MEDIUMINT    = 'mediumint';
+    const BIGINT       = 'bigint';
+    const DOUBLE       = 'double';
+    const REAL         = self::DOUBLE;
+    const FLOAT        = 'float';
+    const DECIMAL      = 'decimal';
+    const NUMERIC      = self::DECIMAL;
+    const CHAR         = 'char';
+    const VARCHAR      = 'varchar';
+    const BINARY       = 'binary';
+    const VARBINARY    = 'varbinary';
+    const DATE         = 'date';
+    const TIME         = 'time';
+    const DATETIME     = 'datetime';
+    const TIMESTAMP    = 'timestamp';
+    const YEAR         = 'year';
+    const TINYBLOB     = 'tinyblob';
+    const BLOB         = 'blob';
+    const MEDIUMBLOB   = 'mediumblob';
+    const LONGBLOB     = 'longblob';
+    const TINYTEXT     = 'tinytext';
+    const TEXT         = 'text';
+    const MEDIUMTEXT   = 'mediumtext';
+    const LONGTEXT     = 'longtext';
+    const ENUM         = 'enum';
+    const SET          = 'set';
+    const BOOLEAN      = 'boolean';
+
     const CREATED_TIME_COLUMN_NAME  = 'created_time';
     const MODIFIED_TIME_COLUMN_NAME = 'modified_time';
 
     /**
      * @var string
      */
-    protected static $primaryKey = 'id';
+    protected $primaryKey = 'id';
 
     /**
      * @var string
      */
-    protected static $tableName;
+    protected $tableName;
 
     /**
      * @var array
      */
-    protected static $columns = [];
+    protected $columns;
 
     /**
      * @var array
      */
-    protected static $hiddenColumns = [];
-
-    /**
-     * @var string
-     */
-    protected static $collectionClassName = 'Sloths\Db\Model\Collection';
+    protected $hiddenColumns = [];
 
     /**
      * @var array
      */
-    protected static $defaultLazyLoadColumnTypes = [
+    protected $lazyLoadColumnTypes = [
         self::TEXT,
         self::MEDIUMTEXT,
         self::LONGTEXT,
@@ -50,178 +86,33 @@ abstract class AbstractModel implements ModelInterface, \JsonSerializable
     /**
      * @var array
      */
-    protected static $defaultSelectColumns;
+    protected $defaultSelectColumns;
+
+    /**
+     * @var string
+     */
+    protected $collectionClassName = 'Sloths\Db\Model\Collection';
 
     /**
      * @var bool
      */
-    protected static $timestamps = true;
+    protected $timestamps = true;
 
     /**
-     * @var array
+     * @var ConnectionManager
      */
-    protected static $hasOne = [];
+    protected static $defaultConnectionManager;
 
     /**
-     * @var array
+     * @var ConnectionManager
      */
-    protected static $belongsTo = [];
+    protected $connectionManager;
 
     /**
-     * @var array
+     * @var Table
      */
-    protected static $hasMany = [];
+    protected $table;
 
-
-    /**
-     * @var Database
-     */
-    protected static $database;
-
-    /**
-     * @return Schema
-     */
-    public static function schema()
-    {
-        static $schema;
-        if (!$schema) {
-            $schema = new Schema(
-                get_called_class(),
-                static::$primaryKey,
-                static::$tableName,
-                static::$columns,
-                static::$hiddenColumns,
-                static::$defaultLazyLoadColumnTypes,
-                static::$defaultSelectColumns,
-                static::$hasOne,
-                static::$belongsTo,
-                static::$hasMany
-            );
-        }
-
-        return $schema;
-    }
-
-    /**
-     * @return string
-     */
-    public static function getPrimaryKey()
-    {
-        return static::schema()->getPrimaryKey();
-    }
-
-    /**
-     * @return string
-     */
-    public static function getTableName()
-    {
-        return static::schema()->getTableName();
-    }
-
-    /**
-     * @param Database $database
-     */
-    public static function setDatabase(Database $database)
-    {
-        static::$database = $database;
-    }
-
-    /**
-     * @param bool $strict
-     * @return Database
-     * @throws \RuntimeException
-     */
-    public static function getDatabase($strict = true)
-    {
-        if (!static::$database && $strict) {
-            throw new \RuntimeException('Database is required');
-        }
-
-        return static::$database;
-    }
-
-    /**
-     * @param int|string|array $where
-     * @param mixed $params
-     * @return static
-     */
-    public static function first($where = null, $params = null)
-    {
-        $select = static::schema()->createSqlSelect('*');
-
-        if ($where) {
-            if (is_numeric($where)) {
-                $select->where(static::wherePrimaryKeyColumn($where));
-            } else {
-                call_user_func_array([$select, 'where'], func_get_args());
-            }
-        }
-
-        $select->limit(1);
-
-        $stmt = static::getDatabase()->run($select);
-
-        if ($stmt && $row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-            return new static($row);
-        }
-    }
-
-    /**
-     * @param string|array $where
-     * @param mixed $params
-     * @return \Sloths\Db\Model\Collection
-     */
-    public static function all($where = null, $params = null)
-    {
-        $select = static::schema()->createSqlSelect(static::schema()->getDefaultSelectColumns());
-
-        if ($where) {
-            if (is_array($where) && ArrayUtils::hasOnlyInts($where)) {
-                $select->where(static::wherePrimaryKeyColumn(' IN (' . implode(', ', $where ) . ')'));
-            } else {
-                call_user_func_array([$select, 'where'], func_get_args());
-            }
-        }
-
-        $collectionClassName = static::$collectionClassName;
-        return new $collectionClassName($select, get_called_class());
-    }
-
-    /**
-     * @param array $data
-     * @return static
-     */
-    public static function create($data = [])
-    {
-        $model = new static();
-        $model->fromArray($data);
-
-        return $model;
-    }
-
-    /**
-     * @param string $column
-     * @param string $condition
-     * @return string
-     */
-    protected static function whereColumn($column, $condition)
-    {
-        return static::getTableName() . '.' . $column . $condition;
-    }
-
-    /**
-     * @param string $condition
-     * @return string
-     */
-    protected static function wherePrimaryKeyColumn($condition)
-    {
-        if (is_numeric($condition)) {
-            $condition = ' = ' . $condition;
-        }
-        return static::whereColumn(static::getPrimaryKey(), $condition);
-    }
-
-    ///////////////////
     /**
      * @var array
      */
@@ -235,7 +126,12 @@ abstract class AbstractModel implements ModelInterface, \JsonSerializable
     /**
      * @var array
      */
-    protected $relationsData = [];
+    protected $relationData = [];
+
+    /**
+     * @var array
+     */
+    protected $mixedData = [];
 
     /**
      * @var Collection
@@ -243,32 +139,142 @@ abstract class AbstractModel implements ModelInterface, \JsonSerializable
     protected $parentCollection;
 
     /**
-     * @param array $data
+     * @param array|\Traversable $data
      * @param Collection $parentCollection
      */
-    public function __construct(array $data = [], Collection $parentCollection = null)
+    public function __construct($data = [], Collection $parentCollection = null)
     {
-        if ($data) {
-            $this->fromArray($data);
-        }
-
+        $this->setData($data);
         $this->parentCollection = $parentCollection;
     }
 
     /**
-     * @return bool
+     * @return string
      */
-    public function exists()
+    public function getPrimaryKey()
     {
-        return isset($this->data[static::getPrimaryKey()]);
+        return $this->primaryKey;
     }
 
     /**
-     * @return int
+     * @return string
      */
-    public function id()
+    public function getTableName()
     {
-        return $this->exists()? $this->data[static::getPrimaryKey()] : null;
+        if (!$this->tableName) {
+            $this->tableName = $this->transformClassNameToTableName(get_called_class());
+        }
+
+        return $this->tableName;
+    }
+
+    /**
+     * @return array
+     */
+    public function getColumnsSchema()
+    {
+        return $this->columns;
+    }
+
+    /**
+     * @return array
+     */
+    public function getLazyLoadColumnTypes()
+    {
+        return $this->lazyLoadColumnTypes;
+    }
+
+    /**
+     * @return array
+     */
+    public function getColumns()
+    {
+        return array_keys($this->columns);
+    }
+
+    /**
+     * @param string $name
+     * @return bool
+     */
+    public function hasColumn($name)
+    {
+        return isset($this->columns[$name]);
+    }
+
+    /**
+     * @return array
+     */
+    public function getDefaultSelectColumns()
+    {
+        if (null === $this->defaultSelectColumns) {
+            $this->defaultSelectColumns = [];
+            $lazyLoadColumnTypes = $this->getLazyLoadColumnTypes();
+
+            foreach ($this->getColumnsSchema() as $name => $type) {
+                if (!in_array($type, $lazyLoadColumnTypes)) {
+                    $this->defaultSelectColumns[] = $name;
+                }
+            }
+        }
+
+        return $this->defaultSelectColumns;
+    }
+
+    /**
+     * @return array
+     */
+    public function getHiddenColumns()
+    {
+        return $this->hiddenColumns;
+    }
+
+    /**
+     * @return string
+     */
+    public function getNamespaceName()
+    {
+        return StringUtils::getNamespace(get_called_class());
+    }
+
+    /**
+     * @param ConnectionManager $connectionManager
+     */
+    public static function setDefaultConnectionManager(ConnectionManager $connectionManager)
+    {
+        static::$defaultConnectionManager = $connectionManager;
+    }
+
+    /**
+     * @param ConnectionManager $connectionManager
+     * @return $this
+     */
+    public function setConnectionManager(ConnectionManager $connectionManager)
+    {
+        $this->connectionManager = $connectionManager;
+
+        if (!static::$defaultConnectionManager) {
+            static::$defaultConnectionManager = $connectionManager;
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param bool $strict
+     * @return ConnectionManager
+     * @throws \RuntimeException
+     */
+    public function getConnectionManager($strict = true)
+    {
+        if (!$this->connectionManager) {
+            $this->connectionManager = static::$defaultConnectionManager;
+        }
+
+        if (!$this->connectionManager && $strict) {
+            throw new \RuntimeException('A database connection manager is required');
+        }
+
+        return $this->connectionManager;
     }
 
     /**
@@ -276,7 +282,7 @@ abstract class AbstractModel implements ModelInterface, \JsonSerializable
      * @return $this
      * @throws \InvalidArgumentException
      */
-    public function fromArray($data)
+    public function setData($data)
     {
         if (!is_array($data) && !$data instanceof \Traversable) {
             throw new \InvalidArgumentException(sprintf(
@@ -289,7 +295,7 @@ abstract class AbstractModel implements ModelInterface, \JsonSerializable
         }
 
 
-        if (isset($data[static::getPrimaryKey()])) {
+        if (isset($data[$this->getPrimaryKey()])) {
             $this->applyDataChange();
         }
 
@@ -312,15 +318,94 @@ abstract class AbstractModel implements ModelInterface, \JsonSerializable
     public function reload()
     {
         if ($id = $this->id()) {
-            $select = static::schema()->createSqlSelect('*');
-            $select->where(static::wherePrimaryKeyColumn($id));
+            $select = $this->table()->select('*');
+            $select->where($this->getPrimaryKey() . ' = ' . $id);
 
-            if ($data = static::getDatabase()->run($select)->fetch(\PDO::FETCH_ASSOC)) {
-                $this->fromArray($data);
-            }
+            $row = $select->first();
+            $this->setData($row);
         }
 
         return $this;
+    }
+
+    /**
+     * @return Collection
+     */
+    public function getParentCollection()
+    {
+        return $this->parentCollection;
+    }
+
+    /**
+     * @param $name
+     * @return mixed
+     * @throws \LogicException
+     * @throws \InvalidArgumentException
+     */
+    public function loadColumn($name)
+    {
+        if (!$this->hasColumn($name)) {
+            throw new \InvalidArgumentException('Model has no column ' . $name);
+        }
+
+        if (!$this->exists()) {
+            throw new \LogicException('Cannot load column from non existing record');
+        }
+
+        if ($parentCollection = $this->getParentCollection()) {
+            $primaryKeyColumn = $this->getPrimaryKey();
+
+            $ids = $parentCollection->ids();
+            $select = $this->table()->select([$primaryKeyColumn, $name]);
+            $select->where($primaryKeyColumn . ' IN (' . implode(', ', $ids) . ')');
+            $rows = $select->all();
+            $pairs = ArrayUtils::column($rows, $name, $primaryKeyColumn);
+
+            foreach ($parentCollection as $model) {
+                $id = $model->id();
+
+                if (isset($pairs[$id])) {
+                    $model->data[$name] = $pairs[$id];
+                } else {
+                    $model->data[$name] = null;
+                }
+            }
+
+            return $pairs[$this->id()];
+
+        } else {
+            $select = $this->table()->select($name);
+            $select->where($this->getPrimaryKey() . ' = ' . $this->id());
+            $row = $select->first();
+            $value = $row[$name];
+
+            $this->data[$name] = $value;
+            return $value;
+        }
+    }
+
+    /**
+     * @return array
+     */
+    public function getOriginalData()
+    {
+        return $this->data;
+    }
+
+    /**
+     * @return array
+     */
+    public function getChangedData()
+    {
+        return $this->changedData;
+    }
+
+    /**
+     * @return array
+     */
+    public function getMixedData()
+    {
+        return $this->mixedData;
     }
 
     /**
@@ -328,8 +413,9 @@ abstract class AbstractModel implements ModelInterface, \JsonSerializable
      */
     public function getDataForSave()
     {
-        $data = ArrayUtils::only($this->changedData, static::schema()->getColumns());
-        unset($data[static::getPrimaryKey()]);
+        $data = array_diff($this->getChangedData(), $this->getOriginalData());
+        $data = ArrayUtils::only($data, $this->getColumns());
+        unset($data[$this->getPrimaryKey()]);
 
         return $data;
     }
@@ -342,16 +428,16 @@ abstract class AbstractModel implements ModelInterface, \JsonSerializable
         $data = $this->getDataForSave();
 
         # timestamp?
-        if ((static::$timestamps === true || static::$timestamps == static::CREATED_TIME_COLUMN_NAME)
+        if (($this->timestamps === true || $this->timestamps == static::CREATED_TIME_COLUMN_NAME)
             && !isset($data[static::CREATED_TIME_COLUMN_NAME])
-            && static::schema()->hasColumn(static::CREATED_TIME_COLUMN_NAME)) {
-            $now = $this->getDatabase()->now();
+            && $this->hasColumn(static::CREATED_TIME_COLUMN_NAME)) {
+            $now = $this->getConnectionManager()->now();
             $this->data[static::CREATED_TIME_COLUMN_NAME] = $data[static::CREATED_TIME_COLUMN_NAME] = $now;
         }
 
-        $insert = static::schema()->createSqlInsert();
-        $insert->values($data);
-        $this->data[static::getPrimaryKey()] = (int) static::getDatabase()->run($insert);
+        $this->table()->insert($data)->run();
+        $id = (int) $this->getConnectionManager()->getWriteConnection()->getLastInsertId();
+        $this->data[$this->getPrimaryKey()] = $id;
 
         return true;
     }
@@ -368,30 +454,22 @@ abstract class AbstractModel implements ModelInterface, \JsonSerializable
             return false;
         }
 
-        if (!$force) {
-            $data = array_diff($data, $this->data);
-        } elseif (!$data) {
-            $data = $this->data;
-            unset($data[static::getPrimaryKey()]);
-        }
+        $id = $this->id();
 
         # timestamp?
-        if ((static::$timestamps === true || static::$timestamps == static::MODIFIED_TIME_COLUMN_NAME)
+        if (($this->timestamps === true || $this->timestamps == static::MODIFIED_TIME_COLUMN_NAME)
             && !isset($data[static::MODIFIED_TIME_COLUMN_NAME])
-            && static::schema()->hasColumn(static::MODIFIED_TIME_COLUMN_NAME)) {
-            $now = $this->getDatabase()->now();
+            && $this->hasColumn(static::MODIFIED_TIME_COLUMN_NAME)) {
+            $now = $this->getConnectionManager()->now();
             $this->data[static::MODIFIED_TIME_COLUMN_NAME] = $data[static::MODIFIED_TIME_COLUMN_NAME] = $now;
         }
 
-        if ($data) {
-            $update = static::schema()->createSqlUpdate();
-            $update->values($data)->where(static::wherePrimaryKeyColumn($this->id()));
-
-            static::getDatabase()->run($update);
-            return true;
+        if (!$data) {
+            $data = [$this->getPrimaryKey() => $id];
         }
 
-        return false;
+        $this->table()->update($data)->where($this->getPrimaryKey() . ' = ' . $id)->run();
+        return true;
     }
 
     /**
@@ -406,9 +484,8 @@ abstract class AbstractModel implements ModelInterface, \JsonSerializable
             $result = $this->doInsert();
         }
 
-        $this->applyDataChange();
-
         if ($result) {
+            $this->applyDataChange();
             $this->touchParents();
         }
 
@@ -428,8 +505,8 @@ abstract class AbstractModel implements ModelInterface, \JsonSerializable
      */
     protected function touchParents()
     {
-        foreach (static::schema()->getAllRelation() as $name => $relationDef) {
-            if ($relationDef['type'] = Schema::BELONGS_TO && !empty($relationDef['touchOnSave'])) {
+        foreach ($this->getAllBelongsToSchema() as $name => $schema) {
+            if ($schema->touchOnSave()) {
                 $parentModel = $this->getRelation($name);
                 if ($parentModel) {
                     $parentModel->touch();
@@ -446,310 +523,10 @@ abstract class AbstractModel implements ModelInterface, \JsonSerializable
     public function delete()
     {
         if ($id = $this->id()) {
-            $delete = static::schema()->createSqlDelete();
-            $delete->where(static::wherePrimaryKeyColumn($id));
-            $this->getDatabase()->run($delete);
+            $this->table()->delete()->where($this->getPrimaryKey() . ' = ' . $id)->run();
         }
 
         return $this;
-    }
-
-    /**
-     * @param string $name
-     * @param bool $cache
-     * @return null|Collection|static
-     */
-    public function getRelation($name, $cache = false)
-    {
-        if ($cache && array_key_exists($name, $this->relationsData)) {
-            return $this->relationsData[$name];
-        }
-        $relation = static::schema()->getRelation($name);
-
-        if (!$relation) {
-            return;
-        }
-
-        $type = $relation['type'];
-        switch ($type) {
-            case Schema::HAS_ONE:
-                return $this->resolveHasOneRelation($name, $relation, $cache);
-
-            case Schema::BELONGS_TO:
-                return $this->resolveBelongsToRelation($name, $relation, $cache);
-
-            case Schema::HAS_MANY:
-                if ($id = $this->id()) {
-                    if (isset($relation['through'])) {
-                        return $this->resolveHasManyThroughRelation($name, $relation, $cache);
-                    } else {
-                        return $this->resolveHasManyRelation($name, $relation, $cache);
-                    }
-                }
-        }
-    }
-
-    /**
-     * @param string $name
-     * @param array $def
-     * @param bool $cache
-     * @return AbstractModel|null
-     */
-    protected function resolveHasOneRelation($name, array $def, $cache)
-    {
-        $model      = $def['model'];
-        $foreignKey = $def['foreignKey'];
-
-        if ($cache && $parentCollection = $this->parentCollection) {
-            $ids = $this->parentCollection->ids();
-            $select = $model::schema()->createSqlSelect();
-            $select->where($model::whereColumn($foreignKey, ' IN (' . implode(', ', $ids) . ')'));
-            $stmt = $this->getDatabase()->run($select);
-            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-            $rows = ArrayUtils::column($rows, null, $foreignKey);
-            foreach ($rows as $id => &$row) {
-                $row = new $model($row);
-            }
-            unset($row);
-
-            foreach ($this->parentCollection as $m) {
-                $id = $m->id();
-                $relation = isset($rows[$id])? $rows[$id] : null;
-                $m->relationsData[$name] = $relation;
-            }
-
-            $selfId = $this->id();
-            return isset($rows[$selfId])? $rows[$selfId] : null;
-
-        } else {
-            $id = $this->id();
-            $result = $id? $model::first($model::whereColumn($foreignKey, ' = ' . $id)) : null;
-            $this->relationsData[$name] = $result;
-        }
-
-        return $result;
-    }
-
-    /**
-     * @param string $name
-     * @param array $def
-     * @param bool $cache
-     * @return AbstractModel|null
-     */
-    protected function resolveBelongsToRelation($name, array $def, $cache)
-    {
-        $model              = $def['model'];
-        $foreignKey         = $def['foreignKey'];
-
-        if ($cache && $parentCollection = $this->parentCollection) {
-            $ids = $this->parentCollection->column($foreignKey);
-            $ids = array_unique($ids);
-
-            $select = $model::schema()->createSqlSelect();
-
-            $relationPrimaryKey = $model::getPrimaryKey();
-            $select->where($model::wherePrimaryKeyColumn(' IN (' . implode(', ', $ids) . ')'));
-            $stmt = $this->getDatabase()->run($select);
-            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-            $rows = ArrayUtils::column($rows, null, $relationPrimaryKey);
-            foreach ($rows as $id => &$row) {
-                $row = new $model($row);
-            }
-            unset($row);
-
-            foreach ($this->parentCollection as $m) {
-                $foreignKeyValue = $m->get($foreignKey);
-                $relation = isset($rows[$foreignKeyValue])? $rows[$foreignKeyValue] : null;
-                $m->relationsData[$name] = $relation;
-            }
-
-            $selfForeignKeyValue = $this->get($foreignKey);
-            return isset($rows[$selfForeignKeyValue])? $rows[$selfForeignKeyValue] : null;
-
-        } else {
-            $foreignKeyValue    = $this->get($foreignKey);
-            $result = $foreignKeyValue? $model::first($foreignKeyValue) : null;
-            $this->relationsData[$name] = $result;
-        }
-
-        return $result;
-    }
-
-    /**
-     * @param string $name
-     * @param array $def
-     * @param bool $cache
-     * @return Collection
-     */
-    protected function resolveHasManyRelation($name, $def, $cache)
-    {
-        $model = $def['model'];
-        $foreignKey = $def['foreignKey'];
-        $collection = $model::all();
-        $selfId = $this->id();
-
-        if ($cache && $parentCollection = $this->parentCollection) {
-            $foreignKeyValues = $parentCollection->ids();
-            $foreignKeyValues = array_unique($foreignKeyValues);
-
-            $collection->where($model::whereColumn($foreignKey, ' IN(' . implode(', ', $foreignKeyValues ) . ')'));
-
-            $collection->addEventListener('load', function($e, &$rows) use ($foreignKey, $parentCollection, $name, $model, $selfId) {
-                $groups = [];
-
-                foreach ($rows as $row) {
-                    isset($groups[$row[$foreignKey]]) || $groups[$row[$foreignKey]] = [];
-                    $groups[$row[$foreignKey]][] = $row;
-                }
-
-                foreach ($parentCollection as $parentModel) {
-                    $groupRows = isset($groups[$parentModel->id()])? $groups[$parentModel->id()] : [];
-                    $parentModel->relationsData[$name] = new Collection($groupRows, $model);
-                }
-
-                $rows = isset($groups[$selfId])? $groups[$selfId] : [];
-            });
-
-        } else {
-            $collection->where($model::whereColumn($foreignKey, ' = ' . $selfId));
-        }
-
-        $this->relationsData[$name] = $collection;
-
-        return $collection;
-    }
-
-    /**
-     * @param string $name
-     * @param array $def
-     * @param bool $cache
-     * @return Collection
-     */
-    protected function resolveHasManyThroughRelation($name, $def, $cache)
-    {
-        $model              = $def['model'];
-        $throughModel       = $def['through'];
-
-//        foreach ($throughModel::schema()->)
-
-        $allBelongsTo = $throughModel::schema()->getAllBelongsToRelation();
-
-        foreach ($allBelongsTo as $belongsTo) {
-            if ($belongsTo['model'] == get_called_class()) {
-                $leftFK = $belongsTo['foreignKey'];
-                continue;
-            }
-
-            if ($belongsTo['model'] == $model) {
-                $rightFK = $belongsTo['foreignKey'];
-                continue;
-            }
-        }
-
-        $selfTableName      = $model::getTableName();
-        $selfPK             = $model::getPrimaryKey();
-        $throughTableName   = $throughModel::getTableName();
-        $selfId             = $this->id();
-
-        $collection = $model::all()->select($throughTableName . '.' . $leftFK);
-        $collection->join($throughTableName, function($join)
-            use ($selfTableName, $throughTableName, $selfPK, $leftFK, $rightFK, $collection, $name, $model, $selfId, $cache) {
-
-            $selfTableName = $model::getTableName();
-            $join->on($throughTableName. '.' . $rightFK . ' = ' . $selfTableName . '.' . $selfPK);
-
-                if ($cache && $parentCollection = $this->parentCollection) {
-                    $join->and($throughTableName. '.' . $leftFK . ' IN(' . implode(', ', $parentCollection->ids()) . ')');
-
-                    $collection->addEventListener('load', function($e, &$rows)
-                        use ($collection, $leftFK, $parentCollection, $name, $model, $selfId) {
-
-                        $groups = [];
-
-                        foreach ($rows as $row) {
-                            if ($leftPKValue = $row[$leftFK]) {
-                                isset($groups[$leftPKValue]) || $groups[$leftPKValue] = [];
-                            }
-
-                            $groups[$leftPKValue][] = $row;
-
-                        }
-
-                        foreach ($parentCollection as $parentModel) {
-                            $parentModelId = $parentModel->id();
-                            $groupRows = isset($groups[$parentModelId])? $groups[$parentModelId] : [];
-                            $parentModel->relationsData[$name] = new Collection($groupRows, $model);
-                        }
-
-                        $rows = isset($groups[$selfId])? $groups[$selfId] : [];
-                    });
-
-                } else {
-                    $join->and($throughTableName. '.' . $leftFK . ' = ' . $selfId);
-                }
-
-            });
-
-        $this->relationsData[$name] = $collection;
-
-        return $collection;
-    }
-
-    /**
-     * @param string $column
-     * @return string
-     */
-    protected function loadColumn($column)
-    {
-        if ($this->parentCollection) {
-            $select = static::schema()->createSqlSelect([static::getPrimaryKey(), $column]);
-            $select->where(static::wherePrimaryKeyColumn(' IN (' . implode(', ', $this->parentCollection->ids()) . ')'));
-
-            $pairs = static::getDatabase()->run($select)->fetchAll(\PDO::FETCH_GROUP|\PDO::FETCH_COLUMN);
-
-            foreach ($this->parentCollection as $model) {
-                $model->data[$column] = $pairs[$model->id()];
-            }
-
-            return $pairs[$this->id()];
-
-        } else {
-            $select = static::schema()->createSqlSelect($column);
-            $select->where(static::wherePrimaryKeyColumn($this->id()));
-
-            $value = static::getDatabase()->run($select)->fetchColumn();
-            $this->data[$column] = $value;
-
-            return $value;
-        }
-    }
-
-    /**
-     * @param string $name
-     * @return mixed
-     */
-    public function get($name)
-    {
-        # from column
-        $columnName = Schema::transformPropertyNameToColumnName($name);
-
-        if (array_key_exists($columnName, $this->changedData)) {
-            return $this->changedData[$columnName];
-        }
-
-        if (array_key_exists($columnName, $this->data)) {
-            return $this->data[$columnName];
-        }
-
-        # lazy loading
-        if ($this->exists() && $this->schema()->hasColumn($columnName)) {
-            return $this->loadColumn($columnName);
-        }
-
-        # from relations
-        return $this->getRelation($name, true);
     }
 
     /**
@@ -759,22 +536,22 @@ abstract class AbstractModel implements ModelInterface, \JsonSerializable
      */
     public function set($name, $value)
     {
-        $columnName = Schema::transformPropertyNameToColumnName($name);
+        $columnName = $this->transformPropertyNameToColumnName($name);
 
-        if (static::schema()->hasColumn($columnName)) {
+        if ($this->hasColumn($columnName)) {
             $this->changedData[$columnName] = $value;
-        } else {
-
-            $belongsToRelationDef = static::schema()->getRelation($name);
-
-            if ($belongsToRelationDef &&
-                $belongsToRelationDef['type'] = Schema::BELONGS_TO && $value instanceof $belongsToRelationDef['model']) {
-                $this->relationsData[$name] = $value;
-                $this->changedData[$belongsToRelationDef['foreignKey']] = $value->id();
-            } else {
-                $this->changedData[$name] = $value;
-            }
+            return $this;
         }
+
+        $belongsToSchema = $this->getBelongsToSchema($name);
+
+        if ($belongsToSchema && get_class($value) == $belongsToSchema->getModelClassName()) {
+            $this->relationData[$name] = $value;
+            $this->changedData[$belongsToSchema->getForeignKey()] = $value->id();
+            return $this;
+        }
+
+        $this->mixedData[$name] = $value;
 
         return $this;
     }
@@ -783,13 +560,89 @@ abstract class AbstractModel implements ModelInterface, \JsonSerializable
      * @param string $name
      * @return mixed
      */
-    public function __get($name)
+    public function get($name)
     {
-        return $this->get($name);
+        # from column
+        $columnName = $this->transformPropertyNameToColumnName($name);
+
+        if (array_key_exists($columnName, $changedData = $this->getChangedData())) {
+            return $changedData[$columnName];
+        }
+
+        if (array_key_exists($columnName, $originalData = $this->getOriginalData())) {
+            return $originalData[$columnName];
+        }
+
+        # lazy loading
+        if ($this->exists() && $this->hasColumn($columnName)) {
+            return $this->loadColumn($columnName);
+        }
+
+        # from relations
+        $result = $this->getRelation($name, true, $success);
+
+        if ($success) {
+            return $result;
+        }
+
+        $mixedData = $this->getMixedData();
+
+        return isset($mixedData[$name])? $mixedData[$name] : null;
     }
 
     /**
      * @param string $name
+     * @param bool $cache
+     * @param null $success
+     * @return AbstractModel|\Sloths\Db\Model\Collection
+     */
+    public function getRelation($name, $cache = false, &$success = null)
+    {
+        $success = true;
+
+        if ($cache && array_key_exists($name, $this->relationData)) {
+            return $this->relationData[$name];
+        }
+
+        if ($this->hasBelongsTo($name)) {
+            $result = $this->getBelongsTo($name);
+            $this->relationData[$name] = $result;
+            return $result;
+        }
+
+        if ($this->hasHasMany($name)) {
+            $result = $this->getHasMany($name);
+            $this->relationData[$name] = $result;
+            return $result;
+        }
+
+        if ($this->hasHasOne($name)) {
+            $result = $this->getHasOne($name);
+            $this->relationData[$name] = $result;
+            return $result;
+        }
+
+        $success = false;
+    }
+
+    /**
+     * @return bool
+     */
+    public function exists()
+    {
+        return isset($this->data[$this->getPrimaryKey()]);
+    }
+
+    /**
+     * @return int
+     */
+    public function id()
+    {
+        return $this->exists()? $this->data[$this->getPrimaryKey()] : null;
+    }
+
+    /**
+     * @param $name
      * @param $value
      */
     public function __set($name, $value)
@@ -798,35 +651,51 @@ abstract class AbstractModel implements ModelInterface, \JsonSerializable
     }
 
     /**
-     * @param string $method
+     * @param $name
+     * @return mixed
+     */
+    public function __get($name)
+    {
+        return $this->get($name);
+    }
+
+    /**
+     * @param $method
      * @param $args
-     * @return null|Collection|static
+     * @return AbstractModel|Collection
      * @throws \BadMethodCallException
      */
     public function __call($method, $args)
     {
-        if (static::schema()->hasRelation($method)) {
-            array_unshift($args, $method);
-            return call_user_func_array([$this, 'getRelation'], $args);
+        $result = $this->getRelation($method, false, $success);
+        if ($success) {
+            return $result;
         }
 
-        throw new \BadMethodCallException(sprintf('Call to undefined method %s::%s()', get_called_class(), $method));
+        throw new \BadMethodCallException('Call to undefined method ' . $method);
     }
 
     /**
-     * @param $withRelations
-     * @return array
+     * @return \Sloths\Db\Table
      */
-    public function toArray($withRelations = false)
+    public function table()
     {
-        $result = array_merge($this->data, $this->changedData);
-
-        if ($withRelations) {
-            $result = array_merge($result, $this->relationsData);
+        if (!$this->table) {
+            $this->table = $this->getConnectionManager()->table($this->getTableName());
         }
 
-        if (static::$hiddenColumns) {
-            $result = ArrayUtils::except($result, static::$hiddenColumns);
+        return $this->table;
+    }
+
+    /**
+     * @return array
+     */
+    public function toArray()
+    {
+        $result = array_merge($this->getOriginalData(), $this->getChangedData(), $this->getMixedData());
+
+        if ($hiddenColumns = $this->getHiddenColumns()) {
+            $result = ArrayUtils::except($result, $hiddenColumns);
         }
 
         return $result;
@@ -858,5 +727,88 @@ abstract class AbstractModel implements ModelInterface, \JsonSerializable
         return $this->toArray();
     }
 
+    public function serialize() {
+        return serialize($this->getOriginalData());
+    }
 
+    /**
+     * @param string $data
+     */
+    public function unserialize($data) {
+        $this->data = unserialize($data);
+    }
+
+    /**
+     * @param null $where
+     * @param null $params
+     * @param null $columns
+     * @return Collection
+     */
+    protected function all($where = null, $params = null, $columns = null)
+    {
+        $select = $this->table()->select();
+
+        if ($where) {
+            if (is_numeric($where)) {
+                $select->where($this->getPrimaryKey() . ' = ' . $where);
+            } elseif (is_array($where) && ArrayUtils::hasOnlyInts($where)) {
+                $select->where($this->getPrimaryKey() . ' IN (' . implode(', ', $where ) . ')');
+            } else {
+                call_user_func_array([$select, 'where'], func_get_args());
+            }
+        }
+
+        if (!$columns) {
+            $select->select($this->getDefaultSelectColumns());
+        }
+
+        $collectionClassName = $this->collectionClassName;
+        return new $collectionClassName($select, $this);
+    }
+
+    /**
+     * @param null $where
+     * @param null $params
+     * @return null|AbstractModel
+     */
+    protected function first($where = null, $params = null)
+    {
+        $select = $this->table()->select();
+
+        if (is_numeric($where)) {
+            $select->where($this->getPrimaryKey() . ' = ' . $where);
+        } else {
+            call_user_func_array([$select, 'where'], func_get_args());
+        }
+
+        $row = $select->first();
+
+        if ($row) {
+            return new static($row);
+        }
+    }
+
+    /**
+     * @param array $data
+     * @return static
+     */
+    public static function create($data = [])
+    {
+        return new static($data);
+    }
+
+    /**
+     * @param $method
+     * @param $args
+     * @return mixed
+     * @throws \BadMethodCallException
+     */
+    public static function __callStatic($method, $args)
+    {
+        if (in_array($method, ['all', 'first'])) {
+            return call_user_func_array([new static(), $method], $args);
+        }
+
+        throw new \BadMethodCallException('Call to undefined method ' . $method);
+    }
 }

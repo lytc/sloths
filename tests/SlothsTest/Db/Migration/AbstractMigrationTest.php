@@ -2,7 +2,7 @@
 
 namespace SlothsTest\Db\Migration;
 
-use Sloths\Application\Service\Database;
+use Sloths\Application\Service\ConnectionManager;
 use SlothsTest\TestCase;
 
 /**

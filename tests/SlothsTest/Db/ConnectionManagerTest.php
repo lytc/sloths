@@ -3,20 +3,20 @@
 namespace SlothsTest\Db;
 
 use Sloths\Db\Connection;
-use Sloths\Db\Database;
+use Sloths\Db\ConnectionManager;
 use Sloths\Db\Sql\Insert;
 use Sloths\Db\Sql\Spec\Raw;
 use SlothsTest\TestCase;
 
 /**
- * @covers \Sloths\Db\Database
+ * @covers \Sloths\Db\ConnectionManager
  */
-class DatabaseTest extends TestCase
+class ConnectionManagerTest extends TestCase
 {
     public function testConnection()
     {
         $connection = new Connection('dsn');
-        $db = new Database();
+        $db = new ConnectionManager();
         $db->setConnection($connection);
 
         $this->assertSame($connection, $db->getConnection());
@@ -38,7 +38,7 @@ class DatabaseTest extends TestCase
      */
     public function testGetConnectionShouldThrowAnExceptionIfHaveNoConnectionWithStrictMode()
     {
-        $db = new Database();
+        $db = new ConnectionManager();
         $db->getConnection();
     }
 
@@ -47,7 +47,7 @@ class DatabaseTest extends TestCase
      */
     public function testGetReadConnectionShouldThrowAnExceptionIfHaveNoConnectionWithStrictMode()
     {
-        $db = new Database();
+        $db = new ConnectionManager();
         $db->getReadConnection();
     }
 
@@ -56,7 +56,7 @@ class DatabaseTest extends TestCase
      */
     public function testGetWriteConnectionShouldThrowAnExceptionIfHaveNoConnectionWithStrictMode()
     {
-        $db = new Database();
+        $db = new ConnectionManager();
         $db->getWriteConnection();
     }
 
@@ -72,11 +72,11 @@ class DatabaseTest extends TestCase
         $connection->expects($this->once())->method('query')->with('read sql');
         $connection->expects($this->once())->method('exec')->with('write sql');
 
-        $database = new Database();
-        $database->setConnection($connection);
+        $connectionManager = new ConnectionManager();
+        $connectionManager->setConnection($connection);
 
-        $database->run($readSql);
-        $database->run($writeSql);
+        $connectionManager->run($readSql);
+        $connectionManager->run($writeSql);
     }
 
     public function testRunWithReadAndWriteConnection()
@@ -93,35 +93,35 @@ class DatabaseTest extends TestCase
         $writeConnection = $this->getMock('Sloths\Db\Connection', ['exec'], ['dsn']);
         $writeConnection->expects($this->once())->method('exec')->with('write sql');
 
-        $database = new Database();
-        $database->setReadConnection($readConnection);
-        $database->setWriteConnection($writeConnection);
+        $connectionManager = new ConnectionManager();
+        $connectionManager->setReadConnection($readConnection);
+        $connectionManager->setWriteConnection($writeConnection);
 
-        $database->run($readSql);
-        $database->run($writeSql);
+        $connectionManager->run($readSql);
+        $connectionManager->run($writeSql);
     }
 
     public function testRunSqlInsert()
     {
-        $database = new Database();
+        $connectionManager = new ConnectionManager();
 
         $connection = $this->getMock('Sloths\Db\Connection', ['exec', 'getLastInsertId'], ['dsn']);
         $connection->expects($this->once())->method('exec');
         $connection->expects($this->once())->method('getLastInsertId')->willReturn('id');
 
-        $database->setConnection($connection);
+        $connectionManager->setConnection($connection);
 
         $insert = new Insert();
-        $this->assertSame('id', $database->run($insert));
+        $this->assertSame('id', $connectionManager->run($insert));
     }
 
     public function testRaw()
     {
-        $database = new Database();
-        $this->assertInstanceOf('Sloths\Db\Sql\Spec\Raw', $database->raw('expr'));
+        $connectionManager = new ConnectionManager();
+        $this->assertInstanceOf('Sloths\Db\Sql\Spec\Raw', $connectionManager->raw('expr'));
 
         $raw = new Raw('expr');
-        $this->assertSame($raw, $database->raw($raw));
+        $this->assertSame($raw, $connectionManager->raw($raw));
     }
 
     /**
@@ -129,7 +129,7 @@ class DatabaseTest extends TestCase
      */
     public function testEscape($input, $expected)
     {
-        $this->assertSame($expected, Database::escape($input));
+        $this->assertSame($expected, ConnectionManager::escape($input));
     }
 
     public function dataProviderTestEscape()
@@ -150,12 +150,12 @@ class DatabaseTest extends TestCase
      */
     public function testQuote($expected, $input)
     {
-        $this->assertSame($expected, Database::quote($input));
+        $this->assertSame($expected, ConnectionManager::quote($input));
     }
 
     public function dataProviderTestQuote()
     {
-        $raw = Database::raw('foo');
+        $raw = ConnectionManager::raw('foo');
         return [
             [1, 1],
             ['1', '1'],
@@ -172,7 +172,7 @@ class DatabaseTest extends TestCase
      */
     public function testBind($expected, $expr, $params)
     {
-        $this->assertSame($expected, Database::bind($expr, $params));
+        $this->assertSame($expected, ConnectionManager::bind($expr, $params));
     }
 
     public function dataProviderTestBind()
@@ -186,7 +186,7 @@ class DatabaseTest extends TestCase
             ["foo IS NOT NULL", 'foo != ?', null],
             ["foo IN (1, 2, 3)", 'foo IN (?)', [1, 2, 3]],
             ["foo NOT IN (1, 2, 3)", 'foo NOT IN (?)', [1, 2, 3]],
-            ["foo IN (SELECT 1, 2, 3)", 'foo IN(?)', Database::raw('SELECT 1, 2, 3')],
+            ["foo IN (SELECT 1, 2, 3)", 'foo IN(?)', ConnectionManager::raw('SELECT 1, 2, 3')],
             ["foo LIKE '%foo%'", "foo LIKE %?%", 'foo'],
             ["foo LIKE '%foo'", "foo LIKE %?", 'foo'],
             ["foo LIKE 'foo%'", "foo LIKE ?%", 'foo'],

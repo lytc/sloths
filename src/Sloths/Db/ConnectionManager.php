@@ -9,7 +9,7 @@ use Sloths\Db\Sql\SqlInterface;
 use Sloths\Db\Sql\SqlReadInterface;
 use Sloths\Misc\StringUtils;
 
-class Database
+class ConnectionManager
 {
     use CacheableTrait;
 
@@ -228,7 +228,7 @@ class Database
     public function table($name)
     {
         $table = new Table($name);
-        $table->setDatabase($this);
+        $table->setConnectionManager($this);
 
         if ($this->cacheManager) {
             $table->setCacheManager($this->cacheManager);
