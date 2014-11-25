@@ -1,5 +1,6 @@
 {
-    "name": "Sloths Framework",
+    "name": "lytc/sloths",
+    "description": "Sloths Framework",
     "minimum-stability": "dev",
     "require": {
         "doctrine/inflector": "1.0.*@dev",
