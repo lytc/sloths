@@ -1,4 +1,5 @@
 {
+    "name": "Sloths Framework",
     "minimum-stability": "dev",
     "require": {
         "doctrine/inflector": "1.0.*@dev",
