@@ -2,71 +2,39 @@
 
 namespace SlothsTest\Session;
 
-use Sloths\Session\Flash;
-use Sloths\Session\Session;
 use SlothsTest\TestCase;
+use Sloths\Session\Flash;
 
-@session_start();
-
+/**
+ * @covers Sloths\Session\Flash
+ */
 class FlashTest extends TestCase
 {
     public function test()
     {
-        $session = new Session(null, []);
-        $flash = new Flash('flash', $session);
-        $this->assertFalse($flash->has('foo'));
+        $data = ['foo' => 'foo'];
 
-        $flash['foo'] = 1;
-        $this->assertFalse($flash->has('foo'));
+        $flash = new Flash($data);
+        $this->assertSame('foo', $flash->get('foo'));
 
-        $next = new Flash('flash', $session);
-        $this->assertSame(1, $next['foo']);
+        $flash->set('foo', 'bar');
+        $this->assertSame('foo', $flash->get('foo'));
 
-        $next = new Flash('flash', $session);
-        $this->assertFalse($next->has('foo'));
-    }
+        $flash->now();
+        $this->assertSame('bar', $flash->get('foo'));
 
-    public function testRemoveAndUnset()
-    {
-        $session = new Session(null, []);
-        $flash = new Flash('flash', $session);
-        $flash['foo'] = 1;
-        $flash['bar'] = 2;
-        $flash['baz'] = 3;
-
-        $flash->remove('foo');
-        unset($flash['bar']);
-
-        $next = new Flash('flash', $session);
-
-        $this->assertFalse($next->has('foo'));
-        $this->assertFalse($next->has('bar'));
-        $this->assertSame(3, $next['baz']);
+        $this->assertNull($flash->get('bar'));
     }
 
     public function testKeep()
     {
-        $session = new Session(null, []);
-        $flash = new Flash('flash', $session);
-        $flash['foo'] = 1;
+        $data = ['foo' => 'bar'];
+        $flash = new Flash($data);
 
-        $next = new Flash('flash', $session);
-        $this->assertSame(1, $next->foo);
-        $next->keep();
+        $this->assertSame([], $data);
 
-        $next = new Flash('flash', $session);
-        $this->assertSame(1, $next->foo);
-    }
+        $flash->keep();
+        $this->assertSame(['foo' => 'bar'], $data);
 
-    public function testNow()
-    {
-        $session = new Session(null, []);
-        $flash = new Flash('flash', $session);
-        $flash['foo'] = 1;
-
-        $this->assertFalse($flash->has('foo'));
-        $flash->now();
-
-        $this->assertSame(1, $flash->foo);
     }
 }

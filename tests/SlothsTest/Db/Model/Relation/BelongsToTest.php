@@ -2,58 +2,73 @@
 
 namespace SlothsTest\Db\Model\Relation;
 
-use SlothsTest\Db\Model\Stub\Post;
-use SlothsTest\Db\Model\TestCase;
+use MockModel\Post;
+use Sloths\Db\ConnectionManager;
+use Sloths\Db\Model\Collection;
 
 class BelongsToTest extends TestCase
 {
-    public function testInstance()
+    public function test()
     {
-        $stmt = $this->mock('PDOStatement');
-        $stmt->shouldReceive('fetch')->once()->with(\PDO::FETCH_ASSOC)->andReturn(['id' => 1]);
-        $pdo = $this->mockPdo();
-        $pdo->shouldReceive('query')->once()->andReturn($stmt);
+        $rows = [
+            ['id' => 2, 'name' => 'foo']
+        ];
 
-        Post::setConnection($this->createConnection($pdo));
+        $stmt = $this->getMock('stmt', ['fetchAll']);
+        $stmt->expects($this->once())->method('fetchAll')->with(\PDO::FETCH_ASSOC)->willReturn($rows);
 
-        $post = new Post(['id' => 1, 'created_user_id' => 1]);
-        $user = $post->User;
-        $this->assertInstanceOf('SlothsTest\Db\Model\Stub\User', $user);
-        $this->assertSame(1, $user->id());
+        $connection = $this->getMock('Sloths\Db\Connection', ['query'], ['dsn']);
+        $connection->expects($this->once())
+            ->method('query')->with("SELECT users.* FROM users WHERE (users.id = 2) LIMIT 1")->willReturn($stmt);
+
+        $connectionManager = new ConnectionManager();
+        $connectionManager->setConnection($connection);
+
+        $post = new Post(['id' => 1, 'user_id' => 2]);
+        Post::setDefaultConnectionManager($connectionManager);
+
+        $user = $post->getBelongsTo('User');
+        $this->assertSame($rows[0], $user->toArray());
+
+        $this->assertFalse($post->getBelongsToSchema('User')->touchOnSave());
+        $this->assertTrue($post->hasBelongsTo('User'));
     }
 
-    public function testEagerLoadingAndLazyLoading()
+    public function testWithParentCollection()
     {
-        $posts = Post::all();
-        $posts[0] = $post1 = new Post(['id' => 1, 'created_user_id' => 1], $posts);
-        $posts[1] = $post2 = new Post(['id' => 2, 'created_user_id' => 2], $posts);
-        $posts[2] = $post3 = new Post(['id' => 3, 'created_user_id' => 1], $posts);
+        $postRows = [
+            ['id' => 1, 'user_id' => 2],
+            ['id' => 2, 'user_id' => 2],
+            ['id' => 3, 'user_id' => 3],
+            ['id' => 4, 'user_id' => null],
+        ];
 
-        $stmt = $this->mock('PDOStatement');
-        $stmt->shouldReceive('fetchAll')->once()->with(\PDO::FETCH_ASSOC)->andReturn([
-            ['id' => 1],
-            ['id' => 2],
-        ]);
+        $posts = new Collection($postRows, new Post());
+        $post1 = $posts->getAt(0);
+        $post2 = $posts->getAt(1);
+        $post3 = $posts->getAt(2);
+        $post4 = $posts->getAt(3);
 
-        $stmt2 = $this->mock('PDOStatement');
-        $stmt2->shouldReceive('fetchAll')->once()->with(\PDO::FETCH_ASSOC)->andReturn([
-            ['id' => 1, 'profile' => 'foo'],
-            ['id' => 2, 'profile' => 'bar'],
-        ]);
+        $userRows = [
+            ['id' => 2, 'name' => 'foo'],
+            ['id' => 3, 'name' => 'bar'],
+        ];
 
-        $pdo = $this->mockPdo();
-        $pdo->shouldReceive('query')->once()
-            ->with("SELECT users.id, users.name, users.password, users.created_time FROM users WHERE (users.id IN(1, 2))")
-            ->andReturn($stmt);
+        $stmt = $this->getMock('stmt', ['fetchAll']);
+        $stmt->expects($this->once())->method('fetchAll')->with(\PDO::FETCH_ASSOC)->willReturn($userRows);
 
-        $pdo->shouldReceive('query')->once()
-            ->with("SELECT users.id, users.profile FROM users WHERE (users.id IN(1, 2))")
-            ->andReturn($stmt2);
+        $connection = $this->getMock('Sloths\Db\Connection', ['query'], ['dsn']);
+        $connection->expects($this->once())
+            ->method('query')->with("SELECT users.* FROM users WHERE (users.id IN (2, 3))")->willReturn($stmt);
 
-        Post::setConnection($this->createConnection($pdo));
+        $connectionManager = new ConnectionManager();
+        $connectionManager->setConnection($connection);
+        $post1->setDefaultConnectionManager($connectionManager);
 
-        $this->assertSame($post1->CreatedUser, $post3->CreatedUser);
-        $this->assertSame('foo', $post1->CreatedUser->profile);
-        $this->assertSame('bar', $post2->CreatedUser->profile);
+        $user = $post1->getBelongsTo('User');
+        $this->assertSame($userRows[0], $user->toArray());
+        $this->assertSame($user, $post2->getRelation('User', true));
+        $this->assertSame($userRows[1], $post3->getRelation('User', true)->toArray());
+        $this->assertNull($post4->getRelation('User', true));
     }
 }

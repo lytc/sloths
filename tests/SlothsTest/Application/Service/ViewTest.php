@@ -2,17 +2,20 @@
 
 namespace SlothsTest\Application\Service;
 
-use Sloths\Application\Application;
-use SlothsTest\TestCase;
-
+/**
+ * @covers Sloths\Application\Service\View
+ */
 class ViewTest extends TestCase
 {
-    public function testApplicationContext()
+    public function testBoot()
     {
-        $application = new Application();
-        $application->setDirectory('foo');
+        $application = $this->getMock('app', ['getPath']);
+        $application->expects($this->once())->method('getPath')->with('views')->willReturn('foo');
 
-        $view = $application->view;
-        $this->assertSame('foo/views', $view->getDirectory());
+        $view = $this->getMock('Sloths\Application\Service\View', ['getApplication', 'setDirectory']);
+        $view->expects($this->once())->method('getApplication')->willReturn($application);
+        $view->expects($this->once())->method('setDirectory')->with('foo');
+
+        $view->boot();
     }
 }

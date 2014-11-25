@@ -1,1 +1,0 @@
-foo <?php $this->capture('foo', 'bar') ?>

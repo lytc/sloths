@@ -1,242 +1,159 @@
 <?php
 
 namespace SlothsTest\Db\Model;
-use SlothsTest\Db\Model\Stub\User;
 
+use Sloths\Db\Model\AbstractModel;
+use Sloths\Db\Model\Collection;
+use Sloths\Db\Sql\Select;
+use SlothsTest\Db\Model\Stub\User;
+use Sloths\Application\Service\ConnectionManager;
+use SlothsTest\TestCase;
+
+/**
+ * @covers Sloths\Db\Model\Collection
+ */
 class CollectionTest extends TestCase
 {
-    public function testInstance()
+    protected $mockModel;
+
+    public function setUp()
     {
-        $users = User::all();
-        $this->assertInstanceOf('Sloths\Db\Model\Collection', $users);
+        parent::setUp();
+        $this->mockModel = $this->getMock('Sloths\Db\Model\AbstractModel');
     }
 
-    public function testGetSqlSelect()
+    public function testModel()
     {
-        $users = User::all();
-        $sqlSelect = $users->getSqlSelect();
-        $this->assertSame("SELECT users.id, users.name, users.password, users.created_time FROM users", $sqlSelect->toString());
+        $collection = new Collection([], $this->mockModel);
+        $this->assertSame($this->mockModel, $collection->getModel());
+        $this->assertSame(get_class($this->mockModel), $collection->getModelClassName());
     }
 
-    public function testCount()
+    public function testLoad()
     {
-        $connection = $this->mockConnection();
-        User::setConnection($connection);
-        $users = User::all();
+        $select = $this->getMock('Sloths\Db\Table\Sql\Select', ['all']);
+        $select->expects($this->exactly(2))->method('all')->willReturn([]);
 
-        $connection->shouldReceive('selectAll')->with($users->getSqlSelect())->andReturn([[], []]);
+        $collection = new Collection($select, $this->mockModel);
 
-        $this->assertCount(2, $users);
+        $collection->load();
+        $collection->load();
+        $collection->load(true);
+    }
+
+    public function testReload()
+    {
+        $collection = $this->getMock('Sloths\Db\Model\Collection', ['load'], [], '', false);
+        $collection->expects($this->once())->method('load')->with(true);
+        $collection->reload();
+    }
+
+    public function testGetAtAndFirst()
+    {
+        $rows = [
+            ['id' => 1],
+            ['id' => 2],
+        ];
+
+        $collection = new Collection($rows, $this->mockModel);
+        $modelClassName = get_class($this->mockModel);
+
+        $this->assertInstanceOf($modelClassName, $collection->getAt(0));
+        $this->assertInstanceOf($modelClassName, $collection->getAt(1));
+        $this->assertInstanceOf($modelClassName, $collection->first());
+        $this->assertNull($collection->getAt(2));
+    }
+
+    public function testColumn()
+    {
+        $collection = $this->getMock('Sloths\Db\Model\Collection', ['toArray'], [], '', false);
+        $collection->expects($this->once())->method('toArray')->willReturn([['id' => 1, 'name' => 'foo'], ['id' => 2, 'name' => 'bar']]);
+        $this->assertSame(['foo', 'bar'], $collection->column('name'));
+    }
+
+    public function testIds()
+    {
+        $model = $this->getMock('Sloths\Db\Model\AbstractModel');
+        $model->expects($this->once())->method('getPrimaryKey')->willReturn('foo');
+
+        $collection = $this->getMock('Sloths\Db\Model\Collection', ['column'], [[], $model]);
+        $collection->expects($this->once())->method('column')->with('foo')->willReturn([1, 2]);
+        $this->assertSame([1, 2], $collection->ids());
+    }
+
+    public function testToArrayAndCount()
+    {
+        $rows = [['id' => 1], ['id' => 2]];
+
+        $collection = new Collection($rows, new MockModelForTestCollection());
+        $this->assertSame($rows, $collection->toArray());
+        $this->assertSame(2, $collection->count());
+    }
+
+    public function testJsonEncoding()
+    {
+        $rows = [['id' => 1], ['id' => 2]];
+
+        $collection = new Collection($rows, new MockModelForTestCollection());
+        $this->assertSame(json_encode($rows), json_encode($collection));
+    }
+
+    public function testTraversable()
+    {
+        $rows = [['id' => 1], ['id' => 2]];
+
+        $collection = new Collection($rows, new MockModelForTestCollection());
+
+        $count = 0;
+        foreach ($collection as $model) {
+            $this->assertInstanceOf(__NAMESPACE__ . '\MockModelForTestCollection', $model);
+            $count++;
+        }
+
+        $this->assertSame(2, $count);
     }
 
     public function testFoundRows()
     {
-        $connection = $this->mockConnection();
-        User::setConnection($connection);
-        $users = User::all();
-        $users->calcFoundRows();
+        $select = $this->getMock('Sloths\Db\Table\Sql\Select', ['foundRows']);
+        $select->expects($this->once())->method('foundRows')->willReturn(10);
 
-        $connection->shouldReceive('selectAllWithFoundRows')->once()->andReturn([
-            'rows' => [[], []],
-            'foundRows' => 4
-        ]);
-
-        $this->assertCount(2, $users);
-        $this->assertSame(4, $users->foundRows());
-
-
+        $collection = new Collection($select, $this->mockModel);
+        $this->assertSame(10, $collection->foundRows());
     }
 
-    public function testFoundRowsWithAlreadyFetched()
+    public function testSet()
     {
-        $connection = $this->mockConnection();
-        User::setConnection($connection);
+        $users = new Collection([['id' => 1, 'username' => 'foo'], ['id' => 2, 'username' => 'bar']], new MockModelForTestCollection());
+        $users->username = 'baz';
 
-        $connection->shouldReceive('selectAll')->once()->andReturn([]);
-        $connection->shouldReceive('selectAllWithFoundRows')->once()->andReturn([
-            'rows' => [],
-            'foundRows' => 4
-        ]);
-        $users = User::all();
-        $users->toArray();
-        $this->assertSame(4, $users->foundRows());
+        $this->assertSame('baz', $users->getAt(0)->username);
+        $this->assertSame('baz', $users->getAt(1)->username);
     }
 
-    public function testFoundRowsWithoutCallCalcFoundRows()
+    public function testSaveAndDelete()
     {
-        $connection = $this->mockConnection();
-        User::setConnection($connection);
-        $users = User::all();
+        $collection = $this->getMock('Sloths\Db\Model\Collection', ['callEach'], [], '', false);
+        $collection->expects($this->at(0))->method('callEach')->with('save');
+        $collection->expects($this->at(1))->method('callEach')->with('delete');
 
-        $connection->shouldReceive('selectAllWithFoundRows')->once()->andReturn([
-            'rows' => [],
-            'foundRows' => 4
-        ]);
-
-        $this->assertSame(4, $users->foundRows());
+        $collection->save();
+        $collection->delete();
     }
 
-    public function testToArray()
+    public function testCallShouldPassToSelectIfMethodNotExists()
     {
-        $connection = $this->mockConnection();
-        User::setConnection($connection);
-        $users = User::all();
+        $select = $this->getMock('Sloths\Db\Table\Sql\Select', ['foo']);
+        $select->expects($this->once())->method('foo');
 
-        $data = [['id' => 1], ['id' => 2]];
-        $connection->shouldReceive('selectAll')->once()->andReturn($data);
-        $this->assertSame($data, $users->toArray());
+        $collection = new Collection($select, $this->mockModel);
+        $collection->foo();
     }
+}
 
-    public function testJsonEncode()
-    {
-        $connection = $this->mockConnection();
-        User::setConnection($connection);
-        $users = User::all();
-
-        $data = [['id' => 1], ['id' => 2]];
-        $connection->shouldReceive('selectAll')->once()->andReturn($data);
-        $this->assertSame(json_encode($data), $users->toJson());
-        $this->assertSame(json_encode($data), json_encode($users));
-    }
-
-    public function testToArrayAndToJsonShouldNotIncludeHiddenColumn()
-    {
-        $connection = $this->mockConnection();
-        User::setConnection($connection);
-        $users = User::all();
-
-        $data = [['id' => 1, 'password' => 'password'], ['id' => 2, 'password' => 'password']];
-        $connection->shouldReceive('selectAll')->once()->andReturn($data);
-
-        $expected = [['id' => 1], ['id' => 2]];
-        $this->assertSame($expected, $users->toArray());
-        $this->assertSame(json_encode($expected), $users->toJson());
-        $this->assertSame(json_encode($expected), json_encode($users));
-    }
-
-    public function testMethodColumn()
-    {
-        $connection = $this->mockConnection();
-        User::setConnection($connection);
-        $users = User::all();
-
-        $data = [['id' => 1, 'name' => 'foo'], ['id' => 2, 'name' => 'bar']];
-        $connection->shouldReceive('selectAll')->once()->andReturn($data);
-
-        $this->assertSame([1, 2], $users->column('id'));
-        $this->assertSame(['foo', 'bar'], $users->column('name'));
-        $this->assertSame([1 => 'foo', 2 => 'bar'], $users->column('name', 'id'));
-    }
-
-    public function testLazyLoading()
-    {
-        $stmt1 = $this->mock('PDOStatement');
-        $stmt1->shouldReceive('fetchAll')->once()->andReturn([
-            ['id' => 1],
-            ['id' => 2]
-        ]);
-
-        $stmt2 = $this->mock('PDOStatement');
-        $stmt2->shouldReceive('fetchAll')->once()->andReturn([
-            ['id' => 1, 'profile' => 'foo'],
-            ['id' => 2, 'profile' => 'bar'],
-        ]);
-
-        $pdo = $this->mockPdo();
-
-        $pdo->shouldReceive('query')->once()->with("SELECT users.id, users.name, users.password, users.created_time FROM users")->andReturn($stmt1);
-        $pdo->shouldReceive('query')->once()->with("SELECT users.id, users.profile FROM users WHERE (users.id IN(1, 2))")->andReturn($stmt2);
-
-        $connection = $this->createConnection($pdo);
-        User::setConnection($connection);
-
-        $users = User::all();
-        foreach ($users as $user) {
-            $user->profile;
-        }
-    }
-
-    public function testEagerLoading()
-    {
-        $stmt1 = $this->mock('PDOStatement');
-        $stmt1->shouldReceive('fetchAll')->once()->andReturn([
-            ['id' => 1],
-            ['id' => 2],
-            ['id' => 3],
-        ]);
-
-        $stmt2 = $this->mock('PDOStatement');
-        $stmt2->shouldReceive('fetchAll')->once()->andReturn([
-            ['id' => 4, 'created_user_id' => 1, 'name' => 'foo'],
-            ['id' => 5, 'created_user_id' => 1, 'name' => 'bar'],
-            ['id' => 6, 'created_user_id' => 2, 'name' => 'baz'],
-        ]);
-
-        $pdo = $this->mockPdo();
-
-        $pdo->shouldReceive('query')->once()
-            ->with("SELECT users.id, users.name, users.password, users.created_time FROM users")
-            ->andReturn($stmt1);
-
-        $pdo->shouldReceive('query')->once()
-            ->with("SELECT posts.id, posts.created_user_id, posts.modified_user_id, posts.name FROM posts WHERE (posts.created_user_id IN(1, 2, 3))")
-            ->andReturn($stmt2);
-
-        $connection = $this->createConnection($pdo);
-        User::setConnection($connection);
-
-        $users = User::all();
-        $expected = [['id' => 4, 'created_user_id' => 1, 'name' => 'foo'], ['id' => 5, 'created_user_id' => 1, 'name' => 'bar']];
-        $this->assertSame($expected, $users[0]->Posts->toArray());
-
-        $expected = [['id' => 6, 'created_user_id' => 2, 'name' => 'baz']];
-        $this->assertSame($expected, $users[1]->Posts->toArray());
-
-        $this->assertSame([], $users[2]->Posts->toArray());
-    }
-
-    public function testCompositeMethods()
-    {
-        $users = User::all();
-        $user1 = $this->mock('SlothsTest\Db\Model\Stub\User');
-        $user1->shouldReceive('save')->once();
-        $user1->shouldReceive('delete')->once();
-
-        $user2 = $this->mock('SlothsTest\Db\Model\Stub\User');
-        $user2->shouldReceive('save')->once();
-        $user2->shouldReceive('delete')->once();
-
-        $user3 = $this->mock('SlothsTest\Db\Model\Stub\User');
-        $user3->shouldReceive('save')->once();
-        $user3->shouldReceive('delete')->once();
-
-        $users[0] = $user1;
-        $users[1] = $user2;
-        $users[2] = $user3;
-
-        $users->save();
-        $users->delete();
-    }
-
-    public function testMassSet()
-    {
-        $users = User::all();
-
-        $users[0] = $user1 = new User();
-        $users[1] = $user2 = new User();
-        $users[2] = $user3 = new User();
-
-        $users->name = 'foo';
-        $this->assertSame('foo', $user1->name);
-        $this->assertSame('foo', $user2->name);
-        $this->assertSame('foo', $user3->name);
-    }
-
-    /**
-     * @expectedException \BadMethodCallException
-     */
-    public function testCallUndefinedMethodShouldThrowAnException()
-    {
-        User::all()->badMethod();
-    }
+class MockModelForTestCollection extends AbstractModel
+{
+    protected $columns = [
+        'id' => self::INT
+    ];
 }

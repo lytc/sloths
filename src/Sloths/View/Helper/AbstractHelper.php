@@ -2,20 +2,7 @@
 
 namespace Sloths\View\Helper;
 
-use Sloths\View\View;
-
-abstract class AbstractHelper
+abstract class AbstractHelper implements HelperInterface
 {
-    /**
-     * @var \Sloths\View\View
-     */
-    protected $view;
-
-    /**
-     * @param View $view
-     */
-    public function __construct(View $view)
-    {
-        $this->view = $view;
-    }
+    use HelperTrait;
 }

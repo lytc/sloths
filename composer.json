@@ -1,24 +1,11 @@
 {
-    "name": "lytc/sloths",
-    "description": "Sloths Framework",
-    "type": "library",
-    "license": "MIT",
-    "keywords": ["php", "framework", "sloths"],
-    "authors": [
-        {
-            "name": "lytc",
-            "email": "prtran@gmail.com"
-        }
-    ],
+    "minimum-stability": "dev",
     "require": {
-        "php": ">=5.4",
-        "doctrine/inflector": "v1.0"
+        "doctrine/inflector": "1.0.*@dev",
+        "ircmaxell/password-compat": "1.0.3"
     },
     "require-dev": {
-        "phpunit/phpunit": "4.0",
-        "mockery/mockery": "dev-master",
-        "zendframework/zend-code": "2.3.*@dev",
-        "satooshi/php-coveralls": "dev-master"
+        "phpunit/phpunit": "4.2.*"
     },
     "autoload": {
         "psr-0": {

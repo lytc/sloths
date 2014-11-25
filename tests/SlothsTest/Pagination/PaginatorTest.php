@@ -2,194 +2,123 @@
 
 namespace SlothsTest\Pagination;
 
-use SlothsTest\Db\Model\Stub\User;
-use Sloths\Db\Model\Model;
-use Sloths\Db\Sql\Select;
-use Sloths\Pagination\Paginator;
 use SlothsTest\TestCase;
+use Sloths\Pagination\Paginator;
 
+/**
+ * @covers Sloths\Pagination\Paginator
+ */
 class PaginatorTest extends TestCase
 {
-    public function testDataAdapter()
-    {
-        $paginator = new Paginator([]);
-        $this->assertInstanceOf('Sloths\Pagination\DataAdapter\ArrayAdapter', $paginator->getDataAdapter());
-
-        $paginator = new Paginator(new Select(), Model::getConnection());
-        $this->assertInstanceOf('Sloths\Pagination\DataAdapter\DbSelect', $paginator->getDataAdapter());
-
-        $paginator = new Paginator(User::all());
-        $this->assertInstanceOf('Sloths\Pagination\DataAdapter\ModelCollection', $paginator->getDataAdapter());
-    }
-
     /**
-     * @expectedException \InvalidArgumentException
+     * @dataProvider dataProvider
      */
-    public function testInvalidDataAdapterShouldThrowException()
+    public function test($currentPage, $totalItems, $itemCountPerPage, $pageRange, $expected)
     {
-        new Paginator(new \stdClass());
+        $adapter = $this->getMock('Sloths\Pagination\Adapter\AdapterInterface');
+        $adapter->expects($this->any())->method('count')->willReturn($totalItems);
+
+        $paginator = new Paginator($adapter);
+        $paginator
+            ->setCurrentPage($currentPage)
+            ->setItemCountPerPage($itemCountPerPage)
+            ->setPageRange($pageRange);
+
+        $this->assertSame($expected, [
+            'getTotalItemCount' => $paginator->getTotalItemCount(),
+            'currentPage' => $paginator->getCurrentPage(),
+            'getFromIndex' => $paginator->getFromIndex(),
+            'getToIndex' => $paginator->getToIndex(),
+            'getPrevPageNumber' => $paginator->getPrevPageNumber(),
+            'getNextPageNumber' => $paginator->getNextPageNumber(),
+            'getFirstPageInRange' => $paginator->getFirstPageInRange(),
+            'getLastPageInRange' => $paginator->getLastPageInRange()
+        ]);
     }
 
-    public function testArrayAdapter()
+    public function dataProvider()
     {
-        $totalRows = 31;
-        $itemsCountPerPage = 2;
-        $pageRange = 10;
-        $rows = range(1, $totalRows);
-
-        $paginator = new Paginator($rows);
-        $paginator->setItemsCountPerPage($itemsCountPerPage)->setPageRange($pageRange);
-
-        $this->assertSame(1, $paginator->getFirstPageInRange());
-        $this->assertSame($pageRange, $paginator->getLastPageInRange());
-        $this->assertFalse($paginator->getPrevPageNumber());
-        $this->assertSame(2, $paginator->getNextPageNumber());
-
-        $paginator->setCurrentPage(6);
-        $this->assertSame(1, $paginator->getFirstPageInRange());
-        $this->assertSame($pageRange, $paginator->getLastPageInRange());
-        $this->assertSame(5, $paginator->getPrevPageNumber());
-        $this->assertSame(7, $paginator->getNextPageNumber());
-
-        $paginator->setCurrentPage(7);
-        $this->assertSame(2, $paginator->getFirstPageInRange());
-        $this->assertSame(11, $paginator->getLastPageInRange());
-
-        $paginator->setCurrentPage(13);
-        $this->assertSame(7, $paginator->getFirstPageInRange());
-        $this->assertSame(16, $paginator->getLastPageInRange());
-    }
-
-    public function testWithFewRows()
-    {
-        $totalRows = 31;
-        $itemsCountPerPage = 10;
-        $pageRange = 10;
-        $rows = range(1, $totalRows);
-
-        $paginator = new Paginator($rows);
-        $paginator->setItemsCountPerPage($itemsCountPerPage)->setPageRange($pageRange);
-        $this->assertSame(4, $paginator->getTotalPages());
-        $this->assertSame(1, $paginator->getFirstPageInRange());
-        $this->assertSame(4, $paginator->getLastPageInRange());
-        $this->assertFalse($paginator->getPrevPageNumber());
-    }
-
-    public function testWithOutOfRange()
-    {
-        $totalRows = 31;
-        $itemsCountPerPage = 10;
-        $pageRange = 10;
-        $rows = range(1, $totalRows);
-
-        $paginator = new Paginator($rows);
-        $paginator->setItemsCountPerPage($itemsCountPerPage)->setPageRange($pageRange);
-
-        $paginator->setCurrentPage(-100);
-        $this->assertSame(1, $paginator->getCurrentPage());
-
-        $paginator->setCurrentPage(100);
-        $this->assertSame(4, $paginator->getCurrentPage());
-    }
-
-    public function testModelCollectionAdapter()
-    {
-        $collection = $this->mock('Sloths\Db\Model\Collection');
-        $collection->shouldReceive('calcFoundRows')->once()->andReturnSelf();
-        $collection->shouldReceive('foundRows')->once();
-        $collection->shouldReceive('limit')->once();
-        $paginator = new Paginator($collection);
-
-        $this->assertSame($collection, $paginator->getIterator());
-    }
-
-    public function estWithDbSelectAdapter()
-    {
-        $select = new Select('users');
-        $connection = AbstractModel::getDefaultConnection();
-
-        $paginator = new Paginator($select, $connection);
-        $paginator->setItemsCountPerPage(2);
-
-        $this->assertCount(2, $paginator->getItems());
-        $this->assertSame(4, $paginator->getTotalItemsCount());
-        $this->assertSame(2, $paginator->getTotalPages());
-        $this->assertSame(1, $paginator->getFromIndex());
-        $this->assertSame(2, $paginator->getToIndex());
-        $this->assertFalse($paginator->getPrevPageNumber());
-        $this->assertSame(2, $paginator->getNextPageNumber());
-
-        $paginator->setCurrentPage(2);
-        $this->assertSame(3, $paginator->getFromIndex());
-        $this->assertSame(4, $paginator->getToIndex());
-        $this->assertSame(1, $paginator->getPrevPageNumber());
-        $this->assertFalse($paginator->getNextPageNumber());
-    }
-    
-    public function testGetInfo()
-    {
-        $expected = [
-            'pages'             => 'getTotalPages',
-            'currentPage'       => 'getCurrentPage',
-            'itemsCountPerPage' => 'getItemsCountPerPage',
-            'fromIndex'         => 'getFromIndex',
-            'toIndex'           => 'getToIndex',
-            'prev'              => 'getPrevPageNumber',
-            'next'              => 'getNextPageNumber',
-            'firstPageInRange'  => 'getFirstPageInRange',
-            'lastPageInRange'   => 'getLastPageInRange'
-        ];
-
-        $paginator = $this->getMock('Sloths\Pagination\Paginator',
+        return [
             [
-                'getTotalPages',
-                'getCurrentPage',
-                'getItemsCountPerPage',
-                'getFromIndex',
-                'getToIndex',
-                'getPrevPageNumber',
-                'getNextPageNumber',
-                'getFirstPageInRange',
-                'getLastPageInRange'
+                1, // current page
+                100, // total item count
+                10, // item count per page
+                10, // page range
+                [
+                    'getTotalItemCount' => 100,
+                    'currentPage' => 1,
+                    'getFromIndex' => 0,
+                    'getToIndex' => 10,
+                    'getPrevPageNumber' => false,
+                    'getNextPageNumber' => 2,
+                    'getFirstPageInRange' => 1,
+                    'getLastPageInRange' => 10
+                ]
             ],
-            [[]]);
-
-        $paginator->expects($this->once())->method('getTotalPages')->willReturn('getTotalPages');
-        $paginator->expects($this->once())->method('getCurrentPage')->willReturn('getCurrentPage');
-        $paginator->expects($this->once())->method('getItemsCountPerPage')->willReturn('getItemsCountPerPage');
-        $paginator->expects($this->once())->method('getFromIndex')->willReturn('getFromIndex');
-        $paginator->expects($this->once())->method('getToIndex')->willReturn('getToIndex');
-        $paginator->expects($this->once())->method('getPrevPageNumber')->willReturn('getPrevPageNumber');
-        $paginator->expects($this->once())->method('getNextPageNumber')->willReturn('getNextPageNumber');
-        $paginator->expects($this->once())->method('getFirstPageInRange')->willReturn('getFirstPageInRange');
-        $paginator->expects($this->once())->method('getLastPageInRange')->willReturn('getLastPageInRange');
-
-        $this->assertSame($expected, $paginator->getInfo());
-    }
-
-    public function testGetItems()
-    {
-        $paginator = new Paginator([]);
-        $this->assertInstanceOf('ArrayIterator', $paginator->getItems());
-    }
-
-    public function testCount()
-    {
-        $paginator = $this->getMock('Sloths\Pagination\Paginator', ['getTotalPages'], [[]]);
-        $paginator->expects($this->exactly(2))->method('getTotalPages')->willReturn(10);
-        $this->assertSame(10, $paginator->count());
-        $this->assertSame(10, count($paginator));
-    }
-
-    public function testDefaultItemCountPerPage()
-    {
-        Paginator::setDefaultItemsCountPerPage(10);
-        $this->assertSame(10, Paginator::getDefaultItemsCountPerPage());
-    }
-
-    public function testDefaultPageRange()
-    {
-        Paginator::setDefaultPageRange(10);
-        $this->assertSame(10, Paginator::getDefaultPageRange());
+            [
+                6, // current page
+                100, // total item count
+                10, // item count per page
+                10, // page range
+                [
+                    'getTotalItemCount' => 100,
+                    'currentPage' => 6,
+                    'getFromIndex' => 50,
+                    'getToIndex' => 60,
+                    'getPrevPageNumber' => 5,
+                    'getNextPageNumber' => 7,
+                    'getFirstPageInRange' => 1,
+                    'getLastPageInRange' => 10
+                ]
+            ],
+            [
+                7, // current page
+                200, // total item count
+                10, // item count per page
+                10, // page range
+                [
+                    'getTotalItemCount' => 200,
+                    'currentPage' => 7,
+                    'getFromIndex' => 60,
+                    'getToIndex' => 70,
+                    'getPrevPageNumber' => 6,
+                    'getNextPageNumber' => 8,
+                    'getFirstPageInRange' => 2,
+                    'getLastPageInRange' => 11
+                ]
+            ],
+            [
+                13, // current page
+                300, // total item count
+                10, // item count per page
+                10, // page range
+                [
+                    'getTotalItemCount' => 300,
+                    'currentPage' => 13,
+                    'getFromIndex' => 120,
+                    'getToIndex' => 130,
+                    'getPrevPageNumber' => 12,
+                    'getNextPageNumber' => 14,
+                    'getFirstPageInRange' => 8,
+                    'getLastPageInRange' => 17
+                ]
+            ],
+            [
+                11, // current page
+                100, // total item count
+                10, // item count per page
+                10, // page range
+                [
+                    'getTotalItemCount' => 100,
+                    'currentPage' => 10,
+                    'getFromIndex' => 90,
+                    'getToIndex' => 100,
+                    'getPrevPageNumber' => 9,
+                    'getNextPageNumber' => false,
+                    'getFirstPageInRange' => 1,
+                    'getLastPageInRange' => 10
+                ]
+            ]
+        ];
     }
 }

@@ -5,13 +5,12 @@
         backupStaticAttributes="false"
         bootstrap="./tests/bootstrap.php"
         cacheTokens="false"
-        colors="false"
+        colors="true"
         convertErrorsToExceptions="true"
         convertNoticesToExceptions="true"
         convertWarningsToExceptions="true"
         forceCoversAnnotation="false"
         mapTestClassNameToCoveredClassName="false"
-        printerClass="PHPUnit_TextUI_ResultPrinter"
         processIsolation="false"
         stopOnError="false"
         stopOnFailure="false"
@@ -20,16 +19,15 @@
         timeoutForSmallTests="1"
         timeoutForMediumTests="10"
         timeoutForLargeTests="60"
-        strict="false"
-        verbose="false">
+        strict="false">
         <filter>
-            <whitelist processUncoveredFilesFromWhitelist="true">
+            <whitelist>
                 <directory suffix=".php">./src</directory>
             </whitelist>
         </filter>
         <testsuites>
             <testsuite name="Sloths">
-                <directory>./tests</directory>
+                <directory suffix="Test.php">./tests</directory>
             </testsuite>
         </testsuites>
         <logging>

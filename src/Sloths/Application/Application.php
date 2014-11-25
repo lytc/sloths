@@ -2,43 +2,40 @@
 
 namespace Sloths\Application;
 
-use Sloths\Application\Exception\Pass;
+use Sloths\Application\Exception\AccessDenied;
+use Sloths\Application\Exception\Error;
 use Sloths\Application\Exception\NotFound;
-use Sloths\Application\Service\ServiceInterface;
+use Sloths\Application\Service\ServiceManager;
+use Sloths\Http\Request;
+use Sloths\Http\RequestInterface;
+use Sloths\Http\Response;
+use Sloths\Http\ResponseInterface;
 use Sloths\Misc\ConfigurableTrait;
+use Sloths\Misc\DynamicMethodTrait;
+use Sloths\Misc\DynamicPropertyTrait;
+use Sloths\Misc\Parameters;
 use Sloths\Observer\ObserverTrait;
-use \Closure;
+use Sloths\Routing\Router;
+use Sloths\Application\Exception\Pass;
 
-/**
- * Class Application
- * @package Sloths\Application
- *
- * @property Service\Request $request
- * @property Service\Response $response
- * @property Service\View $view
- * @property Service\Router $router
- * @property Service\Config $config
- * @property Service\Session $session
- * @property Service\Messages $messages
- */
-class Application
+class Application implements ApplicationInterface
 {
     use ObserverTrait;
+    use DynamicMethodTrait;
+    use DynamicPropertyTrait;
+    use ConfigurableTrait;
+
+    const DEFAULT_ENV = 'production';
 
     /**
      * @var string
      */
-    protected $applicationDirectory;
+    protected $directory;
 
     /**
      * @var string
      */
-    protected $requestBasePath;
-
-    /**
-     * @var string
-     */
-    protected $env = 'production';
+    protected $env;
 
     /**
      * @var bool
@@ -46,95 +43,113 @@ class Application
     protected $debug = false;
 
     /**
-     * @var array
+     * @var string
      */
-    protected $configDirectories = [];
+    protected $name;
+
+    /**
+     * @var string
+     */
+    protected $baseUrl = '/';
 
     /**
      * @var array
      */
-    protected $services = [
-        'exceptionHandler'  => 'Sloths\Exception\Handler',
-        'config'            => 'Sloths\Misc\Config',
-        'request'           => 'Sloths\Http\Request',
-        'response'          => 'Sloths\Http\Response',
-        'view'              => 'Sloths\Application\Service\View',
-        'router'            => 'Sloths\Application\Service\Router',
-        'session'           => 'Sloths\Session\Session',
-        'flash'             => 'Sloths\Session\Flash',
-        'messages'          => 'Sloths\Session\Messages'
-    ];
+    protected $paths = [];
 
     /**
-     * @var array
+     * @var RequestInterface
      */
-    protected $shortcutMethods = [
-        'map'       => ['router', 'map'],
-        'head'      => ['router', 'head'],
-        'get'       => ['router', 'get'],
-        'post'      => ['router', 'post'],
-        'put'       => ['router', 'put'],
-        'patch'     => ['router', 'patch'],
-        'delete'    => ['router', 'delete'],
-        'options'   => ['router', 'options'],
-        'trace'     => ['router', 'trace'],
-        'isXhr'     => ['request', 'isXhr'],
-        'render'    => ['view', 'render'],
-        'setLayout' => ['view', 'setLayout'],
-    ];
+    protected $request;
 
     /**
-     * @var array
+     * @var ResponseInterface
      */
-    protected $shortcutProperties = [
-        'params'    => ['request', 'params'],
-        'get'       => ['request', 'get'],
-        'post'      => ['request', 'post'],
-        'cookie'    => ['request', 'cookie'],
-        'headers'   => ['request', 'headers'],
-    ];
+    protected $response;
 
     /**
-     * @param string $requestBasePath
+     * @var Router
      */
-    final public function __construct($requestBasePath = '')
+    protected $router;
+
+    /**
+     * @var ServiceManager
+     */
+    protected $serviceManager;
+
+    /**
+     * @var ConfigLoader
+     */
+    protected $configLoader;
+
+    /**
+     * @var string
+     */
+    protected $defaultRouteGroupName = 'index';
+
+    /**
+     * @var ModuleManager
+     */
+    protected $moduleManager;
+
+    /**
+     * @var bool
+     */
+    protected $booted = false;
+
+    /**
+     * @param ModuleManager $moduleManager
+     */
+    public function __construct(ModuleManager $moduleManager = null)
     {
-        $this->requestBasePath = $requestBasePath;
-        $this->initialize();
+        $this->moduleManager = $moduleManager;
     }
 
-    protected function initialize() {}
+    /**
+     * @return ModuleManager
+     */
+    public function getModuleManager()
+    {
+        return $this->moduleManager;
+    }
 
+    /**
+     * @param string $name
+     * @return mixed|ServiceInterface
+     */
     public function __get($name)
     {
-        if ($service = $this->getService($name)) {
-            return $service;
+        switch ($name) {
+            case 'request':     return $this->getRequest();
+            case 'response':    return $this->getResponse();
+            case 'router':      return $this->getRouter();
+            case 'params':      return $this->getRequest()->getParams();
+            case 'paramsQuery': return $this->getRequest()->getParamsQuery();
+            case 'paramsPost':  return $this->getRequest()->getParamsPost();
+            case 'paramsFile':  return $this->getRequest()->getParamsFile();
         }
 
-        if (isset($this->shortcutProperties[$name])) {
-            $meta = $this->shortcutProperties[$name];
+        $serviceManager = $this->getServiceManager();
 
-            return $this->{$meta[0]}->{$meta[1]};
+        if ($serviceManager->has($name)) {
+            return $serviceManager->get($name);
         }
 
-        throw new \InvalidArgumentException(sprintf('Call to undefined property %s', $name));
+        return $this->getDynamicProperty($name);
     }
 
     /**
      * @param string $method
      * @param array $args
      * @return mixed
-     * @throws \BadMethodCallException
      */
     public function __call($method, $args)
     {
-        if ($this->hasShortcutMethod($method)) {
-            $alias = $this->shortcutMethods[$method];
-            $callback = [$this->{$alias[0]}, $alias[1]];
-            return call_user_func_array($callback, $args);
+        if (in_array($method, ['head', 'get', 'post', 'put', 'patch', 'delete', 'options', 'trace', 'connect'])) {
+            return call_user_func_array([$this->getRouter(), $method], $args);
         }
 
-        throw new \BadMethodCallException(sprintf('Call to undefined method %s', $method));
+        return $this->callDynamicMethod($method, $args);
     }
 
     /**
@@ -174,12 +189,13 @@ class Application
     }
 
     /**
-     * @param string $directory
+     * @param string $baseUrl
      * @return $this
      */
-    public function setDirectory($directory)
+    public function setBaseUrl($baseUrl)
     {
-        $this->applicationDirectory = $directory;
+        $baseUrl = rtrim($baseUrl, '/')?: '/';
+        $this->baseUrl = $baseUrl;
 
         return $this;
     }
@@ -187,214 +203,42 @@ class Application
     /**
      * @return string
      */
-    public function getDirectory()
+    public function getBaseUrl()
     {
-        if (!$this->applicationDirectory) {
-            $reflection = new \ReflectionClass(get_called_class());
-            $classFile = $reflection->getFileName();
-            $this->applicationDirectory = pathinfo($classFile, PATHINFO_DIRNAME);
-        }
-
-        return $this->applicationDirectory;
+        return $this->baseUrl;
     }
 
     /**
      * @param string $directory
-     * @return $this
+     * @throws \InvalidArgumentException
      */
-    public function addConfigDirectory($directory)
+    public function setDirectory($directory)
     {
-        $this->configDirectories[$directory] = $directory;
-        return $this;
-    }
+        $directory = realpath($directory);
 
-    /**
-     * @param array $directories
-     * @return $this
-     */
-    public function addConfigDirectories(array $directories)
-    {
-        foreach ($directories as $directory) {
-            $this->addConfigDirectory($directory);
+        if (!is_dir($directory)) {
+            throw new \InvalidArgumentException('Invalid directory: ' . $directory);
         }
 
-        return $this;
+        $this->directory = $directory;
     }
 
     /**
-     * @return array
-     */
-    public function getConfigDirectories()
-    {
-        if (!$this->configDirectories) {
-            $defaultDirectory = $this->getDirectory() . '/config';
-            $this->configDirectories[$defaultDirectory] = $defaultDirectory;
-        }
-
-        return $this->configDirectories;
-    }
-
-    /**
-     * @param string $name
-     * @param mixed $service
-     * @return $this
-     * @throws \RuntimeException
-     */
-    public function addService($name, $service)
-    {
-        if ($this->hasService($name)) {
-            throw new \RuntimeException(sprintf('Service %s already exists', $name));
-        }
-
-        return $this->setService($name, $service);
-
-    }
-
-    /**
-     * @param array $services
-     * @return $this
-     */
-    public function addServices(array $services)
-    {
-        foreach ($services as $name => $service) {
-            $this->addService($name, $service);
-        }
-
-        return $this;
-    }
-
-    /**
-     * @param string $name
-     * @param mixed $service
-     * @return $this
-     */
-    public function setService($name, $service)
-    {
-        $this->services[$name] = $service;
-        return $this;
-    }
-
-    /**
-     * @param array $services
-     * @return $this
-     */
-    public function setServices(array $services)
-    {
-        foreach ($services as $name => $service) {
-            $this->setService($name, $service);
-        }
-
-        return $this;
-    }
-
-    /**
-     * @param string $name
-     * @return bool
-     */
-    public function hasService($name)
-    {
-        return isset($this->services[$name]);
-    }
-
-    /**
-     * @param string $name
      * @return mixed
-     * @throws \InvalidArgumentException
      */
-    public function getService($name)
+    public function getDirectory()
     {
-        if (!$this->hasService($name)) {
-            return;
-        }
-
-        $service = $this->services[$name];
-
-        if (is_string($service)) {
-            if (!class_exists($service)) {
-                throw new \InvalidArgumentException(sprintf('Service class %s not found', $service));
-            }
-
-            $service = new $service;
-        } else if ($service instanceof \Closure) {
-            $service = $service($this);
-        } else {
-            return $service;
-        }
-
-        if ($service instanceof ServiceInterface) {
-            $service->setApplication($this);
-        }
-
-        if (method_exists($service, 'initialize')) {
-            $service->initialize($this);
-        }
-
-        # load config
-        foreach ($this->getConfigDirectories() as $directory) {
-            $configFile = $directory . '/' . $name . '.php';
-            $envConfigFile = $directory . '/' . $name . '.' . $this->getEnv() . '.php';
-
-            $this->applyServiceConfig($service, $configFile);
-            $this->applyServiceConfig($service, $envConfigFile);
-        }
-
-        $this->services[$name] = $service;
-        return $service;
-    }
-
-    protected function applyServiceConfig($service, $configFile)
-    {
-        if (!file_exists($configFile)) {
-            return;
-        }
-
-        $callback = function($configFile) {
-            require $configFile;
-        };
-
-        $callback = $callback->bindTo($service, $service);
-        $callback($configFile);
+        return $this->directory;
     }
 
     /**
-     * @param string $name
-     * @return bool
-     */
-    public function hasShortcutMethod($name)
-    {
-        return isset($this->shortcutMethods[$name]);
-    }
-
-    /**
-     * @param string $name
-     * @param string $service
-     * @param null $serviceMethod
-     * @return $this
-     * @throws \InvalidArgumentException
-     */
-    public function addShortcutMethod($name, $service, $serviceMethod = null)
-    {
-        if ($this->hasShortcutMethod($name)) {
-            throw new \InvalidArgumentException(sprintf('Shortcut method %s already exists', $name));
-        }
-
-        return $this->setShortcutMethod($name, $service, $serviceMethod);
-    }
-
-    /**
-     * @param array $shortcuts
+     * @param array $paths
      * @return $this
      */
-    public function addShortcutMethods(array $shortcuts)
+    public function setPaths(array $paths)
     {
-        foreach ($shortcuts as $name => $service) {
-            if (is_array($service)) {
-                $args = $service;
-                array_unshift($args, $name);
-            } else {
-                $args = [$name, $service];
-            }
-            call_user_func_array([$this, 'addShortcutMethod'], $args);
+        foreach ($paths as $name => $path) {
+            $this->setPath($name, $path);
         }
 
         return $this;
@@ -402,146 +246,142 @@ class Application
 
     /**
      * @param string $name
-     * @param string $service
-     * @param string [$serviceMethod]
-     * @return $this
+     * @param string $path
      */
-    public function setShortcutMethod($name, $service, $serviceMethod = null)
+    public function setPath($name, $path)
     {
-        if (!$serviceMethod) {
-            $serviceMethod = $name;
+        if ('/' !== $path[0]) {
+            $path = $this->getDirectory() . '/' . $path;
         }
 
-        $this->shortcutMethods[$name] = [$service, $serviceMethod];
-        return $this;
-    }
-
-    /**
-     * @param array $shortcuts
-     * @return $this
-     */
-    public function setShortcutMethods(array $shortcuts)
-    {
-        foreach ($shortcuts as $name => $service) {
-            if (is_array($service)) {
-                $args = $service;
-                array_unshift($args, $name);
-            } else {
-                $args = [$name, $service];
-            }
-            call_user_func_array([$this, 'setShortcutMethod'], $args);
-        }
-
-        return $this;
+        $this->paths[$name] = realpath($path);
     }
 
     /**
      * @param string $name
-     * @return bool
+     * @return string|null
      */
-    public function hasShortcutProperty($name)
+    public function getPath($name)
     {
-        return isset($this->shortcutProperties[$name]);
+        if (isset($this->paths[$name])) {
+            return $this->paths[$name];
+        }
+
+        return $this->getDirectory() . '/' . $name;
     }
 
     /**
-     * @param string $name
-     * @param string $service
-     * @param string [$serviceProperty]
+     * @param \Sloths\Http\RequestInterface $request
      * @return $this
-     * @throws \InvalidArgumentException
      */
-    public function addShortcutProperty($name, $service, $serviceProperty = null)
+    public function setRequest(RequestInterface $request)
     {
-        if ($this->hasShortcutProperty($name)) {
-            throw new \InvalidArgumentException(sprintf('Shortcut property %s already exists', $name));
-        }
-
-        return $this->setShortcutProperty($name, $service, $serviceProperty);
+        $this->request = $request;
     }
 
     /**
-     * @param array $shortcuts
-     * @return $this
+     * @return \Sloths\Http\RequestInterface
      */
-    public function addShortcutProperties(array $shortcuts)
+    public function getRequest()
     {
-        foreach ($shortcuts as $name => $service) {
-            if (is_array($service)) {
-                $args = $service;
-                array_unshift($args, $name);
-            } else {
-                $args = [$name, $service];
-            }
-            call_user_func_array([$this, 'addShortcutProperty'], $args);
+        if (!$this->request) {
+            $this->request = new Request();
         }
 
+        return $this->request;
+    }
+
+    /**
+     * @param \Sloths\Http\ResponseInterface $response
+     * @return $this
+     */
+    public function setResponse(ResponseInterface $response)
+    {
+        $this->response = $response;
         return $this;
     }
 
     /**
-     * @param string $name
-     * @param string $service
-     * @param string [$serviceProperty]
-     * @return $this
+     * @return \Sloths\Http\ResponseInterface
      */
-    public function setShortcutProperty($name, $service, $serviceProperty = null)
+    public function getResponse()
     {
-        if (!$serviceProperty) {
-            $serviceProperty = $name;
+        if (!$this->response) {
+            $this->response = new Response();
         }
 
-        $this->shortcutProperties[$name] = [$service, $serviceProperty];
+        return $this->response;
+    }
+
+    /**
+     * @param Router $router
+     * @return $this
+     */
+    public function setRouter(Router $router)
+    {
+        $this->router = $router;
         return $this;
     }
 
     /**
-     * @param array $shortcuts
-     * @return $this
+     * @return Router
      */
-    public function setShortcutProperties(array $shortcuts)
+    public function getRouter()
     {
-        foreach ($shortcuts as $name => $service) {
-            if (is_array($service)) {
-                $args = $service;
-                array_unshift($args, $name);
-            } else {
-                $args = [$name, $service];
-            }
-            call_user_func_array([$this, 'setShortcutProperty'], $args);
+        if (!$this->router) {
+            $this->router = new Router();
         }
 
+        return $this->router;
+    }
+
+    /**
+     * @param ServiceManager $manager
+     * @return $this
+     */
+    public function setServiceManager(ServiceManager $manager)
+    {
+        $this->serviceManager = $manager;
         return $this;
     }
 
     /**
-     * @param $url
+     * @return ServiceManager
      */
-    public function redirectTo($url)
+    public function getServiceManager()
     {
-        call_user_func_array([$this->response, 'redirect'], func_get_args());
-        $this->response->send();
-        $this->stop();
+        if (!$this->serviceManager) {
+            $this->serviceManager = new ServiceManager($this);
+            $this->boot();
+        }
+
+        return $this->serviceManager;
     }
 
     /**
-     *
+     * @param ConfigLoader $configLoader
+     * @return $this
      */
-    public function redirectBack()
+    public function setConfigLoader(ConfigLoader $configLoader)
     {
-        $this->redirectTo($this->request->getReferrer());
+        $this->configLoader = $configLoader;
+        return $this;
     }
 
     /**
-     *
+     * @return ConfigLoader
      */
-    public function stop()
+    public function getConfigLoader()
     {
-        exit;
+        if (!$this->configLoader) {
+            $this->configLoader = new ConfigLoader($this);
+        }
+
+        return $this->configLoader;
     }
 
     /**
-     * @throws NotFound
+     * @throws Exception\NotFound
      */
     public function notFound()
     {
@@ -549,79 +389,208 @@ class Application
     }
 
     /**
-     * @throws Pass
+     * @param string $message
+     * @param int $code
+     * @throws Error
+     */
+    public function error($message = '', $code = 500)
+    {
+        throw new Error($message, $code);
+    }
+
+    /**
+     * @param string $message
+     * @param int $code
+     * @throws Exception\AccessDenied
+     */
+    public function accessDenied($message = 'Access denied', $code = 403)
+    {
+        throw new AccessDenied($message, $code);
+    }
+
+    /**
+     * @throws Exception\Pass
      */
     public function pass()
     {
         throw new Pass();
     }
 
-    protected function before() {}
-    protected function after() {}
+    /**
+     * @param string|RequestInterface $request
+     * @param array $params
+     * @return RequestInterface
+     */
+    public function forward($request, array $params = [])
+    {
+        if (!$request instanceof RequestInterface) {
+            $parts = explode(' ', $request, 2);
 
+            if (count($parts) == 1) {
+                $this->getRequest()->setPath($parts[0]);
+            } else {
+                $this->getRequest()->setMethod($parts[0])->setPath($parts[1]);
+            }
+
+            if ($params) {
+                $params = array_merge($this->getRequest()->getParams()->toArray(), $params);
+                $this->getRequest()->setParams(new Parameters($params));
+            }
+
+            $request = $this->getRequest();
+
+        }
+
+        return $request;
+    }
+
+    /**
+     *
+     */
     protected function boot()
     {
-        # load config
-        foreach ($this->getConfigDirectories() as $directory) {
-            $configFile = $directory . '/application.php';
-
-            if (file_exists($configFile)) {
-                require $configFile;
+        if (!$this->booted) {
+            if (!($env = $this->getEnv())) {
+                $this->setEnv(static::DEFAULT_ENV);
             }
 
-            $envConfigFile = $directory . '/application.' . $this->getEnv() . '.php';
-
-            if (file_exists($envConfigFile)) {
-                require $envConfigFile;
-            }
+            $this->getConfigLoader()->apply('application', $this);
+            $this->booted = true;
         }
     }
 
     /**
-     * @return $this|void
+     * @return bool|string
+     * @throws \RuntimeException
      */
-    public function run()
+    protected function processAutoLoadRoutes()
     {
-        if (false === $this->before()) {
-            return $this;
+        $routesPath = $this->getPath('routes');
+
+        $request = $this->getRequest();
+        $path = $request->getPath();
+
+        if ($baseUrl = $this->getBaseUrl()) {
+            $path = '/' . trim(substr($path, strlen(parse_url($baseUrl, PHP_URL_PATH))), '/');
         }
 
-        $this->boot();
+        $parts = explode('/', $path);
+        $routeGroupName = $parts[1];
 
-        if ($this->notify('run') === false) {
-            return $this;
-        }
+        $routeFile = $routesPath . '/' . $routeGroupName . '.php';
 
-        $request = $this->request;
-        $method = $request->getMethod();
-        $requestPath = $request->getPath();
+        if (is_file($routeFile)) {
+            $path = '/' . implode('/', array_slice($parts, 2));
+            require $routeFile;
+            return $path;
+        } else {
+            $routeFile = $routesPath . '/' . $this->defaultRouteGroupName . '.php';
 
-        if ($this->requestBasePath) {
-            $requestPath = substr($requestPath, strlen($this->requestBasePath))?: '/';
-        }
-
-        $found = false;
-        while ($route = $this->router->matches($method, $requestPath)) {
-            $callback = $route->getCallback();
-            $callback = $callback->bindTo($this);
-
-            try {
-                $result = call_user_func_array($callback, $route->getParams());
-                $this->response->setBody($result)->send();
-                $found = true;
-                break;
-            } catch(Pass $e) {
-
+            if (is_file($routeFile)) {
+                require $routeFile;
             }
         }
 
-        $this->after();
-        $this->notify('ran');
+        return $path;
+    }
 
-        if ($found) {
-            return $this;
+    /**
+     * @return $this
+     */
+    public function send()
+    {
+        $response = $this->getResponse();
+
+        $headers = $response->getHeaders();
+        $body = $this->getResponse()->getBody();
+
+        if (is_array($body) || $body instanceof \JsonSerializable) {
+            $body = json_encode($body);
+            if (!$headers->has('Content-Type')) {
+                $headers->set('Content-Type', 'application/json');
+            }
         }
 
-        return $this->notFound();
+        if (!$this->getResponse()->getStatusCode()) {
+            $this->getResponse()->setStatusCode(200);
+        }
+
+        # first header line
+        $line = sprintf('HTTP/%s %d %s', $response->getProtocolVersion(),
+            $response->getStatusCode(), $response->getReasonPhrase());
+
+        $this->sendHeader($line);
+
+        foreach ($headers->getLines() as $line) {
+            $this->sendHeader($line);
+        }
+
+        echo $body;
+
+        return $this;
+    }
+
+    protected function sendHeader($headerLine)
+    {
+        if (PHP_SAPI != 'cli') {
+            header($headerLine);
+        }
+    }
+
+    protected function resolveRequest()
+    {
+        $method = $this->getRequest()->getMethod();
+
+        if ($path = $this->processAutoLoadRoutes()) {
+            foreach ($this->getRouter() as $route) {
+                try {
+                    $params = $route->match($method, $path);
+                    if (!is_array($params)) {
+                        continue;
+                    }
+
+                    $callback = $route->getCallback();
+
+                    $result = call_user_func_array($callback, $params);
+
+                    if ($result instanceof ResponseInterface) {
+                        return $this->setResponse($result);
+                    }
+
+                    if ($result instanceof RequestInterface) {
+                        $this->setRequest($result);
+                        return $this->resolveRequest();
+                    }
+
+                    return $this->getResponse()->setBody($result);
+                } catch (Pass $e) {
+
+                }
+            }
+        }
+
+        return null !== $this->getResponse()->getStatusCode();
+    }
+
+    /**
+     * @return $this
+     */
+    public function run()
+    {
+        $this->boot();
+
+        if ($result = $this->triggerEventListener('before')) {
+            if ($result != $this->getResponse()) {
+                $this->getResponse()->setBody($result);
+            }
+        } else {
+            if (false === $this->resolveRequest()) {
+                $this->triggerEventListener('after');
+                $this->notFound();
+            }
+        }
+
+        $this->send();
+        $this->triggerEventListener('after');
     }
 }

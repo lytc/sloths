@@ -2,82 +2,80 @@
 
 namespace SlothsTest\Db\Model\Relation;
 
-use SlothsTest\Db\Model\Stub\User;
-use SlothsTest\Db\Model\TestCase;
+use MockModel\User;
+use Sloths\Db\ConnectionManager;
+use Sloths\Db\Model\Collection;
 
 class HasManyThroughTest extends TestCase
 {
-    public function testInstance()
+    public function test()
     {
         $rows = [
-            ['id' => 1, 'name' => 'foo'],
-            ['id' => 2, 'name' => 'bar'],
+            ['id' => 2, 'name' => 'foo'],
+            ['id' => 3, 'name' => 'bar'],
         ];
 
-        $stmt = $this->mock('PDOStatement');
-        $stmt->shouldReceive('fetchAll')->once()
-            ->with(\PDO::FETCH_ASSOC)
-            ->andReturn($rows);
+        $stmt = $this->getMock('stmt', ['fetchAll']);
+        $stmt->expects($this->once())->method('fetchAll')->with(\PDO::FETCH_ASSOC)->willReturn($rows);
 
-        $pdo = $this->mockPdo();
-        $pdo->shouldReceive('query')->once()
-            ->with("SELECT roles.id, roles.name FROM roles INNER JOIN user_roles ON user_roles.role_id = roles.id WHERE (user_roles.user_id = 1)")
-            ->andReturn($stmt);
+        $connection = $this->getMock('Sloths\Db\Connection', ['query'], ['dsn']);
+        $connection->expects($this->once())->method('query')
+            ->with("SELECT roles.id, roles.name, user_roles.user_id FROM roles INNER JOIN user_roles ON ((user_roles.role_id = roles.id) AND (user_roles.user_id = 1))")
+            ->willReturn($stmt);
 
-        $connection = $this->createConnection($pdo);
+        $connectionManager = new ConnectionManager();
+        $connectionManager->setConnection($connection);
 
-        User::setConnection($connection);
 
         $user = new User(['id' => 1]);
-        $roles = $user->Roles;
-        $this->assertInstanceOf('Sloths\Db\Model\Relation\HasManyThrough', $roles);
-        $this->assertCount(2, $roles);
+        $user->setDefaultConnectionManager($connectionManager);
+
+        $roles = $user->getHasMany('Roles');
         $this->assertSame($rows, $roles->toArray());
     }
 
-    public function testEagerLoadingAndLazyLoading()
+    public function testWithParentCollection()
     {
-        $rows = [
-            ['id' => 3, 'name' => 'foo', 'user_id' => 1],
-            ['id' => 4, 'name' => 'bar', 'user_id' => 2],
-            ['id' => 5, 'name' => 'baz', 'user_id' => 1],
-            ['id' => 6, 'name' => 'qux', 'user_id' => 2],
+        $userRows = [
+            ['id' => 1],
+            ['id' => 2],
+            ['id' => 3],
         ];
 
-        $stmt = $this->mock('PDOStatement');
-        $stmt->shouldReceive('fetchAll')->once()
-            ->with(\PDO::FETCH_ASSOC)
-            ->andReturn($rows);
+        $roleRows = [
+            ['id' => 1, 'name' => 'foo', 'user_id' => 1],
+            ['id' => 2, 'name' => 'bar', 'user_id' => 2],
+            ['id' => 3, 'name' => 'baz', 'user_id' => 1],
+        ];
 
-        $stmt2 = $this->mock('PDOStatement');
-        $stmt2->shouldReceive('fetchAll')->once()->with(\PDO::FETCH_ASSOC)->andReturn([
-            ['id' => 3, 'description' => 'description1'],
-            ['id' => 5, 'description' => 'description2'],
-        ]);
+        $users = new Collection($userRows, new User());
+        $user1 = $users->getAt(0);
+        $user2 = $users->getAt(1);
+        $user3 = $users->getAt(2);
 
-        $pdo = $this->mockPdo();
-        $pdo->shouldReceive('query')->once()
-            ->with("SELECT roles.id, roles.name, user_roles.user_id FROM roles INNER JOIN user_roles ON user_roles.role_id = roles.id WHERE (user_roles.user_id IN(1, 2, 3))")
-            ->andReturn($stmt);
+        $stmt = $this->getMock('stmt', ['fetchAll']);
+        $stmt->expects($this->once())->method('fetchAll')->with(\PDO::FETCH_ASSOC)->willReturn($roleRows);
 
-        $pdo->shouldReceive('query')->once()
-            ->with("SELECT roles.id, roles.description FROM roles WHERE (roles.id IN(3, 5))")
-            ->andReturn($stmt2);
+        $connection = $this->getMock('Sloths\Db\Connection', ['query'], ['dsn']);
+        $connection->expects($this->once())->method('query')
+            ->with("SELECT roles.id, roles.name, user_roles.user_id FROM roles INNER JOIN user_roles ON ((user_roles.role_id = roles.id) AND (user_roles.user_id IN (1, 2, 3)))")
+            ->willReturn($stmt);
 
-        $connection = $this->createConnection($pdo);
+        $connectionManager = new ConnectionManager();
+        $connectionManager->setConnection($connection);
 
-        User::setConnection($connection);
 
-        $users = User::all();
-        $users[0] = $user1 = new User(['id' => 1], $users);
-        $users[1] = $user2 = new User(['id' => 2], $users);
-        $users[2] = $user3 = new User(['id' => 3], $users);
+        $user1->setDefaultConnectionManager($connectionManager);
 
-        $this->assertSame([['id' => 3, 'name' => 'foo'], ['id' => 5, 'name' => 'baz']], $user1->Roles->toArray());
-        $this->assertSame([['id' => 4, 'name' => 'bar'], ['id' => 6, 'name' => 'qux']], $user2->Roles->toArray());
-        $this->assertSame([], $user3->Roles->toArray());
+        $roles = $user1->getHasMany('Roles');
 
-        $this->assertSame('description1',$user1->Roles[0]->description);
-        $this->assertSame('description2',$user1->Roles[1]->description);
+        $expected = [['id' => 1, 'name' => 'foo', 'user_id' => 1], ['id' => 3, 'name' => 'baz', 'user_id' => 1]];
+        $this->assertSame($expected, $roles->toArray());
+
+        $expected = [['id' => 2, 'name' => 'bar', 'user_id' => 2]];
+        $this->assertSame($expected, $user2->getRelation('Roles', true)->toArray());
+
+        $this->assertSame([], $user3->getRelation('Roles', true)->toArray());
+
     }
 }

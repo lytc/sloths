@@ -2,167 +2,34 @@
 
 namespace Sloths\View;
 
-use Sloths\Util\Inflector;
-use Sloths\View\Exception as ViewException;
+use Sloths\View\Helper\HelperInterface;
 
 class View
 {
     /**
-     * @var array
-     */
-    protected $variables = [];
-
-    /**
      * @var string
      */
-    protected $directory = '';
+    protected $extension = '.html.php';
 
     /**
-     * @var
-     */
-    protected $file;
-
-    /**
-     * @var string
-     */
-    protected $extension = 'html.php';
-
-    /**
-     * @var bool|string
+     * @var bool
      */
     protected $layout = false;
 
     /**
+     * @var array
+     */
+    protected $helpers = [];
+
+    /**
      * @var string
      */
-    protected $content;
+    protected $directory;
 
     /**
      * @var array
      */
-    protected $captures = [];
-
-    /**
-     * @var array
-     */
-    protected static $helperNamespaces = [
-        'Sloths\View\Helper' => 'Sloths\View\Helper'
-    ];
-
-    /**
-     * @param string $namespaceName
-     */
-    public static function addHelperNamespace($namespaceName)
-    {
-        static::$helperNamespaces[$namespaceName] = $namespaceName;
-    }
-
-    public function __call($method, $arguments)
-    {
-        foreach (self::$helperNamespaces as $namespace) {
-            $helperClassName = $namespace . '\\' . Inflector::classify($method);
-            if (class_exists($helperClassName) && is_subclass_of($helperClassName, 'Sloths\View\Helper\AbstractHelper')) {
-                $helperClass = new $helperClassName($this);
-
-                if (method_exists($helperClass, $method)) {
-                    return call_user_func_array([$helperClass, $method], $arguments);
-                }
-
-                if (method_exists($helperClass, '__invoke')) {
-                    return call_user_func_array($helperClass, $arguments);
-                }
-
-                throw new \RuntimeException(sprintf('%s: Invalid helper. Method %s or __invoke is required', $method, $method));
-
-            }
-        }
-
-        throw new \BadMethodCallException(sprintf('Call undefined method %s', $method));
-    }
-
-    public function config(array $config)
-    {
-        !isset($config['path']) || $this->setDirectory($config['path']);
-        !isset($config['layout']) || $this->setLayout($config['layout']);
-        !isset($config['extension']) || $this->setExtension($config['extension']);
-
-        return $this;
-    }
-
-    /**
-     * @param array $variable
-     * @return $this
-     */
-    public function setVars(array $variable)
-    {
-        $this->variables = $variable;
-        return $this;
-    }
-
-    /**
-     * @return array
-     */
-    public function getVars()
-    {
-        return $this->variables;
-    }
-
-    /**
-     * @param string $name
-     * @param mixed $value
-     * @return $this
-     */
-    public function setVar($name, $value)
-    {
-        $this->variables[$name] = $value;
-        return $this;
-    }
-
-    /**
-     * @param string $name
-     * @return bool
-     */
-    public function hasVar($name)
-    {
-        return array_key_exists($name, $this->variables);
-    }
-
-    /**
-     * @param string $name
-     * @return mixed
-     */
-    public function getVar($name)
-    {
-        return $this->hasVar($name)? $this->variables[$name] : null;
-    }
-
-    /**
-     * @param array $variables
-     * @return $this
-     */
-    public function addVars(array $variables)
-    {
-        $this->variables = array_merge($this->variables, $variables);
-        return $this;
-    }
-
-    /**
-     * @param string $path
-     * @return $this
-     */
-    public function setDirectory($path)
-    {
-        $this->directory = $path;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getDirectory()
-    {
-        return $this->directory;
-    }
+    protected $variables = [];
 
     /**
      * @param string $extension
@@ -183,25 +50,31 @@ class View
     }
 
     /**
-     * @param string $file
+     * @param $directory
      * @return $this
+     * @throws \InvalidArgumentException
      */
-    public function setFile($file)
+    public function setDirectory($directory)
     {
-        $this->file = $file;
+        if (!is_dir($directory)) {
+            throw new \InvalidArgumentException('Invalid directory: ' . $directory);
+        }
+
+        $this->directory = realpath($directory);
+
         return $this;
     }
 
     /**
      * @return string
      */
-    public function getFile()
+    public function getDirectory()
     {
-        return $this->file;
+        return $this->directory;
     }
 
     /**
-     * @param bool|string $layout
+     * @param string|false $layout
      * @return $this
      */
     public function setLayout($layout)
@@ -211,146 +84,162 @@ class View
     }
 
     /**
-     * @return bool|string
+     * @param array $helpers
+     * @return $this
      */
-    public function getLayout()
+    public function setHelpers(array $helpers)
     {
-        return $this->layout;
+        foreach ($helpers as $name => $helper) {
+            $this->addHelper($name, $helper);
+        }
+
+        return $this;
     }
 
     /**
-     * @return string
+     * @param $name
+     * @param callable $helper
+     * @return $this
      */
-    public function getFilePath()
+    public function addHelper($name, callable $helper)
     {
-        if (!$this->file) {
-            return;
-        }
-
-        $file = $this->file;
-
-        if (DIRECTORY_SEPARATOR != $file[0]) {
-            $file = $this->directory . '/' . $file;
-        }
-
-        if (!pathinfo($file, PATHINFO_EXTENSION)) {
-            $file .= '.' . $this->extension;
-        }
-
-        return $file;
-    }
-
-    public function getLayoutFilePath()
-    {
-        if (!$this->layout) {
-            return;
-        }
-
-        $file = $this->layout;
-
-        if (DIRECTORY_SEPARATOR != $file[0]) {
-            $file = $this->directory . '/_layouts/' . $file;
-        }
-
-        if (!pathinfo($file, PATHINFO_EXTENSION)) {
-            $file .= '.' . $this->extension;
-        }
-
-        return $file;
+        $this->helpers[$name] = $helper;
+        return $this;
     }
 
     /**
-     * @return string
+     * @param string $method
+     * @param array $args
+     * @return mixed
+     * @throws \BadMethodCallException
      */
-    public function content()
+    public function __call($method, $args)
     {
-        return $this->content;
+        if (isset($this->helpers[$method])) {
+            return call_user_func_array($this->helpers[$method], $args);
+        }
+
+        $helperClassName = 'Sloths\View\Helper\\' . ucfirst($method);
+
+        if (class_exists($helperClassName)) {
+            $helperClass = new $helperClassName();
+
+            if ($helperClass instanceof HelperInterface) {
+                $helperClass->setView($this);
+            }
+
+            $this->helpers[$method] = $helperClass;
+            return call_user_func_array($helperClass, $args);
+        }
+
+        throw new \BadMethodCallException('Call to undefined helper ' . $method);
     }
 
     /**
-     * @param string $__file__
-     * @return string
+     * @param array $variables
+     * @return $this
      */
-    protected function _render($__file__)
+    public function setVariables(array $variables)
     {
-        extract($this->variables);
-        ob_start();
-        require $__file__;
-        return ob_get_clean();
+        $this->variables = array_merge($this->variables, $variables);
+        return $this;
     }
 
     /**
-     * @param string [$file=null]
-     * @param array [$variables=null]
-     * @return string
-     * @throws ViewException
+     * @return array
      */
-    public function render($file = null, array $variables = null)
+    public function getVariables()
     {
-        if (is_array($file)) {
-            $variables = $file;
-            $file = null;
+        return $this->variables;
+    }
+
+    /**
+     * @param string $name
+     * @param mixed $value
+     * @return $this
+     */
+    public function setVariable($name, $value)
+    {
+        $this->variables[$name] = $value;
+        return $this;
+    }
+
+    /**
+     * @param string $name
+     * @return bool
+     */
+    public function hasVariable($name)
+    {
+        return array_key_exists($name, $this->variables);
+    }
+
+    /**
+     * @param string $name
+     * @return mixed|null
+     */
+    public function getVariable($name)
+    {
+        return $this->hasVariable($name)? $this->variables[$name] : null;
+    }
+
+    /**
+     * @param string $template
+     * @param array $variables
+     * @return string
+     * @throws \InvalidArgumentException
+     */
+    public function render($template, array $variables = [])
+    {
+        if ('/' !== $template[0]) {
+            $template = $this->getDirectory() . '/' . $template;
         }
 
-        !$file || $this->setFile($file);
-        !$variables || $this->addVars($variables);
-
-        if (!($file = $this->getFilePath())) {
-            throw new \InvalidArgumentException('A view file is required');
+        if (!pathinfo($template, PATHINFO_EXTENSION)) {
+            $template = $template . $this->getExtension();
         }
 
-        if (!file_exists($file)) {
-            throw new \InvalidArgumentException(sprintf('%s: No such view file', $file));
+        if (!is_file($template)) {
+            throw new \InvalidArgumentException('Template file not found: ' . $template);
         }
 
-        $content = $this->_render($file);
+        $this->setVariables($variables);
+
+        $content = $this->_render($template, $this->variables);
 
         if ($this->layout) {
-            $viewLayout = clone $this;
-            $viewLayout->setLayout(false);
-            $viewLayout->content = $content;
-            return $viewLayout->render($this->getLayoutFilePath());
+            $layoutView = clone $this;
+            $layoutView->setLayout(false);
+
+            $layoutView->helpers['content'] = function() use ($content) {
+                return $content;
+            };
+
+            return $layoutView->render($this->layout, $this->variables);
         }
 
         return $content;
     }
 
     /**
-     * @param $str
+     * @param string $__template__
+     * @param array $variables
      * @return string
+     * @throws \InvalidArgumentException
+     * @throws \Exception
      */
-    public function escape($str)
+    protected function _render($__template__, array $variables = [])
     {
-        return htmlspecialchars($str);
-    }
+        extract($variables);
 
-    public function escapeUrl($url)
-    {
-        return rawurlencode($url);
-    }
-
-    /**
-     * @param string $key
-     * @param string [$value=null]
-     * @return Capture
-     */
-    public function capture($key, $value = null)
-    {
-        if (!isset($this->captures[$key])) {
-            $this->captures[$key] = new Capture();
+        try {
+            ob_start();
+            include $__template__;
+            $content = ob_get_clean();
+        } catch (\Exception $e) {
+            ob_end_clean();
+            throw $e;
         }
 
-        $capture = $this->captures[$key];
-
-        if ($value) {
-            $capture->append($value);
-        }
-
-        return $capture;
-    }
-
-    public function __toString()
-    {
-        return $this->render();
+        return $content;
     }
 }

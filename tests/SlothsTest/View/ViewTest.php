@@ -2,178 +2,114 @@
 
 namespace SlothsTest\View;
 
-use Sloths\View\Helper\AbstractHelper;
+use SlothsTest\TestCase;
 use Sloths\View\View;
 
-class ViewTest extends \PHPUnit_Framework_TestCase
+/**
+ * @covers Sloths\View\View
+ */
+class ViewTest extends TestCase
 {
-    public function testSetAndGetVars()
-    {
-        $vars = ['foo' => 'bar', 'bar'=>'baz'];
-        $view = new View();
-        $view->setVars($vars);
-        $this->assertSame($vars, $view->getVars());
-    }
-
-    public function testSetAndGetVar()
-    {
-        $view = new View();
-        $view->setVar('foo', 'bar');
-        $this->assertSame('bar', $view->getVar('foo'));
-        $this->assertNull($view->getVar('bar'));
-    }
-
-    public function testSetAndGetPath()
+    public function testDirectory()
     {
         $view = new View();
         $view->setDirectory(__DIR__);
         $this->assertSame(__DIR__, $view->getDirectory());
     }
 
-    public function testSetAndGetExtension()
+    /**
+     * @expectedException \InvalidArgumentException
+     */
+    public function testSetInvalidDirectoryShouldThrowAnException()
     {
         $view = new View();
-        $view->setExtension('foo');
-        $this->assertSame('foo', $view->getExtension());
+        $view->setDirectory('foo');
     }
 
-    public function testConfig()
+    public function testVariable()
     {
         $view = new View();
-        $view->config([
-            'path' => __DIR__,
-            'layout' => 'foo',
-            'extension' => 'bar'
-        ]);
+        $view->setVariable('foo', 'foo');
+        $view->setVariables(['bar' => 'bar']);
 
-        $this->assertSame(__DIR__, $view->getDirectory());
-        $this->assertSame('foo', $view->getLayout());
-        $this->assertSame('bar', $view->getExtension());
-    }
-
-    public function testSetAndGetFile()
-    {
-        $view = new View();
-        $view->setFile('foo');
-        $this->assertSame('foo', $view->getFile());
-    }
-
-    public function testSetAndGetLayout()
-    {
-        $view = new View();
-        $view->setLayout('foo');
-        $this->assertSame('foo', $view->getLayout());
-    }
-
-    public function testGetFilePath()
-    {
-        $view = new View();
-        $this->assertNull($view->getFilePath());
-
-        $view->setDirectory(__DIR__);
-        $view->setFile('foo');
-        $this->assertSame(__DIR__ . '/foo.html.php', $view->getFilePath());
-    }
-
-    public function testGetLayoutFilePath()
-    {
-        $view = new View();
-        $this->assertNull($view->getLayoutFilePath());
-
-        $view->setDirectory(__DIR__);
-        $view->setLayout('foo');
-        $this->assertSame(__DIR__ . '/_layouts/foo.html.php', $view->getLayoutFilePath());
+        $this->assertTrue($view->hasVariable('foo'));
+        $this->assertSame('foo', $view->getVariable('foo'));
+        $this->assertNull($view->getVariable('baz'));
+        $this->assertSame(['foo' => 'foo', 'bar' => 'bar'], $view->getVariables());
     }
 
     public function testRender()
     {
         $view = new View();
-        $content = $view->render(__DIR__ . '/fixtures/foo', ['bar' => 'bar']);
-        $this->assertSame('foo bar', $content);
+        $result = $view->render(__DIR__ . '/fixtures/template', ['foo' => 'foo']);
+        $this->assertSame('template foo', $result);
 
-        $content = $view->render(['bar' => 'baz']);
-        $this->assertSame('foo baz', $content);
-    }
+        $view->setDirectory(__DIR__);
+        $result = $view->render('fixtures/template', ['foo' => 'foo']);
+        $this->assertSame('template foo', $result);
 
-    public function testLayout()
-    {
-        $view = new View();
-        $content = $view
-            ->setLayout(__DIR__ . '/fixtures/_layouts/layout1')
-            ->render(__DIR__ . '/fixtures/foo', ['bar' => 'bar']);
-        $this->assertSame('layout1 foo bar', $content);
-    }
-
-    public function testNestedLayout()
-    {
-        $view = new View();
-        $content = $view
-            ->setDirectory(__DIR__ . '/fixtures')
-            ->setLayout('layout2')
-            ->render('foo', ['bar' => 'bar']);
-        $this->assertSame('layout1 layout2 foo bar', $content);
     }
 
     /**
      * @expectedException \InvalidArgumentException
      */
-    public function testRenderWithNoFileShouldThrowAnException()
+    public function testRenderUnExistingTemplateShouldThrowAnException()
     {
         $view = new View();
-        $view->render();
+        $view->render('foo');
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
-    public function testRenderWithNonExistingFileShouldThrowAnException()
+    public function testRenderWithLayout()
     {
         $view = new View();
-        $view->render('foooo');
+        $view->setDirectory(__DIR__ . '/fixtures');
+        $view->setLayout('layout');
+
+        $result = $view->render('template', ['foo' => 'foo']);
+        $this->assertSame('layout foo template foo', $result);
     }
 
-    public function testEscape()
+    public function testRenderWithExceptionThrown()
     {
         $view = new View();
-        $this->assertSame('&lt;foo&gt;', $view->escape('<foo>'));
+
+        try {
+            $view->render(__DIR__ . '/fixtures/test-exception-thrown');
+        } catch (\Exception $e) {
+
+        }
+
+        $this->assertSame('exception thrown', $e->getMessage());
+    }
+
+    public function testCustomException()
+    {
+        $view = new View();
+        $view->setExtension('.tpl');
+
+        $result = $view->render(__DIR__ . '/fixtures/custom-extension', ['foo' => 'foo']);
+        $this->assertSame('custom extension foo', $result);
     }
 
     public function testCustomHelper()
     {
-        View::addHelperNamespace('SlothsTest\View');
         $view = new View();
-        $this->assertSame('foo', $view->customHelper());
+        $view->setHelpers(['foo' => function() {return 'foo';}]);
+        $this->assertSame('foo', $view->foo());
     }
 
-    /**
-     * @expectedException \RuntimeException
-     */
-    public function testInvalidHelperShouldThrowAnException()
+    public function testCallDefaultHelper()
     {
-        View::addHelperNamespace('SlothsTest\View');
         $view = new View();
-        $view->invalidHelper();
+        $this->assertSame('&lt;div&gt;', $view->escape('<div>'));
     }
 
     /**
      * @expectedException \BadMethodCallException
      */
-    public function testCallUndefinedMethodShouldThrowAnException()
+    public function testCallUndefinedHelperShouldThrowAnException()
     {
         $view = new View();
-        $view->fooooo();
+        $view->foobarbaz();
     }
-}
-
-class CustomHelper extends AbstractHelper
-{
-    public function customHelper()
-    {
-        return 'foo';
-    }
-}
-
-class InvalidHelper extends AbstractHelper
-{
-
 }

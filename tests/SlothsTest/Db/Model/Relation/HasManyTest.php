@@ -2,87 +2,75 @@
 
 namespace SlothsTest\Db\Model\Relation;
 
-use SlothsTest\Db\Model\Stub\User;
-use SlothsTest\Db\Model\TestCase;
+use MockModel\User;
+use Sloths\Db\ConnectionManager;
+use Sloths\Db\Model\Collection;
 
 class HasManyTest extends TestCase
 {
-    public function testInstance()
+    public function test()
     {
         $rows = [
-            ['id' => 1, 'created_user_id' => 1, 'modified_user_id' => null, 'name' => 'foo'],
-            ['id' => 2, 'created_user_id' => 1, 'modified_user_id' => 1, 'name' => 'bar'],
+            ['id' => 2, 'user_id' => 1],
+            ['id' => 3, 'user_id' => 1],
         ];
 
-        $stmt = $this->mock('PDOStatement');
-        $stmt->shouldReceive('fetchAll')->once()->with(\PDO::FETCH_ASSOC)->andReturn($rows);
+        $stmt = $this->getMock('stmt', ['fetchAll']);
+        $stmt->expects($this->once())->method('fetchAll')->with(\PDO::FETCH_ASSOC)->willReturn($rows);
 
-        $pdo = $this->mockPdo();
-        $pdo->shouldReceive('query')
-            ->once()
-            ->with("SELECT posts.id, posts.created_user_id, posts.modified_user_id, posts.name FROM posts WHERE (posts.created_user_id = 1)")
-            ->andReturn($stmt);
+        $connection = $this->getMock('Sloths\Db\Connection', ['query'], ['dsn']);
+        $connection->expects($this->once())->method('query')
+            ->with("SELECT posts.id, posts.user_id, posts.title FROM posts WHERE (posts.user_id = 1)")->willReturn($stmt);
 
-        $connection = $this->createConnection($pdo);
-        User::setConnection($connection);
+        $connectionManager = new ConnectionManager();
+        $connectionManager->setConnection($connection);
+
 
         $user = new User(['id' => 1]);
-        $posts = $user->Posts;
-        $this->assertInstanceOf('Sloths\Db\Model\Relation\HasMany', $posts);
+        $user->setDefaultConnectionManager($connectionManager);
 
-        $this->assertSame($posts, $user->Posts);
-        $this->assertCount(2, $user->Posts);
+        $posts = $user->getHasMany('Posts');
+        $this->assertSame($rows, $posts->toArray());
+
+        $this->assertTrue($user->hasHasMany('Posts'));
     }
 
-    public function testEagerLoadAndLazyLoad()
+    public function testWithParentCollection()
     {
-        $postRows = [
-            ['id' => 3, 'created_user_id' => 1, 'modified_user_id' => 1, 'name' => 'foo'],
-            ['id' => 4, 'created_user_id' => 2, 'modified_user_id' => 1, 'name' => 'bar'],
-            ['id' => 5, 'created_user_id' => 1, 'modified_user_id' => 1, 'name' => 'baz'],
-            ['id' => 6, 'created_user_id' => 2, 'modified_user_id' => 1, 'name' => 'qux'],
+        $userRows = [
+            ['id' => 1],
+            ['id' => 2],
+            ['id' => 3],
         ];
 
-        $stmt = $this->mock('PDOStatement');
-        $stmt->shouldReceive('fetchAll')->once()->with(\PDO::FETCH_ASSOC)->andReturn($postRows);
+        $postRows = [
+            ['id' => 1, 'user_id' => 1, 'title' => 'foo'],
+            ['id' => 2, 'user_id' => 1, 'title' => 'bar'],
+            ['id' => 3, 'user_id' => 2, 'title' => 'baz'],
+        ];
 
-        $pdo = $this->mockPdo();
-        $pdo->shouldReceive('query')
-            ->once()
-            ->with("SELECT posts.id, posts.created_user_id, posts.modified_user_id, posts.name FROM posts WHERE (posts.created_user_id IN(1, 2, 3))")
-            ->andReturn($stmt);
+        $users = new Collection($userRows, new User());
+        $user1 = $users->getAt(0);
+        $user2 = $users->getAt(1);
+        $user3 = $users->getAt(2);
 
-        $stmt2 = $this->mock('PDOStatement');
-        $stmt2->shouldReceive('fetchAll')->once()->with(\PDO::FETCH_ASSOC)->andReturn([
-            ['id' => 3, 'content' => 'content1'],
-            ['id' => 5, 'content' => 'content2'],
-        ]);
+        $stmt = $this->getMock('stmt', ['fetchAll']);
+        $stmt->expects($this->once())->method('fetchAll')->with(\PDO::FETCH_ASSOC)->willReturn($postRows);
 
-        $pdo->shouldReceive('query')->once()->with("SELECT posts.id, posts.content FROM posts WHERE (posts.id IN(3, 5))")
-            ->andReturn($stmt2);
+        $connection = $this->getMock('Sloths\Db\Connection', ['query'], ['dsn']);
+        $connection->expects($this->once())->method('query')
+            ->with("SELECT posts.id, posts.user_id, posts.title FROM posts WHERE (posts.user_id IN (1, 2, 3))")
+            ->willReturn($stmt)
+        ;
 
-        $connection = $this->createConnection($pdo);
+        $connectionManager = new ConnectionManager();
+        $connectionManager->setConnection($connection);
 
-        User::setConnection($connection);
+        $user1->setDefaultConnectionManager($connectionManager);
 
-        $users = User::all();
-        $users[0] = $user1 = new User(['id' => 1], $users);
-        $users[1] = $user2 = new User(['id' => 2], $users);
-        $users[1] = $user3 = new User(['id' => 3], $users);
-
-        $this->assertSame([
-            ['id' => 3, 'created_user_id' => 1, 'modified_user_id' => 1, 'name' => 'foo'],
-            ['id' => 5, 'created_user_id' => 1, 'modified_user_id' => 1, 'name' => 'baz']
-        ], $user1->Posts->toArray());
-
-        $this->assertSame([
-            ['id' => 4, 'created_user_id' => 2, 'modified_user_id' => 1, 'name' => 'bar'],
-            ['id' => 6, 'created_user_id' => 2, 'modified_user_id' => 1, 'name' => 'qux']
-        ], $user2->Posts->toArray());
-
-        $this->assertSame([], $user3->Posts->toArray());
-
-        $this->assertSame('content1', $user1->Posts[0]->content);
-        $this->assertSame('content2', $user1->Posts[1]->content);
+        $posts = $user1->getHasMany('Posts');
+        $this->assertSame([['id' => 1, 'user_id' => 1, 'title' => 'foo'], ['id' => 2, 'user_id' => 1, 'title' => 'bar']], $posts->toArray());
+        $this->assertSame([['id' => 3, 'user_id' => 2, 'title' => 'baz']], $user2->getRelation('Posts', true)->toArray());
+        $this->assertSame([], $user3->getRelation('Posts', true)->toArray());
     }
 }

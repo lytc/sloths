@@ -2,25 +2,25 @@
 
 namespace SlothsTest\Misc;
 
-use Sloths\Misc\Config;
 use Sloths\Misc\ConfigurableTrait;
 use SlothsTest\TestCase;
 
+
+/**
+ * @covers Sloths\Misc\ConfigurableTrait
+ */
 class ConfigurableTraitTest extends TestCase
 {
-    public function test()
+    public function testLoadConfigFromFile()
     {
-        $configurable = new ConfigurableMock();
-        $this->assertInstanceOf('Sloths\Misc\Config', $configurable->getConfig());
-
-        $config = new Config();
-        $configurable->setConfig($config);
-
-        $this->assertSame($config, $configurable->getConfig());
+        $file = __DIR__ . '/fixtures/configurabletrait-test.php';
+        $foo = new Foo();
+        $foo->loadConfigFromFile($file);
+        $this->assertTrue(in_array($file, get_included_files()));
     }
 }
 
-class ConfigurableMock
+class Foo
 {
     use ConfigurableTrait;
 }

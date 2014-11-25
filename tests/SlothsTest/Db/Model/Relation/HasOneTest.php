@@ -1,71 +1,70 @@
 <?php
 
-namespace Sloths\Db\Model\Relation;
+namespace SlothsTest\Db\Model\Relation;
 
-use SlothsTest\Db\Model\Stub\User;
-use SlothsTest\Db\Model\TestCase;
+use MockModel\User;
+use Sloths\Db\ConnectionManager;
+use Sloths\Db\Model\Collection;
 
 class HasOneTest extends TestCase
 {
-    public function testInstance()
+    public function test()
     {
-        $stmt = $this->mock('PDOStatement');
-        $stmt->shouldReceive('fetch')->once()->with(\PDO::FETCH_ASSOC)->andReturn(['user_id' => 1, 'title' => 'foo']);
+        $rows = [
+            ['id' => 2, 'name' => 'foo']
+        ];
 
-        $pdo = $this->mockPdo();
-        $pdo->shouldReceive('query')->once()->with("SELECT * FROM professors WHERE (user_id = 1) LIMIT 1")->andReturn($stmt);
+        $stmt = $this->getMock('stmt', ['fetchAll']);
+        $stmt->expects($this->once())->method('fetchAll')->with(\PDO::FETCH_ASSOC)->willReturn($rows);
 
-        $connection = $this->createConnection($pdo);
-        User::setConnection($connection);
+        $connection = $this->getMock('Sloths\Db\Connection', ['query'], ['dsn']);
+        $connection->expects($this->once())
+            ->method('query')->with("SELECT profiles.* FROM profiles WHERE (profiles.user_id = 1) LIMIT 1")->willReturn($stmt);
+
+        $connectionManager = new ConnectionManager();
+        $connectionManager->setConnection($connection);
 
         $user = new User(['id' => 1]);
-        $professor = $user->Professor;
-        $this->assertInstanceOf('SlothsTest\Db\Model\Stub\Professor', $professor);
-        $this->assertSame('foo', $professor->title);
+        $user->setDefaultConnectionManager($connectionManager);
+
+        $profile = $user->getHasOne('Profile');
+        $this->assertSame($rows[0], $profile->toArray());
+
+        $this->assertTrue($user->hasHasOne('Profile'));
     }
 
-    public function testEagerLoadingAndLazyLoading()
+    public function testWithParentCollection()
     {
-        $users = User::all();
+        $userRows = [
+            ['id' => 1],
+            ['id' => 2],
+            ['id' => 3],
+        ];
 
-        $users[0] = $user1 = new User(['id' => 1], $users);
-        $users[1] = $user2 = new User(['id' => 2], $users);
-        $users[2] = $user3 = new User(['id' => 3], $users);
+        $users = new Collection($userRows, new User());
+        $user1 = $users->getAt(0);
+        $user2 = $users->getAt(1);
+        $user3 = $users->getAt(2);
 
-        $stmt = $this->mock('PDOStatement');
-        $stmt->shouldReceive('fetchAll')->once()->with(\PDO::FETCH_ASSOC)->andReturn([
-            ['user_id' => 1, 'title' => 'foo'],
-            ['user_id' => 3, 'title' => 'bar'],
-        ]);
+        $profileRows = [
+            ['user_id' => 1, 'resume' => 'foo'],
+            ['user_id' => 2, 'resume' => 'bar'],
+        ];
 
-        $stmt2 = $this->mock('PDOStatement');
-        $stmt2->shouldReceive('fetchAll')->once()->with(\PDO::FETCH_ASSOC)->andReturn([
-            ['user_id' => 1, 'resume' => 'baz'],
-            ['user_id' => 3, 'resume' => 'qux'],
-        ]);
+        $stmt = $this->getMock('stmt', ['fetchAll']);
+        $stmt->expects($this->once())->method('fetchAll')->with(\PDO::FETCH_ASSOC)->willReturn($profileRows);
 
-        $pdo = $this->mockPdo();
-        $pdo->shouldReceive('query')
-            ->once()
-            ->with("SELECT professors.user_id, professors.title FROM professors WHERE (professors.user_id IN(1, 2, 3))")
-            ->andReturn($stmt);
+        $connection = $this->getMock('Sloths\Db\Connection', ['query'], ['dsn']);
+        $connection->expects($this->once())
+            ->method('query')->with("SELECT profiles.* FROM profiles WHERE (profiles.user_id IN (1, 2, 3))")->willReturn($stmt);
 
-        $pdo->shouldReceive('query')
-            ->once()
-            ->with("SELECT professors.user_id, professors.resume FROM professors WHERE (professors.user_id IN(1, 3))")
-            ->andReturn($stmt2);
+        $connectionManager = new ConnectionManager();
+        $connectionManager->setConnection($connection);
+        $user1->setDefaultConnectionManager($connectionManager);
 
-        $connection = $this->createConnection($pdo);
-        User::setConnection($connection);
-
-        $this->assertInstanceOf('SlothsTest\Db\Model\Stub\Professor', $user1->Professor);
-        $this->assertInstanceOf('SlothsTest\Db\Model\Stub\Professor', $user3->Professor);
-        $this->assertNull($user2->Professor);
-
-        $this->assertSame('foo', $user1->Professor->title);
-        $this->assertSame('bar', $user3->Professor->title);
-
-        $this->assertSame('baz', $user1->Professor->resume);
-        $this->assertSame('qux', $user3->Professor->resume);
+        $profile = $user1->getHasOne('Profile');
+        $this->assertSame($profileRows[0], $profile->toArray());
+        $this->assertSame($profileRows[1], $user2->getRelation('Profile', true)->toArray());
+        $this->assertNull($user3->getRelation('Profile', true));
     }
 }

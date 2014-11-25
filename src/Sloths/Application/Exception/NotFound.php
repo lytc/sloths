@@ -2,9 +2,8 @@
 
 namespace Sloths\Application\Exception;
 
-use Sloths\Exception\HttpException;
-
-class NotFound extends HttpException
+class NotFound extends \Exception
 {
     protected $code = 404;
+    protected $message = 'Page not found';
 }

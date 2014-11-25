@@ -1,1 +1,0 @@
-partial <?= $foo ?><?php if (isset($bar)): ?><?= $bar ?><?php endif ?>
