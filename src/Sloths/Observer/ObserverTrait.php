@@ -5,209 +5,135 @@ namespace Sloths\Observer;
 trait ObserverTrait
 {
     /**
-     * @var array
+     * @var Event[]
      */
-    protected $observerListeners = [];
+    protected $eventListeners = [];
 
     /**
-     * @var array
+     * @param string|Event $event
+     * @return string
      */
-    protected $listeningTo = [];
-
-
-    /**
-     * @return array
-     */
-    public function getListeners()
+    protected function getEventName($event)
     {
-        return $this->observerListeners;
+        if ($event instanceof Event) {
+            return $event->getName();
+        }
+
+        return $event;
     }
 
     /**
-     * @param string $eventName
-     * @return array
-     */
-    public function getListener($eventName)
-    {
-        return isset($this->observerListeners[$eventName])? $this->observerListeners[$eventName] : [];
-    }
-
-    /**
-     * @param string [$eventName]
-     * @param callable $callback
+     * @param string|Event $event
      * @return bool
      */
-    public function hasListener($eventName = null, callable $callback = null)
+    public function hasEventListener($event)
     {
-        if (!$eventName) {
-            return !!$this->observerListeners;
-        }
-
-        if (!isset($this->observerListeners[$eventName])) {
-            return false;
-        }
-
-        if ($callback) {
-            return $this->observerListeners[$eventName]->contains($callback);
-        }
-
-        return !!count($this->getListener($eventName));
+        return isset($this->eventListeners[$this->getEventName($event)]);
     }
 
     /**
-     * @param string $eventName
-     * @param callable $callback
-     * @param int $limitCall
+     * @param string|Event $event
+     * @return null|Event
+     */
+    public function getEventListener($event)
+    {
+        $event = $this->getEventName($event);
+        return $this->hasEventListener($event)? $this->eventListeners[$event] : null;
+    }
+
+    /**
+     * @param array $events
      * @return $this
      */
-    public function addListener($eventName, \Closure $callback, $limitCall = -1)
+    public function addEventListeners(array $events)
     {
-        if (!isset($this->observerListeners[$eventName])) {
-            $this->observerListeners[$eventName] = new \SplObjectStorage();
+        foreach ($events as $event => $callback) {
+            $this->addEventListener($event, $callback);
         }
 
-        $this->observerListeners[$eventName]->attach($callback, $limitCall);
         return $this;
     }
 
     /**
-     * @param string $eventName
-     * @param callable $callback
+     * @param string|Event $event
+     * @param callable|Callback $callback
+     * @param int $limit
      * @return $this
      */
-    public function addListenerOne($eventName, callable $callback)
+    public function addEventListener($event, $callback, $limit = -1)
     {
-        return $this->addListener($eventName, $callback, 1);
+        if (!$this->hasEventListener($event)) {
+            $this->eventListeners[$event] = new Event($event);
+        }
+
+        $this->eventListeners[$event]->addCallback($callback, $limit);
+        return $this;
     }
 
     /**
-     * @param string [$eventName]
-     * @param callable $callback
+     * @param string $event
+     * @param callable|Callback $callback
      * @return $this
-     * @throws \InvalidArgumentException
      */
-    public function removeListener($eventName = null, callable $callback = null)
+    public function addEventListenerOne($event, $callback)
     {
-        if (!$eventName) {
-            $this->observerListeners = [];
-            return $this;
+        return $this->addEventListener($event, $callback, 1);
+    }
+
+    /**
+     * @param array $events
+     * @return $this
+     */
+    public function addEventListenersOne(array $events)
+    {
+        foreach ($events as $event => $callback) {
+            $this->addEventListenerOne($event, $callback);
         }
 
-        if (!isset($this->observerListeners[$eventName])) {
-            throw new \InvalidArgumentException(sprintf('%s: Event not found', $eventName));
-        }
+        return $this;
+    }
 
+    /**
+     * @param string|Event $event
+     * @param callable|Callback $callback
+     * @return $this
+     */
+    public function removeEventListener($event, $callback = null)
+    {
         if (!$callback) {
-            $this->observerListeners[$eventName]->removeAll($this->observerListeners[$eventName]);
+            unset($this->eventListeners[$this->getEventName($event)]);
             return $this;
         }
 
-        $this->observerListeners[$eventName]->detach($callback);
-        return $this;
-    }
-
-    /**
-     * @param Observer $target
-     * @param string $eventName
-     * @param callable $callback
-     * @param int [$limitCall=-1]
-     * @return $this
-     */
-    public function listenTo(Observer $target, $eventName, callable $callback, $limitCall = -1)
-    {
-        $that = $this;
-        $bindCallback = $callback->bindTo($this, $this);
-        $listenCallback = function() use ($that, $bindCallback, &$limitCall, $target, $eventName, $callback) {
-            $limitCall--;
-            if ($limitCall == 0) {
-                $that->stopListening($target, $eventName, $callback);
-            }
-            return call_user_func_array($bindCallback, func_get_args());
-        };
-
-        $this->listeningTo[] = [
-            'target'            => $target,
-            'eventName'         => $eventName,
-            'callback'          => $callback,
-            'listenCallback'    => $listenCallback
-        ];
-
-        $target->addListener($eventName, $listenCallback);
-
-        return $this;
-    }
-
-    /**
-     * @param Observer $target
-     * @param string $eventName
-     * @param callable $callback
-     * @return $this
-     */
-    public function listenOneTo(Observer $target, $eventName, callable $callback)
-    {
-        return $this->listenTo($target, $eventName, $callback, 1);
-    }
-
-    /**
-     * @param Observer $target
-     * @param string [$eventName]
-     * @param callable $callback
-     * @return $this
-     */
-    public function stopListening(Observer $target = null, $eventName = null, callable $callback = null)
-    {
-        if (!$target) {
-            foreach ($this->listeningTo as $info) {
-                $info['target']->removeListener($info['eventName'], $info['listenCallback']);
-            }
-            $this->listeningTo = [];
-            return $this;
-        }
-
-        $matched = function($info) use ($target, $eventName, $callback) {
-            $result = $target == $info['target'];
-            !$eventName || $result = ($result && ($eventName == $info['eventName']));
-            !$callback || $result = ($result && ($callback == $info['callback']));
-
-            return $result;
-        };
-
-        foreach ($this->listeningTo as $index => $info) {
-            if (!$matched($info)) {
-                continue;
-            }
-            $info['target']->removeListener($info['eventName'], $info['listenCallback']);
-            unset($this->listeningTo[$index]);
+        if ($event = $this->getEventListener($event)) {
+            $event->removeCallback($callback);
         }
 
         return $this;
     }
 
     /**
-     * @param string $eventName
+     * @return $this
+     */
+    public function removeAllEventListeners()
+    {
+        $this->eventListeners = [];
+        return $this;
+    }
+
+    /**
+     * @param string|Event $event
      * @param array $args
-     * @return $this
+     * @return bool|mixed|null
      */
-    public function notify($eventName, array $args = [])
+    public function triggerEventListener($event, array $args = [])
     {
-        $result = $this;
+        $event = $this->getEventListener($event);
 
-        if (isset($this->observerListeners[$eventName])) {
-            $listeners = $this->observerListeners[$eventName];
-
-            foreach ($listeners as $callback) {
-                $listeners->setInfo($listeners[$callback] - 1);
-                if ($listeners[$callback] == 0) {
-                    $this->removeListener($eventName, $callback);
-                }
-
-                $callback = $callback->bindTo($this, $this);
-                if (false === ($result = call_user_func_array($callback, $args))) {
-                    return false;
-                }
-            }
+        if (!$event) {
+            return;
         }
 
-        return $result;
+        return $event->call($args);
     }
 }

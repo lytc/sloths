@@ -2,9 +2,9 @@
 
 namespace Sloths\Translation;
 
-use Sloths\Util\StringUtils;
+use Sloths\Misc\StringUtils;
 
-class Translator
+class Translator implements TranslatorInterface
 {
     /**
      * @var
@@ -141,8 +141,8 @@ class Translator
 
     /**
      * @return $this
+     * @throws \RuntimeException
      * @throws \LogicException
-     * @throws \InvalidArgumentException
      */
     protected function load()
     {

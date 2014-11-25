@@ -2,12 +2,22 @@
 
 namespace Sloths\Session;
 
-class Flash implements \IteratorAggregate, \ArrayAccess, \Countable
+class Flash
 {
+    /**
+     * @var string
+     */
+    protected $sessionName;
+
+    /**
+     * @var Session
+     */
+    protected $sessionManager;
+
     /**
      * @var array
      */
-    protected $currentData;
+    protected $currentData = [];
 
     /**
      * @var array
@@ -15,53 +25,17 @@ class Flash implements \IteratorAggregate, \ArrayAccess, \Countable
     protected $nextData = [];
 
     /**
-     * @param string $name
-     * @param Session $session
+     * @param array $data
      */
-    public function __construct($name = '__SLOTHS_FLASH_SESSION__', Session $session = null)
+    public function __construct(array &$data)
     {
-        if (!$session) {
-            $session = Session::getInstance();
-        }
-
-        $this->currentData = $session[$name]?: [];
-        $session->getContainer()[$name] = &$this->nextData;
+        $this->currentData = $data;
+        $this->nextData = &$data;
+        $this->nextData = [];
     }
 
     /**
-     * @return array
-     */
-    public function getCurrentData()
-    {
-        return $this->currentData;
-    }
-
-    /**
-     * @return array
-     */
-    public function getNextData()
-    {
-        return $this->nextData;
-    }
-
-    /**
-     * @return int
-     */
-    public function count()
-    {
-        return count($this->currentData);
-    }
-
-    /**
-     * @return \ArrayIterator
-     */
-    public function getIterator()
-    {
-        return new \ArrayIterator($this->currentData);
-    }
-
-    /**
-     * @param string $name
+     * @param $name
      * @return bool
      */
     public function has($name)
@@ -69,47 +43,28 @@ class Flash implements \IteratorAggregate, \ArrayAccess, \Countable
         return array_key_exists($name, $this->currentData);
     }
 
-
     /**
-     * @param string $name
-     * @return mixed|null
+     * @param $name
+     * @return null
      */
-    public function get($name)
+    public function &get($name)
     {
-        return $this->has($name)? $this->currentData[$name] : null;
+        $result = null;
+        if (!$this->has($name)) {
+            return $result;
+        }
+
+        return $this->currentData[$name];
     }
 
     /**
-     * @param string $name
-     * @param mixed $value
+     * @param $name
+     * @param $value
      * @return $this
      */
     public function set($name, $value)
     {
-        if (!$name) {
-            $this->nextData[] = $value;
-        } else {
-            $this->nextData[$name] = $value;
-        }
-        return $this;
-    }
-
-    /**
-     * @param string $name
-     * @return $this
-     */
-    public function remove($name)
-    {
-        unset($this->nextData[$name]);
-        return $this;
-    }
-
-    /**
-     * @return $this
-     */
-    public function clear()
-    {
-        $this->nextData = [];
+        $this->nextData[$name] = $value;
         return $this;
     }
 
@@ -129,66 +84,5 @@ class Flash implements \IteratorAggregate, \ArrayAccess, \Countable
     {
         $this->currentData = $this->nextData;
         return $this;
-    }
-
-    /**
-     * @param string $name
-     * @return null
-     */
-    public function __get($name)
-    {
-        return $this->get($name);
-    }
-
-    /**
-     * @param string $name
-     * @param mixed $value
-     */
-    public function __set($name, $value)
-    {
-        $this->set($name, $value);
-    }
-
-    /**
-     * @param string $name
-     */
-    public function __unset($name)
-    {
-        $this->remove($name);
-    }
-
-    /**
-     * @param mixed $name
-     * @return bool
-     */
-    public function offsetExists($name)
-    {
-        return $this->has($name);
-    }
-
-    /**
-     * @param mixed $name
-     * @return null
-     */
-    public function offsetGet($name)
-    {
-        return $this->get($name);
-    }
-
-    /**
-     * @param mixed $name
-     * @param mixed $value
-     */
-    public function offsetSet($name, $value)
-    {
-        $this->set($name, $value);
-    }
-
-    /**
-     * @param mixed $name
-     */
-    public function offsetUnset($name)
-    {
-        $this->remove($name);
     }
 }

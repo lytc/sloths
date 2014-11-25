@@ -2,63 +2,32 @@
 
 namespace Sloths\Application\Service;
 
-use Sloths\Translation\Translator;
-use Sloths\Validation\Group;
-use Sloths\Validation\Validator as V;
-
-class Validator implements ServiceInterface
+class Validator extends \Sloths\Validation\Validator implements ServiceInterface, \JsonSerializable
 {
     use ServiceTrait;
 
     /**
-     * @var
+     * @param array $chains
+     * @return Validator
      */
-    protected $translator;
-
-    /**
-     * @param Translator $translator
-     */
-    public function setTranslator(Translator $translator)
+    public function create(array $chains = null)
     {
-        $this->translator = $translator;
-    }
+        $validator = clone $this;
+        $validator->reset();
 
-    /**
-     * @return mixed
-     */
-    public function getTranslator()
-    {
-        return $this->translator;
-    }
-
-    /**
-     * @param $name
-     * @param $args
-     * @return \Sloths\Validation\Rule\AbstractRule
-     */
-    public function __call($name, $args)
-    {
-        $rule = V::createRule($name, $args);
-
-        if ($this->translator) {
-            $rule->setTranslator($this->translator);
+        if ($chains) {
+            $validator->addChains($chains);
         }
 
-        return $rule;
+        return $validator;
     }
 
-    /**
-     * @param array $rules
-     * @return Group
-     */
-    public function create(array $rules)
+    public function jsonSerialize()
     {
-        $group = new Group($rules);
-
-        if ($this->translator) {
-            $group->setTranslator($this->translator);
+        if ($this->fails()) {
+            return ['success' => false, 'messages' => $this->getMessages()];
         }
 
-        return $group;
+        return ['success' => true];
     }
 }

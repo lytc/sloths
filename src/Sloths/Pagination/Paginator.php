@@ -2,49 +2,24 @@
 
 namespace Sloths\Pagination;
 
-use Sloths\Db\Model\Collection;
-use Sloths\Db\Sql\Select;
-use Sloths\Pagination\DataAdapter\ArrayAdapter;
-use Sloths\Pagination\DataAdapter\DataAdapterInterface;
-use Sloths\Pagination\DataAdapter\DbSelect;
-use Sloths\Pagination\DataAdapter\ModelCollection;
+use Sloths\Pagination\Adapter\AdapterInterface;
 
-class Paginator implements \Countable, \IteratorAggregate
+class Paginator implements \IteratorAggregate
 {
     /**
-     * @var int
+     * @var AdapterInterface
      */
-    protected static $defaultItemsCountPerPage = 50;
+    protected $adapter;
 
     /**
      * @var int
      */
-    protected static $defaultPageRange = 10;
-
-    /**
-     * @var DataAdapter\DataAdapterInterface
-     */
-    protected $dataAdapter;
+    protected $itemCountPerPage = 50;
 
     /**
      * @var int
      */
-    protected $itemsCountPerPage;
-
-    /**
-     * @var int
-     */
-    protected $pageRange;
-
-    /**
-     * @var int
-     */
-    protected $totalItemsCount;
-
-    /**
-     * @var int
-     */
-    protected $totalPages;
+    protected $pageRange = 10;
 
     /**
      * @var int
@@ -52,96 +27,53 @@ class Paginator implements \Countable, \IteratorAggregate
     protected $currentPage = 1;
 
     /**
-     * @var \Traversable
+     * @var int
      */
-    protected $items;
+    protected $totalPages;
 
     /**
-     * @param int $number
+     * @param AdapterInterface $adapter
+     * @param int $currentPage
      */
-    public static function setDefaultItemsCountPerPage($number)
+    public function __construct(AdapterInterface $adapter, $currentPage = 1)
     {
-        static::$defaultItemsCountPerPage = $number;
+        $this->adapter = $adapter;
+        $this->currentPage = $currentPage;
     }
 
     /**
-     * @return int
+     * @return AdapterInterface
      */
-    public static function getDefaultItemsCountPerPage()
+    public function getAdapter()
     {
-        return static::$defaultItemsCountPerPage;
+        return $this->adapter;
     }
 
     /**
-     * @param int $number
-     */
-    public static function setDefaultPageRange($number)
-    {
-        static::$defaultPageRange = $number;
-    }
-
-    /**
-     * @return int
-     */
-    public static function getDefaultPageRange()
-    {
-        return static::$defaultPageRange;
-    }
-
-    /**
-     * @param DataAdapterInterface|array|Collection|Select $dataAdapter
-     * @throws \InvalidArgumentException
-     */
-    public function __construct($dataAdapter)
-    {
-        if ($dataAdapter instanceof Collection) {
-            $dataAdapter = new ModelCollection($dataAdapter);
-        } elseif ($dataAdapter instanceof Select) {
-            $dataAdapter = new DbSelect($dataAdapter, func_get_arg(1));
-        } else if (is_array($dataAdapter)) {
-            $dataAdapter = new ArrayAdapter($dataAdapter);
-        }
-
-        if (!$dataAdapter instanceof DataAdapterInterface) {
-            throw new \InvalidArgumentException(sprintf('Pagination adapter must be an instanceof AdapterInterface. %s Given.', get_class($dataAdapter)));
-        }
-
-        $this->dataAdapter = $dataAdapter;
-    }
-
-    /**
-     * @return DataAdapterInterface
-     */
-    public function getDataAdapter()
-    {
-        return $this->dataAdapter;
-    }
-
-    /**
-     * @param int $number
+     * @param int $itemCountPerPage
      * @return $this
      */
-    public function setItemsCountPerPage($number)
+    public function setItemCountPerPage($itemCountPerPage)
     {
-        $this->itemsCountPerPage = $number;
+        $this->itemCountPerPage = (int) $itemCountPerPage;
         return $this;
     }
 
     /**
      * @return int
      */
-    public function getItemsCountPerPage()
+    public function getItemCountPerPage()
     {
-        return $this->itemsCountPerPage?: static::$defaultItemsCountPerPage;
+        return $this->itemCountPerPage;
     }
 
     /**
-     * @param int $number
+     * @param int $pageRange
      * @return $this
      */
-    public function setPageRange($number)
+    public function setPageRange($pageRange)
     {
-        $this->pageRange = $number;
+        $this->pageRange = (int) $pageRange;
         return $this;
     }
 
@@ -150,44 +82,16 @@ class Paginator implements \Countable, \IteratorAggregate
      */
     public function getPageRange()
     {
-        return $this->pageRange?: static::$defaultPageRange;
+        return $this->pageRange;
     }
 
     /**
-     * @return int
-     */
-    public function getTotalItemsCount()
-    {
-        if (null === $this->totalItemsCount) {
-            $this->getItems();
-            $this->totalItemsCount = $this->dataAdapter->count();
-        }
-
-        return $this->totalItemsCount;
-    }
-
-    /**
-     * @return int
-     */
-    public function getTotalPages()
-    {
-        if (null === $this->totalPages) {
-            $this->totalPages = (int) ceil($this->getTotalItemsCount() / $this->getItemsCountPerPage());
-        }
-
-        return $this->totalPages;
-    }
-
-    /**
-     * @param int $number
+     * @param int $currentPage
      * @return $this
      */
-    public function setCurrentPage($number)
+    public function setCurrentPage($currentPage)
     {
-        $number = (int) $number;
-        $number > 0 || $number = 1;
-
-        $this->currentPage = $number;
+        $this->currentPage = (int) $currentPage;
         return $this;
     }
 
@@ -202,9 +106,21 @@ class Paginator implements \Countable, \IteratorAggregate
     /**
      * @return int
      */
-    public function getOffset()
+    public function getTotalItemCount()
     {
-        return ($this->currentPage - 1) * $this->getItemsCountPerPage();
+        return $this->getAdapter()->count();
+    }
+
+    /**
+     * @return int
+     */
+    public function getTotalPages()
+    {
+        if (null === $this->totalPages) {
+            $this->totalPages = (int) ceil($this->getTotalItemCount() / $this->getItemCountPerPage());
+        }
+
+        return $this->totalPages;
     }
 
     /**
@@ -212,7 +128,8 @@ class Paginator implements \Countable, \IteratorAggregate
      */
     public function getFromIndex()
     {
-        return $this->getTotalItemsCount()? max(0, $this->getOffset()) : 0;
+        $fromIndex = ($this->getCurrentPage() - 1) * $this->getItemCountPerPage();
+        return $this->getTotalItemCount()? max(0, $fromIndex) : 0;
     }
 
     /**
@@ -220,7 +137,7 @@ class Paginator implements \Countable, \IteratorAggregate
      */
     public function getToIndex()
     {
-        return min($this->getFromIndex() + $this->getItemsCountPerPage() - 1, $this->getTotalItemsCount());
+        return min($this->getFromIndex() + $this->getItemCountPerPage(), $this->getTotalItemCount());
     }
 
     /**
@@ -228,7 +145,7 @@ class Paginator implements \Countable, \IteratorAggregate
      */
     public function getPrevPageNumber()
     {
-        if (($prev = ($this->currentPage - 1)) > 0) {
+        if (($prev = ($this->getCurrentPage() - 1)) > 0) {
             return $prev;
         }
         return false;
@@ -239,7 +156,7 @@ class Paginator implements \Countable, \IteratorAggregate
      */
     public function getNextPageNumber()
     {
-        if (($next = ($this->currentPage + 1)) <= $this->getTotalPages()) {
+        if (($next = ($this->getCurrentPage() + 1)) <= $this->getTotalPages()) {
             return $next;
         }
 
@@ -251,7 +168,7 @@ class Paginator implements \Countable, \IteratorAggregate
      */
     public function getFirstPageInRange()
     {
-        $result = max(1, $this->currentPage - (int) ceil($this->getPageRange() / 2));
+        $result = max(1, $this->getCurrentPage() - (int) ceil($this->getPageRange() / 2));
         return max(1, min($result, $this->getTotalPages() - $this->getPageRange() + 1));
     }
 
@@ -264,52 +181,10 @@ class Paginator implements \Countable, \IteratorAggregate
     }
 
     /**
-     * @return \ArrayIterator|\Traversable
-     */
-    public function getItems()
-    {
-        if (null === $this->items) {
-            $this->items = $this->dataAdapter->items($this->getItemsCountPerPage(), $this->getOffset());
-
-            if (!$this->items instanceof \Traversable) {
-                $this->items = new \ArrayIterator($this->items);
-            }
-        }
-
-        return $this->items;
-    }
-
-    /**
-     * @return array
-     */
-    public function getInfo()
-    {
-        return [
-            'pages'             => $this->getTotalPages(),
-            'currentPage'       => $this->getCurrentPage(),
-            'itemsCountPerPage' => $this->getItemsCountPerPage(),
-            'fromIndex'         => $this->getFromIndex(),
-            'toIndex'           => $this->getToIndex(),
-            'prev'              => $this->getPrevPageNumber(),
-            'next'              => $this->getNextPageNumber(),
-            'firstPageInRange'  => $this->getFirstPageInRange(),
-            'lastPageInRange'   => $this->getLastPageInRange()
-        ];
-    }
-
-    /**
-     * @return int
-     */
-    public function count()
-    {
-        return $this->getTotalPages();
-    }
-
-    /**
-     * @return \ArrayIterator|\Traversable
+     * @return \Traversable
      */
     public function getIterator()
     {
-        return $this->getItems();
+        return $this->getAdapter()->getRange($this->getFromIndex(), $this->getItemCountPerPage());
     }
 }

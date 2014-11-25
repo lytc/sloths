@@ -1,9 +1,7 @@
 <?php
 
 namespace Sloths\Http;
-
-use Sloths\Http\Message\AbstractRequest;
-use Sloths\Http\Message\Parameters;
+use Sloths\Misc\Parameters;
 
 class Request extends AbstractRequest
 {
@@ -18,30 +16,9 @@ class Request extends AbstractRequest
     protected $host;
 
     /**
-     * @var string
+     * @var int
      */
-    protected $path;
-
-    /**
-     * @param array|Parameters $vars
-     * @return $this
-     * @throws \InvalidArgumentException
-     */
-    public function setServerVars($vars)
-    {
-        if (is_array($vars)) {
-            $vars = new Parameters($vars);
-        }
-
-        if (!$vars instanceof Parameters) {
-            throw new \InvalidArgumentException(
-                sprintf('Server vars must be an array or instance of %s\Parameters, %s given', __NAMESPACE__, gettype($vars))
-            );
-        }
-
-        $this->serverVars = $vars;
-        return $this;
-    }
+    protected $port;
 
     /**
      * @return Parameters
@@ -56,20 +33,18 @@ class Request extends AbstractRequest
     }
 
     /**
-     * @return Message\Headers
+     * @return Headers
      */
     public function getHeaders()
     {
         if (!$this->headers) {
             $headers = [];
-
             foreach ($this->getServerVars() as $name => $value) {
                 if ('HTTP_' == substr($name, 0, 5)) {
                     $headers[substr($name, 5)] = $value;
                 }
             }
-
-            parent::setHeaders($headers);
+            $this->headers = new Headers($headers);
         }
 
         return $this->headers;
@@ -77,29 +52,6 @@ class Request extends AbstractRequest
 
     /**
      * @return string
-     */
-    public function getReferrer()
-    {
-        return $this->getHeaders()->get('REFERER');
-    }
-
-    /**
-     * @return string
-     */
-    public function getPath()
-    {
-        if (!$this->path) {
-            $serverVars = $this->getServerVars();
-            $path = $serverVars->get('PATH_INFO')?: parse_url($serverVars->get('REQUEST_URI'), PHP_URL_PATH);
-            $path = '/' . trim($path, ' /');
-            $this->path = $path;
-        }
-
-        return $this->path;
-    }
-
-    /**
-     * @return mixed
      */
     public function getOriginalMethod()
     {
@@ -111,11 +63,11 @@ class Request extends AbstractRequest
      */
     public function getMethod()
     {
-        if (null === $this->method) {
+        if (!$this->method) {
             $originalMethod = $this->getOriginalMethod();
 
             if ($originalMethod == self::METHOD_POST) {
-                $this->method = $this->getHeaders()->get('X_HTTP_METHOD_OVERRIDE')?: $this->getPostParams()->get('_method');
+                $this->method = $this->getHeaders()->get('X_HTTP_METHOD_OVERRIDE')?: $this->getParams()->get('_method');
             }
 
             $this->method = $this->method?: $originalMethod;
@@ -127,56 +79,51 @@ class Request extends AbstractRequest
     /**
      * @return string
      */
-    public function getUrl()
+    public function getPath()
     {
-        if (!$this->url) {
-            $this->url = $this->getScheme() . '://' . $this->getHost();
-            $port = $this->getPort();
-
-            if ($port != 80 && $port != 443) {
-                $this->url .= ':' . $port;
-            }
-
-            $this->url .= $this->getServerVars()->get('REQUEST_URI');
+        if (!$this->path) {
+            $serverVars = $this->getServerVars();
+            $path = $serverVars->get('PATH_INFO')?: parse_url($serverVars->get('REQUEST_URI'), PHP_URL_PATH);
+            $this->setPath($path);
         }
 
-        return parent::getUrl();
+        return $this->path;
     }
 
     /**
-     * @return Parameters
+     * @return \Sloths\Misc\Parameters
      */
-    public function getQueryParams()
+    public function getParamsQuery()
     {
-        if (!$this->queryParams) {
-            $this->queryParams = new Parameters($_GET?: []);
+        if (!$this->paramsQuery) {
+            $this->paramsQuery = new Parameters($_GET?: []);
         }
 
-        return $this->queryParams;
+        return $this->paramsQuery;
     }
 
     /**
-     * @return Parameters
+     * @return \Sloths\Misc\Parameters
      */
-    public function getParams()
+    public function getParamsPost()
     {
-        if (!$this->params) {
-            $this->params = new Parameters(array_merge($this->getQueryParams()->toArray(), $this->getQueryParams()->toArray()));
+        if (!$this->paramsPost) {
+            $this->paramsPost = new Parameters($_POST?: []);
         }
 
-        return $this->params;
+        return $this->paramsPost;
     }
 
     /**
-     * @return Parameters
+     * @return \Sloths\Misc\Parameters
      */
-    public function getFileParams()
+    public function getParamsFile()
     {
-        if (!$this->files) {
-            $this->files = new Parameters($_FILES? $this->mapFiles($_FILES) : []);
+        if (!$this->paramsFile) {
+            $this->paramsFile = new Parameters($_FILES? $this->mapFiles($_FILES) : []);
         }
 
-        return $this->files;
+        return $this->paramsFile;
     }
 
     /**
@@ -204,7 +151,7 @@ class Request extends AbstractRequest
      * @param $value
      * @param $param
      */
-    function restructureFiles(&$result, $name, $value, $param)
+    protected function restructureFiles(&$result, $name, $value, $param)
     {
         if (is_array($value)) {
             foreach ($value as $k => $v) {
@@ -219,15 +166,11 @@ class Request extends AbstractRequest
     }
 
     /**
-     * @return Parameters
+     * @return string
      */
-    public function getCookieParams()
+    public function getReferrer()
     {
-        if (!$this->cookies) {
-            $this->cookies = new Parameters($_COOKIE?: []);
-        }
-
-        return $this->cookies;
+        return $this->getHeaders()->get('REFERER');
     }
 
     /**
@@ -236,14 +179,6 @@ class Request extends AbstractRequest
     public function getServerName()
     {
         return $this->getServerVars()->get('SERVER_NAME');
-    }
-
-    /**
-     * @return int
-     */
-    public function getPort()
-    {
-        return (int) $this->getServerVars()->get('SERVER_PORT');
     }
 
     /**
@@ -273,6 +208,42 @@ class Request extends AbstractRequest
     }
 
     /**
+     * @return int
+     */
+    public function getPort()
+    {
+        if (null === $this->port) {
+            $this->port = $this->getServerVars()->get('SERVER_PORT');
+        }
+
+        return $this->port;
+    }
+
+    /**
+     * @param bool $full
+     * @return string
+     */
+    public function getUrl($full = true)
+    {
+        $url = '';
+
+        if ($full) {
+            $url = $this->getScheme() . '://' . $this->getHost();
+            $port = $this->getPort();
+
+            if ($port != 80 && $port != 443) {
+                $url .= ':' . $port;
+            }
+        }
+
+
+        $url .= $this->getServerVars()->get('REQUEST_URI');
+        $url = rtrim($url, '/')?: '/';
+
+        return $url;
+    }
+
+    /**
      * @return string
      */
     public function getClientIp()
@@ -289,25 +260,6 @@ class Request extends AbstractRequest
     }
 
     /**
-     * @return array
-     */
-    public function getAccepts()
-    {
-        $types = $this->getHeaders()->get('ACCEPT');
-        $types = explode(',', $types);
-        return $types;
-    }
-
-    /**
-     * @param string $type
-     * @return bool
-     */
-    public function isAccept($type)
-    {
-        return in_array($type, $this->getAccepts());
-    }
-
-    /**
      * @return bool
      */
     public function isSecure()
@@ -321,86 +273,6 @@ class Request extends AbstractRequest
     public function getScheme()
     {
         return $this->isSecure()? 'https' : 'http';
-    }
-
-    /**
-     * @return string
-     */
-    public function getContentType()
-    {
-        return $this->getHeaders()->get('CONTENT_TYPE');
-    }
-
-    /**
-     * @return bool
-     */
-    public function isHead()
-    {
-        return 'HEAD' == $this->getMethod();
-    }
-
-    /**
-     * @return bool
-     */
-    public function isGet()
-    {
-        return 'GET' == $this->getMethod();
-    }
-
-    /**
-     * @return bool
-     */
-    public function isPost()
-    {
-        return 'POST' == $this->getMethod();
-    }
-
-    /**
-     * @return bool
-     */
-    public function isPut()
-    {
-        return 'PUT' == $this->getMethod();
-    }
-
-    /**
-     * @return bool
-     */
-    public function isPatch()
-    {
-        return 'PATCH' == $this->getMethod();
-    }
-
-    /**
-     * @return bool
-     */
-    public function isDelete()
-    {
-        return 'DELETE' == $this->getMethod();
-    }
-
-    /**
-     * @return bool
-     */
-    public function isOptions()
-    {
-        return 'OPTIONS' == $this->getMethod();
-    }
-
-    /**
-     * @return bool
-     */
-    public function isTrace()
-    {
-        return 'TRACE' == $this->getMethod();
-    }
-
-    /**
-     * @return bool
-     */
-    public function isConnect()
-    {
-        return 'CONNECT' == $this->getMethod();
     }
 
     /**

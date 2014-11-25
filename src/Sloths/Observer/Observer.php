@@ -2,9 +2,6 @@
 
 namespace Sloths\Observer;
 
-use Sloths\Observer\ObserverTrait;
-
-class Observer
+class Observer extends AbstractObserver
 {
-    use ObserverTrait;
 }

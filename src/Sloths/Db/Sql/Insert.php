@@ -2,45 +2,39 @@
 
 namespace Sloths\Db\Sql;
 
-use Sloths\Db\Db;
-
-class Insert extends Replace
+/**
+ * @method Insert values(array $values)
+ */
+class Insert extends AbstractSql implements SqlWriteInterface
 {
+    const SPEC_SET = 'Set';
     /**
-     * @var string
+     * @var array
      */
-    protected $spec = 'INSERT';
+    protected $specs = [
+        self::SPEC_SET => null,
+    ];
 
     /**
      * @var array
      */
-    protected $onDuplicateKeyUpdate;
+    protected $methods = [
+        'values' => [self::SPEC_SET, 'values']
+    ];
 
     /**
-     * @param bool $state
+     * @var string
+     */
+    protected $tableName;
+
+    /**
+     * @param $tableName
      * @return $this
      */
-    public function highPriority($state = true)
+    public function table($tableName)
     {
-        return $this->toggleOption('HIGH_PRIORITY', 'priority', $state);
-    }
-
-    /**
-     * @param bool $state
-     * @return $this
-     */
-    public function ignore($state = true)
-    {
-        return $this->toggleOption('IGNORE', $state);
-    }
-
-
-    /**
-     * @param array $values
-     */
-    public function onDuplicateKeyUpdate(array $values)
-    {
-        $this->onDuplicateKeyUpdate = $values;
+        $this->tableName = $tableName;
+        return $this;
     }
 
     /**
@@ -48,19 +42,9 @@ class Insert extends Replace
      */
     public function toString()
     {
-        $sql = parent::toString();
+        $result = 'INSERT INTO ' . $this->tableName;
+        $result .= ' ' . parent::toString();
 
-        if ($this->onDuplicateKeyUpdate) {
-            $sql .= ' ON DUPLICATE KEY UPDATE ';
-            $set = [];
-
-            foreach ($this->onDuplicateKeyUpdate as $key => $value) {
-                $set[] = $key . ' = ' . Db::quote($value);
-            }
-
-            $sql .= implode(', ', $set);
-        }
-
-        return $sql;
+        return $result;
     }
 }

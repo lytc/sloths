@@ -1,29 +1,71 @@
 <?php
 
 namespace Sloths\Application\Service;
-
-use Sloths\Application\Application;
+use Sloths\Application\ApplicationInterface;
+use Sloths\Misc\ConfigurableTrait;
 
 trait ServiceTrait
 {
+    use ConfigurableTrait;
+
     /**
-     * @var Application
+     * @var ApplicationInterface
      */
     protected $application;
 
     /**
-     * @param Application $application
+     * @var string
      */
-    public function setApplication(Application $application)
+    protected $name;
+
+    /**
+     * @param ApplicationInterface $application
+     * @return $this
+     */
+    public function setApplication(ApplicationInterface $application)
     {
+        $needReboot = $application !== $this->getApplication();
         $this->application = $application;
+
+        if ($needReboot) {
+            $this->boot();
+            $application->getConfigLoader()->apply($this->getName(), $this);
+        }
+
+        return $this;
     }
 
     /**
-     * @return Application
+     * @return ApplicationInterface
      */
     public function getApplication()
     {
         return $this->application;
+    }
+
+    /**
+     * @param string $name
+     * @return $this
+     */
+    public function setName($name)
+    {
+        $this->name = $name;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
+     * @return $this
+     */
+    public function boot()
+    {
+        return $this;
     }
 }

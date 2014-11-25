@@ -2,103 +2,245 @@
 
 namespace Sloths\Validation;
 
-use Sloths\Translation\Translator;
-use Sloths\Validation\Rule\Not;
+use Sloths\Translation\TranslatorInterface;
+use Sloths\Misc\StringUtils;
+use Sloths\Validation\Validator\Callback;
+use Sloths\Validation\Validator\Chain;
+use Sloths\Validation\Validator\ValidatorInterface;
 
 class Validator
 {
     /**
+     * @var Validator\Chain[]
+     */
+    protected $chains = [];
+
+    /**
+     * @var Validator\ValidatorInterface[]
+     */
+    protected $fails = [];
+
+    /**
+     * @var bool
+     */
+    protected $validated = false;
+
+    /**
+     * @var \Sloths\Translation\TranslatorInterface
+     */
+    protected $translator;
+
+    /**
      * @var array
      */
-    protected static $namespaces = [
-        'Sloths\Validation\Rule' => 'Sloths\Validation\Rule'
-    ];
+    protected static $customRules = [];
 
     /**
-     * @var Translator
+     * @param Validator\Chain[] $chains
      */
-    protected static $defaultTranslator;
-
-    /**
-     * @param string $namespace
-     */
-    public static function addNamespace($namespace)
+    public function __construct(array $chains = [])
     {
-        static::$namespaces[$namespace] = $namespace;
+        $this->addChains($chains);
     }
 
     /**
-     * @param Translator $translator
+     * @return $this
      */
-    public static function setDefaultTranslator(Translator $translator)
+    public function reset()
     {
-        static::$defaultTranslator = $translator;
-    }
+        $this->chains = [];
+        $this->fails = [];
+        $this->validated = false;
 
-    /**
-     * @return Translator
-     */
-    public static function getDefaultTranslator()
-    {
-        if (!static::$defaultTranslator) {
-            static::$defaultTranslator = new Translator();
-            static::$defaultTranslator->setDirectory(__DIR__);
-        }
-
-        return static::$defaultTranslator;
+        return $this;
     }
 
     /**
      * @param string $name
-     * @param array $args
-     * @return Rule\AbstractRule
-     * @throws \InvalidArgumentException
+     * @param \Closure $callback
+     * @return $this
      */
-    public static function createRule($name, array $args = [])
+    public static function addRule($name, \Closure $callback)
     {
-        $ruleClassName = null;
-
-        foreach (static::$namespaces as $namespace) {
-            $ruleClassName = $namespace . '\\' . ucfirst($name);
-
-            if (class_exists($ruleClassName)) {
-                break;
-            } else {
-                $ruleClassName = null;
-            }
-        }
-
-        if (!$ruleClassName) {
-            throw new \InvalidArgumentException(
-                'Call to undefined rule ' . $name
-            );
-        }
-
-        $reflector = new \ReflectionClass($ruleClassName);
-        $rule = $reflector->newInstanceArgs($args);
-
-        if (!$rule instanceof ValidatableInterface) {
-            throw new \InvalidArgumentException(
-                sprintf('Expects rule must be instance of %s, instanceof %s given',
-                    __NAMESPACE__ . '\\ValidatableInterface', get_class($rule)
-                )
-            );
-        }
-
-        return $rule;
+        self::$customRules[$name] = $callback;
     }
 
     /**
-     * @param $name
-     * @param $args
-     * @return ValidatableInterface
+     * @param array $rules
+     * @return $this
      */
-    public static function __callStatic($name, $args)
+    public static function addRules(array $rules)
     {
-        if ('not' == substr($name, 0, 3)) {
-            return new Not(static::createRule(substr($name, 3), $args));
+        foreach ($rules as $name => $callback) {
+            self::addRule($name, $callback);
+        }
+    }
+
+    public static function createRule($rule, array $args = [])
+    {
+        if (is_string($rule)) {
+            # from builtin rules
+            $validatorClassName = __NAMESPACE__ . '\Validator\\' . ucfirst($rule);
+
+            if (class_exists($validatorClassName)) {
+                $reflectionClass = new \ReflectionClass($validatorClassName);
+                return $reflectionClass->newInstanceArgs($args);
+            }
+            if (isset(self::$customRules[$rule])) {
+                return new Callback(self::$customRules[$rule], $args);
+            }
+
+            throw new \InvalidArgumentException('Undefined rule: ' . $rule);
+        } elseif ($rule instanceof \Closure) {
+            return new Callback($rule, $args);
+        } elseif ($rule instanceof ValidatorInterface) {
+            return $rule;
         }
 
-        return static::createRule($name, $args);
+        throw new \InvalidArgumentException(sprintf(
+            'Rule must be an string of rule name or callback or instance of \Sloths\Validation\Validator\ValidatorInterface. %s given.',
+            gettype($rule)
+        ));
+    }
+
+    /**
+     * @param Validator\Chain[] $chains
+     * @return $this
+     */
+    public function addChains(array $chains)
+    {
+        foreach ($chains as $name => $chain) {
+            $this->add($name, $chain);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Validator\Chain[]
+     */
+    public function getChains()
+    {
+        return $this->chains;
+    }
+
+    /**
+     * @param string $name
+     * @param Chain|string|array $chain
+     * @return $this
+     */
+    public function add($name, $chain)
+    {
+        if (!$chain instanceof Chain) {
+            if (!is_array($chain)) {
+                $chain = [$chain];
+            }
+            $chain = Chain::fromArray($chain);
+        }
+
+        $this->chains[$name] = $chain;
+        return $this;
+    }
+
+    /**
+     * @param TranslatorInterface $translator
+     * @return $this
+     */
+    public function setTranslator(TranslatorInterface $translator)
+    {
+        $this->translator = $translator;
+        return $this;
+    }
+
+    /**
+     * @return TranslatorInterface
+     */
+    public function getTranslator()
+    {
+        return $this->translator;
+    }
+
+    /**
+     * @param array|\ArrayAccess $data
+     * @return bool
+     * @throws \InvalidArgumentException
+     */
+    public function validate($data)
+    {
+        if (!is_array($data) && !$data instanceof \ArrayAccess) {
+            throw new \InvalidArgumentException(sprintf(
+                'Data must be an array or an instanceof \ArrayAccess. %s given.', gettype($data)
+            ));
+        }
+
+        $fails = [];
+
+        foreach ($this->getChains() as $name => $chain) {
+            $value = isset($data[$name])? $data[$name] : '';
+            if (true !== ($validator = $chain->validate($value))) {
+                $fails[$name] = $validator;
+            }
+        }
+
+        $this->fails = $fails;
+        $this->validated = true;
+        return !$fails;
+    }
+
+    protected function ensureValidated()
+    {
+        if (!$this->validated) {
+            throw new \RuntimeException('Requires to call ::validate() first');
+        }
+    }
+
+    /**
+     * @return Validator\ValidatorInterface[]
+     */
+    public function fails()
+    {
+        $this->ensureValidated();
+        return $this->fails;
+    }
+
+    /**
+     * @return array
+     */
+    public function getMessageTemplates()
+    {
+        $messageTemplates = [];
+
+        foreach ($this->fails() as $name => $validator) {
+            $messageTemplate = $validator->getMessageTemplate();
+            $dataForMessage = $validator->getDataForMessage();
+
+            $messageTemplates[$name] = [
+                'template'  => $messageTemplate,
+                'data'      => $dataForMessage
+            ];
+        }
+
+        return $messageTemplates;
+    }
+
+    /**
+     * @return array
+     */
+    public function getMessages()
+    {
+        $messages = [];
+        $translator = $this->getTranslator();
+
+        foreach ($this->getMessageTemplates() as $name => $data) {
+            if ($translator) {
+                $message = $translator->translate($data['template'], $data['data']);
+            } else {
+                $message = StringUtils::format($data['template'], $data['data']);
+            }
+
+            $messages[$name] = $message;
+        }
+
+        return $messages;
     }
 }

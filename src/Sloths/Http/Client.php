@@ -14,6 +14,14 @@ class Client
      */
     protected $curl;
 
+    /**
+     * @var string
+     */
+    protected $baseUrl;
+
+    /**
+     * @var array
+     */
     protected $defaultCurlOptions = [
         CURLOPT_HEADER => true,
         CURLINFO_HEADER_OUT => false,
@@ -46,6 +54,29 @@ class Client
         }
 
         return $this->curl;
+    }
+
+    /**
+     * @param $baseUrl
+     * @return $this
+     */
+    public function setBaseUrl($baseUrl)
+    {
+        $this->baseUrl = rtrim($baseUrl, '/');
+        return $this;
+    }
+
+    /**
+     * @param $url
+     * @return string
+     */
+    protected function processUrl($url)
+    {
+        if (0 === strpos($url, 'http://') || 0 === strpos($url, 'https://')) {
+            return $url;
+        }
+
+        return $this->baseUrl . '/' . $url;
     }
 
     /**
@@ -175,7 +206,7 @@ class Client
                     $options[CURLOPT_POSTFIELDS] = $body;
                 } else {
                     $params = $request->getParams()->toArray();
-                    if ($files = $request->getFileParams()->toArray()) {
+                    if ($files = $request->getParamsFile()->toArray()) {
                         $result = $this->createPostFields($files, $params);
                         $headers[] = 'Content-Type: multipart/form-data; boundary=' . $result['boundary'];
                         $options[CURLOPT_POSTFIELDS] = $result['fields'];
@@ -215,7 +246,7 @@ class Client
         $request->setMethod(Client\Request::METHOD_OPTIONS)->setUrl($url);
 
         if ($query) {
-            $request->setQueryParams($query);
+            $request->setParamsQuery($query);
         }
 
         if ($headers) {
@@ -233,16 +264,19 @@ class Client
      */
     public function get($url, array $query = null, $headers = null)
     {
-        $request = $this->getRequest();
-        $request->setMethod(Client\Request::METHOD_GET)->setUrl($url);
+        $request = new Client\Request();
+
+        $request->setMethod(Client\Request::METHOD_GET)->setUrl($this->processUrl($url));
 
         if ($query) {
-            $request->setQueryParams($query);
+            $request->setParamsQuery($query);
         }
 
         if ($headers) {
             $request->setHeaders($headers);
         }
+
+        $this->setRequest($request);
 
         return $this;
     }
@@ -255,16 +289,19 @@ class Client
      */
     public function head($url, array $query = null, $headers = null)
     {
-        $request = $this->getRequest();
-        $request->setMethod(Client\Request::METHOD_HEAD)->setUrl($url);
+        $request = new Client\Request();
+
+        $request->setMethod(Client\Request::METHOD_HEAD)->setUrl($this->processUrl($url));
 
         if ($query) {
-            $request->setQueryParams($query);
+            $request->setParamsQuery($query);
         }
 
         if ($headers) {
             $request->setHeaders($headers);
         }
+
+        $this->setRequest($request);
 
         return $this;
     }
@@ -277,8 +314,9 @@ class Client
      */
     public function post($url, $params = null, $headers = null)
     {
-        $request = $this->getRequest();
-        $request->setMethod(Client\Request::METHOD_POST)->setUrl($url);
+        $request = new Client\Request();
+
+        $request->setMethod(Client\Request::METHOD_POST)->setUrl($this->processUrl($url));
 
         if (is_string($params)) {
             $request->setBody($params);
@@ -289,6 +327,8 @@ class Client
         if ($headers) {
             $request->setHeaders($headers);
         }
+
+        $this->setRequest($request);
 
         return $this;
     }
@@ -301,8 +341,9 @@ class Client
      */
     public function put($url, $body = null, $headers = null)
     {
-        $request = $this->getRequest();
-        $request->setMethod(Client\Request::METHOD_PUT)->setUrl($url);
+        $request = new Client\Request();
+
+        $request->setMethod(Client\Request::METHOD_PUT)->setUrl($this->processUrl($url));
 
         if ($body) {
             $request->setBody($body);
@@ -311,6 +352,8 @@ class Client
         if ($headers) {
             $request->setHeaders($headers);
         }
+
+        $this->setRequest($request);
 
         return $this;
     }
@@ -323,8 +366,9 @@ class Client
      */
     public function patch($url, $body = null, $headers = null)
     {
-        $request = $this->getRequest();
-        $request->setMethod(Client\Request::METHOD_PATCH)->setUrl($url);
+        $request = new Client\Request();
+
+        $request->setMethod(Client\Request::METHOD_PATCH)->setUrl($this->processUrl($url));
 
         if ($body) {
             $request->setBody($body);
@@ -333,6 +377,8 @@ class Client
         if ($headers) {
             $request->setHeaders($headers);
         }
+
+        $this->setRequest($request);
 
         return $this;
     }
@@ -345,16 +391,19 @@ class Client
      */
     public function delete($url, $query = null, $headers = null)
     {
-        $request = $this->getRequest();
-        $request->setMethod(Client\Request::METHOD_DELETE)->setUrl($url);
+        $request = new Client\Request();
+
+        $request->setMethod(Client\Request::METHOD_DELETE)->setUrl($this->processUrl($url));
 
         if ($query) {
-            $request->setQueryParams($query);
+            $request->setParamsQuery($query);
         }
 
         if ($headers) {
             $request->setHeaders($headers);
         }
+
+        $this->setRequest($request);
 
         return $this;
     }
@@ -367,14 +416,21 @@ class Client
      */
     public function upload($url, $files, $headers = null)
     {
-        $request = $this->getRequest();
-        $request->setMethod(Client\Request::METHOD_POST)->setUrl($url);
+        $request = new Client\Request();
 
-        $request->setFileParams($files);
+        $request->setMethod(Client\Request::METHOD_POST)->setUrl($this->processUrl($url));
+
+        if (!is_array($files)) {
+            $files = [$files];
+        }
+
+        $request->setParamsFile($files);
 
         if ($headers) {
             $request->setHeaders($headers);
         }
+
+        $this->setRequest($request);
 
         return $this;
     }

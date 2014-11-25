@@ -5,29 +5,19 @@ namespace Sloths\Misc;
 trait ConfigurableTrait
 {
     /**
-     * @var Config
-     */
-    protected $_config;
-
-    /**
-     * @return Config
-     */
-    public function getConfig()
-    {
-        if (!$this->_config) {
-            $this->_config = new Config();
-        }
-
-        return $this->_config;
-    }
-
-    /**
-     * @param Config $config
+     * @param string|array $files
      * @return $this
      */
-    public function setConfig(Config $config)
+    public function loadConfigFromFile($files)
     {
-        $this->_config = $config;
+        if (!is_array($files)) {
+            $files = [$files];
+        }
+
+        foreach ($files as $file) {
+            require $file;
+        }
+
         return $this;
     }
 }

@@ -3,7 +3,6 @@
 namespace SlothsTest\Encryption\Crypt;
 
 use Sloths\Encryption\Crypt\Mcrypt;
-use Sloths\Util\StringUtils;
 use SlothsTest\TestCase;
 
 /**
@@ -26,64 +25,18 @@ class McryptTest extends TestCase
         $this->assertSame($iv, $mcrypt->getIv());
     }
 
-    public function testSingletonInstance()
-    {
-        $mcrypt = Mcrypt::getInstance();
-        $mcrypt->setKey(Mcrypt::createRandomKey($mcrypt));
-        $mcrypt->setIv(Mcrypt::createRandomIv($mcrypt));
-
-        $data = 'test';
-        $encrypted = $mcrypt->encrypt($data);
-        $this->assertSame($data, $mcrypt->decrypt($encrypted));
-    }
-
-    public function testDefault()
+    public function testBase64Mode()
     {
         $algo = Mcrypt::ALGO_DES;
         $mode = Mcrypt::MODE_ECB;
-
         $key = Mcrypt::createRandomKey(mcrypt_module_get_algo_key_size($algo));
         $iv = Mcrypt::createRandomIv(mcrypt_get_iv_size($algo, $mode));
 
-        Mcrypt::setDefaultAlgorithm($algo);
-        Mcrypt::setDefaultMode($mode);
-        Mcrypt::setDefaultKey($key);
-        Mcrypt::setDefaultIv($iv);
+        $mcrypt = new Mcrypt($key, $iv, $algo, $mode);
 
-        $this->assertSame($algo, Mcrypt::getDefaultAlgorithm());
-        $this->assertSame($mode, Mcrypt::getDefaultMode());
-        $this->assertSame($key, Mcrypt::getDefaultKey());
-        $this->assertSame($iv, Mcrypt::getDefaultIv());
-
-        $mcrypt = new Mcrypt();
-        $this->assertSame($algo, $mcrypt->getAlgorithm());
-        $this->assertSame($mode, $mcrypt->getMode());
-        $this->assertSame($key, $mcrypt->getKey());
-        $this->assertSame($iv, $mcrypt->getIv());
-    }
-
-    public function testBase64Mode()
-    {
-        $mcrypt = new Mcrypt();
         $mcrypt->setBase64Mode(false);
         $encrypted = $mcrypt->encrypt('foo');
         $this->assertSame(base64_encode($encrypted), $mcrypt->setBase64Mode(true)->encrypt('foo'));
-    }
-
-    /**
-     * @expectedException \InvalidArgumentException
-     */
-    public function testSetInvalidDefaultAlgorithmShouldThrowAnException()
-    {
-        Mcrypt::setDefaultAlgorithm('foobar');
-    }
-
-    /**
-     * @expectedException \InvalidArgumentException
-     */
-    public function testSetInvalidDefaultModeShouldThrowAnException()
-    {
-        Mcrypt::setDefaultMode('foobar');
     }
 
     /**

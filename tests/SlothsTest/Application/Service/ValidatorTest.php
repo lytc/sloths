@@ -2,34 +2,27 @@
 
 namespace SlothsTest\Application\Service;
 
+use Sloths\Application\Service\ServiceTrait;
 use Sloths\Application\Service\Validator;
-use Sloths\Translation\Translator;
-use SlothsTest\TestCase;
+use Sloths\Validation\Validator\Chain;
 
+/**
+ * @covers Sloths\Application\Service\Validator
+ */
 class ValidatorTest extends TestCase
 {
-    public function testCreateSimpleRule()
+    public function testCreate()
     {
-        $translator = new Translator();
+        $translator = $this->getMock('Sloths\Translation\TranslatorInterface');
+
         $validator = new Validator();
         $validator->setTranslator($translator);
 
-        $this->assertSame($translator, $validator->getTranslator());
+        $chains = ['foo' => new Chain()];
+        $newValidator = $validator->create($chains);
 
-        $rule = $validator->email();
+        $this->assertSame($translator, $newValidator->getTranslator());
+        $this->assertSame($chains, $newValidator->getChains());
 
-        $this->assertInstanceOf('Sloths\Validation\Rule\Email', $rule);
-        $this->assertSame($translator, $rule->getTranslator());
-    }
-
-    public function testMethodCreate()
-    {
-        $translator = new Translator();
-        $validator = new Validator();
-        $validator->setTranslator($translator);
-
-        $group = $validator->create([]);
-        $this->assertInstanceOf('Sloths\Validation\Group', $group);
-        $this->assertSame($translator, $group->getTranslator());
     }
 }

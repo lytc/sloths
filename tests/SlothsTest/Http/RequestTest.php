@@ -2,9 +2,8 @@
 
 namespace SlothsTest\Http;
 
-use Sloths\Http\Message\Parameters;
-use Sloths\Http\Request;
 use SlothsTest\TestCase;
+use Sloths\Http\Request;
 
 /**
  * @covers Sloths\Http\Request
@@ -13,216 +12,63 @@ class RequestTest extends TestCase
 {
     public function testServerVars()
     {
+        $_SERVER['foo'] = 'bar';
         $request = new Request();
-        $this->assertInstanceOf('Sloths\Http\Message\Parameters', $request->getServerVars());
+        $this->assertSame('bar', $request->getServerVars()->get('foo'));
+    }
 
-        $serverVars = new Parameters();
-        $request->setServerVars($serverVars);
-        $this->assertSame($serverVars, $request->getServerVars());
+    public function testGetHeaders()
+    {
+        $_SERVER['HTTP_FOO'] = 'bar';
+        $request = new Request();
+        $this->assertSame('bar', $request->getHeaders()->get('foo'));
+    }
+
+    public function testGetMethod()
+    {
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'] = 'PUT';
+
+        $request = new Request();
+        $this->assertSame('PUT', $request->getMethod());
+
+        $request->setMethod('DELETE');
+        $this->assertSame('DELETE', $request->getMethod());
+    }
+
+    public function testGetPath()
+    {
+        $_SERVER['PATH_INFO'] = '/foo';
+        $request = new Request();
+
+        $this->assertSame('/foo', $request->getPath());
+    }
+
+    public function testGetParamsQuery()
+    {
+        $_GET['foo'] = 'bar';
+        $request = new Request();
+        $this->assertSame('bar', $request->getParamsQuery()->get('foo'));
+    }
+
+    public function testGetParamsPost()
+    {
+        $_POST['foo'] = 'bar';
+        $request = new Request();
+        $this->assertSame('bar', $request->getParamsPost()->get('foo'));
     }
 
     /**
-     * @expectedException \InvalidArgumentException
+     * @dataProvider dataProviderTestParamsFile
      */
-    public function testSetInvalidServerVarsShouldThrowAnException()
-    {
-        $request = new Request();
-        $request->setServerVars('foo');
-    }
-
-    public function testHeaders()
-    {
-        $request = new Request();
-        $request->setServerVars(['HTTP_FOO' => 'bar']);
-        $this->assertSame('bar', $request->getHeaders()->Foo);
-    }
-
-    public function testGetReferrer()
-    {
-        $request = new Request();
-        $request->setServerVars(['HTTP_REFERER' => 'bar']);
-        $this->assertSame('bar', $request->getReferrer());
-    }
-
-    /**
-     * @dataProvider dataProviderTestGetPath
-     */
-    public function testGetPath($expected, $uri)
-    {
-        $request = new Request();
-        $request->setServerVars(['REQUEST_URI' => $uri]);
-        $this->assertSame($expected, $request->getPath());
-    }
-
-    public function dataProviderTestGetPath()
-    {
-        return [
-            ['/', '/'],
-            ['/', '//'],
-            ['/', '// '],
-            ['/foo', '/foo'],
-            ['/foo', '/foo/'],
-            ['/foo', '/foo//'],
-            ['/foo', '/foo// '],
-            ['/foo', '/foo?foo=1&bar=2'],
-            ['/foo', '/foo//?foo=1&bar=2'],
-        ];
-    }
-
-    public function testGetOriginalMethod()
-    {
-        $request = new Request();
-        $request->setServerVars(['REQUEST_METHOD' => 'POST']);
-        $this->assertSame('POST', $request->getOriginalMethod());
-    }
-
-    /**
-     * @dataProvider dataProviderTestGetMethod
-     */
-    public function testGetMethod($expected, $request)
-    {
-        $this->assertSame($expected, $request->getMethod());
-    }
-
-    public function dataProviderTestGetMethod()
-    {
-        return [
-            ['POST', (new Request())->setServerVars(['REQUEST_METHOD' => 'POST'])],
-            ['PUT', (new Request())->setServerVars(['REQUEST_METHOD' => 'POST'])->setPostParams(['_method' => 'PUT'])],
-            ['PUT', (new Request())->setServerVars(['REQUEST_METHOD' => 'POST', 'HTTP_X_HTTP_METHOD_OVERRIDE' => 'PUT'])],
-        ];
-    }
-
-    /**
-     * @dataProvider dataProviderTestGetHost
-     */
-    public function testGetHost($expected, $request, $withPort = false)
-    {
-        $this->assertSame($expected, $request->getHost($withPort));
-    }
-
-    public function dataProviderTestGetHost()
-    {
-        return [
-            ['example.com', (new Request())->setServerVars(['HTTP_HOST' => 'example.com'])],
-            ['example.com', (new Request())->setServerVars(['HTTP_HOST' => 'example.com:80'])],
-            ['example.com', (new Request())->setServerVars(['SERVER_NAME' => 'example.com'])],
-            ['example.com:80', (new Request())->setServerVars(['HTTP_HOST' => 'example.com:80', 'SERVER_PORT' => '80']), true],
-        ];
-    }
-
-    public function testGetClientIp()
-    {
-        $request = new Request();
-        $request->setServerVars(['REMOTE_ADDR' => '127.0.0.1']);
-        $this->assertSame('127.0.0.1', $request->getClientIp());
-    }
-
-    public function testGetUserAgent()
-    {
-        $request = new Request();
-        $request->setServerVars(['USER_AGENT' => 'foo']);
-        $this->assertSame('foo', $request->getUserAgent());
-    }
-
-    public function testAccepts()
-    {
-        $request = new Request();
-        $request->setServerVars(['HTTP_ACCEPT' => 'foo,bar']);
-        $this->assertSame(['foo', 'bar'], $request->getAccepts());
-        $this->assertTrue($request->isAccept('foo'));
-    }
-
-    public function testGetContentType()
-    {
-        $request = new Request();
-        $request->setServerVars(['HTTP_CONTENT_TYPE' => 'text/xml']);
-        $this->assertSame('text/xml', $request->getContentType());
-    }
-
-    public function testIsXhr()
-    {
-        $request = new Request();
-        $request->setServerVars(['HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest']);
-        $this->assertTrue($request->isXhr());
-    }
-
-    /**
-     * @dataProvider dataProviderTestIsMethod
-     */
-    public function testIsMethod($requestMethod, $method)
-    {
-        $request = new Request();
-        $request->setServerVars(['REQUEST_METHOD' => $requestMethod]);
-        $this->assertTrue($request->{$method}());
-    }
-
-    public function dataProviderTestIsMethod()
-    {
-        return [
-            ['HEAD', 'isHead'],
-            ['GET', 'isGet'],
-            ['POST', 'isPost'],
-            ['PUT', 'isPut'],
-            ['PATCH', 'isPatch'],
-            ['DELETE', 'isDelete'],
-            ['OPTIONS', 'isOptions'],
-            ['TRACE', 'isTrace'],
-            ['CONNECT', 'isConnect'],
-        ];
-    }
-
-    /**
-     * @dataProvider dataProviderTestGetUrl
-     */
-    public function testGetUrl($expected, $request)
-    {
-        $this->assertSame($expected, $request->getUrl());
-    }
-
-    public function dataProviderTestGetUrl()
-    {
-        return [
-            ['http://example.com', (new Request())->setServerVars(['HTTP_HOST' => 'example.com', 'SERVER_PORT' => '80'])],
-            ['https://example.com', (new Request())->setServerVars(['HTTP_HOST' => 'example.com', 'SERVER_PORT' => '443', 'HTTPS' => 'on'])],
-            ['http://example.com:8080', (new Request())->setServerVars(['HTTP_HOST' => 'example.com', 'SERVER_PORT' => '8080'])],
-            ['http://example.com/foo', (new Request())->setServerVars(['HTTP_HOST' => 'example.com', 'SERVER_PORT' => '80', 'REQUEST_URI' => '/foo'])],
-            ['http://example.com:8080/foo', (new Request())->setServerVars(['HTTP_HOST' => 'example.com:8080', 'SERVER_PORT' => '8080', 'REQUEST_URI' => '/foo'])],
-        ];
-    }
-
-    public function testQueryParams()
-    {
-        $_GET = ['foo' => 'bar'];
-        $request = new Request();
-        $this->assertSame('bar', $request->getQueryParams()->foo);
-    }
-
-    public function testParams()
-    {
-        $_POST = ['foo' => 'bar'];
-        $request = new Request();
-        $this->assertSame('bar', $request->getParams()->foo);
-    }
-
-    public function testCookieParams()
-    {
-        $_COOKIE = ['foo' => 'bar'];
-        $request = new Request();
-        $this->assertSame('bar', $request->getCookieParams()->foo);
-    }
-
-    /**
-     * @dataProvider dataProviderTestFileParams
-     */
-    public function testFileParams($files, $expectedFiles)
+    public function testGetParamsFile($files, $expected)
     {
         $_FILES = $files;
         $request = new Request();
-        $this->assertSame($expectedFiles, $request->getFileParams()->toArray());
+        $this->assertSame($expected, $request->getParamsFile()->toArray());
     }
 
-    public function dataProviderTestFileParams()
+    public function dataProviderTestParamsFile()
     {
         return [
             // single file: name="foo", name="bar"
@@ -313,5 +159,81 @@ class RequestTest extends TestCase
                 ]
             ]
         ];
+    }
+
+    public function testReferrer()
+    {
+        $_SERVER['HTTP_REFERER'] = '/foo';
+        $request = new Request();
+        $this->assertSame('/foo', $request->getReferrer());
+    }
+
+    public function testServerName()
+    {
+        $_SERVER['SERVER_NAME'] = 'example.com';
+        $request = new Request();
+        $this->assertSame('example.com', $request->getServerName());
+    }
+
+    public function testHost()
+    {
+        $_SERVER['HTTP_HOST'] = 'example.com';
+        $_SERVER['SERVER_PORT'] = 8080;
+
+        $request = new Request();
+        $this->assertSame('example.com', $request->getHost());
+        $this->assertSame('example.com:8080', $request->getHost(true));
+    }
+
+    public function testUrl()
+    {
+        $_SERVER['HTTPS'] = 'on';
+        $_SERVER['HTTP_HOST'] = 'example.com';
+        $_SERVER['SERVER_PORT'] = 8080;
+        $_SERVER['REQUEST_URI'] = '/foo/bar';
+
+        $request = new Request();
+        $this->assertSame('https://example.com:8080/foo/bar', $request->getUrl());
+        $this->assertSame('/foo/bar', $request->getUrl(false));
+    }
+
+    public function testGetClientIp()
+    {
+        $_SERVER['REMOTE_ADDR'] = '192.168.1.1';
+
+        $request = new Request();
+        $this->assertSame('192.168.1.1', $request->getClientIp());
+    }
+
+    public function testGetUserAgent()
+    {
+        $_SERVER['USER_AGENT'] = 'ua';
+
+        $request = new Request();
+        $this->assertSame('ua', $request->getUserAgent());
+    }
+
+    public function testAccepts()
+    {
+        $_SERVER['HTTP_ACCEPT'] = 'foo,bar';
+
+        $request = new Request();
+        $this->assertSame(['foo', 'bar'], $request->getAccepts());
+        $this->assertTrue($request->isAccept('foo'));
+    }
+
+    public function testGetContentType()
+    {
+        $_SERVER['HTTP_CONTENT_TYPE'] = 'application/json';
+
+        $request = new Request();
+        $this->assertSame('application/json', $request->getContentType());
+    }
+
+    public function testIsXhr()
+    {
+        $_SERVER['HTTP_X_REQUESTED_WITH'] = 'XMLHttpRequest';
+        $request = new Request();
+        $this->assertTrue($request->isXhr());
     }
 }
