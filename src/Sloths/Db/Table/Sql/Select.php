@@ -40,17 +40,17 @@ class Select extends \Sloths\Db\Sql\Select
     {
         $sql = $this->toString();
 
-        if ($cacheExpiration = $this->getCacheExpiration()) {
+        if ($cacheExpiration = $this->getCacheExpiration() && $cacheManager = $this->getCacheManager(false)) {
             $key = static::CACHE_KEY_PREFIX . '.' . md5($sql);
 
-            $result = $this->getCacheManager()->get($key, $success);
+            $result = $cacheManager->get($key, $success);
 
             if ($success) {
                 return $result;
             }
 
             $result = $this->getConnection()->query($sql)->fetchAll(\PDO::FETCH_ASSOC);
-            $this->getCacheManager()->set($key, $result, $cacheExpiration);
+            $cacheManager->set($key, $result, $cacheExpiration);
 
             return $result;
         }
@@ -84,17 +84,17 @@ class Select extends \Sloths\Db\Sql\Select
 
         $sql = $select->toString();
 
-        if ($cacheExpiration = $this->getCacheExpiration()) {
+        if ($cacheExpiration = $this->getCacheExpiration() && $cacheManager = $this->getCacheManager(false)) {
             $key = static::CACHE_KEY_PREFIX . '.' . md5($sql);
 
-            $result = $this->getCacheManager()->get($key, $success);
+            $result = $cacheManager->get($key, $success);
 
             if ($success) {
                 return $result;
             }
 
             $result = (int) $select->getConnection()->query($sql)->fetchColumn();
-            $select->getCacheManager()->set($key, $result, $cacheExpiration);
+            $cacheManager->set($key, $result, $cacheExpiration);
 
             return $result;
         }
