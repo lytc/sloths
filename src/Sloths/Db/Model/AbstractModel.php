@@ -106,12 +106,12 @@ class AbstractModel implements \JsonSerializable, \Serializable
     /**
      * @var ConnectionManager
      */
-    protected $connectionManager;
+    private $connectionManager;
 
     /**
      * @var Table
      */
-    protected $table;
+    private $table;
 
     /**
      * @var array
@@ -136,7 +136,7 @@ class AbstractModel implements \JsonSerializable, \Serializable
     /**
      * @var Collection
      */
-    protected $parentCollection;
+    private $parentCollection;
 
     /**
      * @param array|\Traversable $data
