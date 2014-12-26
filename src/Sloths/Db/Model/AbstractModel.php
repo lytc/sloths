@@ -413,7 +413,7 @@ class AbstractModel implements \JsonSerializable, \Serializable
      */
     public function getDataForSave()
     {
-        $data = array_diff($this->getChangedData(), $this->getOriginalData());
+        $data = array_diff_assoc($this->getChangedData(), $this->getOriginalData());
         $data = ArrayUtils::only($data, $this->getColumns());
         unset($data[$this->getPrimaryKey()]);
 
