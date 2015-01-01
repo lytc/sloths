@@ -16,14 +16,11 @@ class Password implements PasswordInterface
      * @var string
      */
     protected $salt;
+
     /**
      * @var int
      */
     protected $cost;
-    /**
-     * @var array
-     */
-    protected $options = [];
 
     /**
      * @param int $algorithm
