@@ -48,10 +48,10 @@ class Url extends AbstractService
 
         if (!$path) {
             $path = $prefix;
-        }
-
-        if ('/' != $path[0] && !preg_match('/^https?:\/\//', $path)) {
-            $path = $prefix . ($path? '/' . $path : '');
+        } else {
+            if ('/' != $path[0] && !preg_match('/^https?:\/\//', $path)) {
+                $path = rtrim($prefix, '/') . '/' . $path;
+            }
         }
 
         return UrlUtils::appendParams($path, $queryParams);
