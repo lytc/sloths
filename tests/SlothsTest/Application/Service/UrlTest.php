@@ -40,6 +40,7 @@ class UrlTest extends TestCase
     {
         return [
             ['/', '', [], '/'],
+            ['/', 'foo', [], '/foo'],
             ['/admin', '', [], '/admin'],
             ['/admin', 'foo', [], '/admin/foo'],
             ['/admin', 'foo', ['foo' => 'bar'], '/admin/foo?foo=bar'],
