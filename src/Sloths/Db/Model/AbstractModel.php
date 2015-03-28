@@ -744,7 +744,7 @@ class AbstractModel implements \JsonSerializable, \Serializable
      * @param null $columns
      * @return Collection
      */
-    protected function all($where = null, $params = null, $columns = null)
+    private function all($where = null, $params = null, $columns = null)
     {
         $select = $this->table()->select();
 
@@ -771,7 +771,7 @@ class AbstractModel implements \JsonSerializable, \Serializable
      * @param null $params
      * @return null|AbstractModel
      */
-    protected function first($where = null, $params = null)
+    private function first($where = null, $params = null)
     {
         $select = $this->table()->select();
 
@@ -783,9 +783,7 @@ class AbstractModel implements \JsonSerializable, \Serializable
 
         $row = $select->first();
 
-        if ($row) {
-            return new static($row);
-        }
+        return $row? new static($row) : null;
     }
 
     /**
