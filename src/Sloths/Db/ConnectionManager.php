@@ -152,19 +152,23 @@ class ConnectionManager
      */
     public static function quote($input)
     {
-        if (is_null($input)) {
-            return 'NULL';
-        }
-
-        if (is_numeric($input) || is_bool($input) || $input instanceof SqlInterface) {
+        if ($input instanceof SqlInterface) {
             return $input;
         }
 
-        if (is_array($input)) {
-            return array_map('self::quote', $input);
-        }
+        $type = gettype($input);
 
-        return '\'' . self::escape($input) . '\'';
+        switch ($type) {
+            case 'NULL': return 'NULL';
+
+            case 'integer':
+            case 'double':
+            case 'boolean':
+                return $input;
+
+            case 'array': return array_map('self::quote', $input);
+            default: return '\'' . self::escape($input) . '\'';
+        }
     }
 
     /**

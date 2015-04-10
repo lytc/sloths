@@ -158,7 +158,8 @@ class ConnectionManagerTest extends TestCase
         $raw = ConnectionManager::raw('foo');
         return [
             [1, 1],
-            ['1', '1'],
+            ["'1'", '1'],
+            ["'04'", '04'],
             ["'foo'", 'foo'],
             [true, true],
             ['NULL', null],
