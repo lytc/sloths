@@ -406,6 +406,9 @@ class ApplicationTest extends TestCase
             ['GET', '/'],
             ['GET', '/posts'],
             ['POST', '/posts'],
+            ['GET', '/posts/comments'],
+            ['GET', '/foo/bar/baz/qux'],
+            ['GET', '/foo/bar/baz/qux/qot'],
         ];
     }
 
