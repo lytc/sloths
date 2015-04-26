@@ -475,20 +475,32 @@ class Application implements ApplicationInterface
         }
 
         $parts = explode('/', $path);
-        $routeGroupName = $parts[1];
+        array_shift($parts);
 
-        $routeFile = $routesPath . '/' . $routeGroupName . '.php';
+        $len = count($parts);
 
-        if (is_file($routeFile)) {
-            $path = '/' . implode('/', array_slice($parts, 2));
-            require $routeFile;
-            return $path;
-        } else {
-            $routeFile = $routesPath . '/' . $this->defaultRouteGroupName . '.php';
+        for ($i = 0; $i < $len; $i++) {
+            $leftParts = array_slice($parts, 0, $len - $i);
+            $rightParts = $i != 0? array_slice($parts, -$i) : [];
+
+            $routeFile = $routesPath . '/' . implode('/', $leftParts) . '.php';
 
             if (is_file($routeFile)) {
+                if (0 !== strpos(realpath(pathinfo($routeFile, PATHINFO_DIRNAME)), $routesPath)) {
+                    break;
+                }
+
+                $path = '/' . implode('/', $rightParts);
                 require $routeFile;
+                return $path;
             }
+        }
+
+        $routeFile = $routesPath . '/' . $this->defaultRouteGroupName . '.php';
+
+        if (is_file($routeFile)) {
+            require $routeFile;
+            return $path;
         }
 
         return $path;
