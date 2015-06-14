@@ -211,6 +211,7 @@ class Application implements ApplicationInterface
     /**
      * @param string $directory
      * @throws \InvalidArgumentException
+     * @return $this
      */
     public function setDirectory($directory)
     {
@@ -221,10 +222,12 @@ class Application implements ApplicationInterface
         }
 
         $this->directory = $directory;
+
+        return $this;
     }
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getDirectory()
     {

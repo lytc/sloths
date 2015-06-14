@@ -68,7 +68,7 @@ class ConnectionManager
 
     /**
      * @param bool $strict
-     * @return mixed
+     * @return Connection
      * @throws \DomainException
      */
     public function getConnection($strict = true)
