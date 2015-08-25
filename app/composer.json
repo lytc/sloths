@@ -1,0 +1,11 @@
+{
+  "repositories": [
+    {
+      "type":"vcs",
+      "url":"/Users/lytc/Projects/lytc/sloths-framework"
+    }
+  ],
+  "require":{
+    "lytc/sloths":"dev-feature/5.x"
+  }
+}
