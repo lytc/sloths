@@ -4,17 +4,24 @@ namespace Sloths\Db\Model;
 
 use Sloths\Db\ConnectionManager;
 use Sloths\Db\Model\Relation\BelongsToTrait;
+use Sloths\Db\Model\Relation\HasManyThroughSchema;
 use Sloths\Db\Model\Relation\HasManyTrait;
 use Sloths\Db\Model\Relation\HasOneTrait;
 use Sloths\Misc\ArrayUtils;
 use Sloths\Misc\StringUtils;
+use Sloths\Observer\ObserverTrait;
 
+/**
+ * @method static $this first()
+ * @method static $this all()
+ */
 class AbstractModel implements \JsonSerializable, \Serializable
 {
     use TransformNameTrait;
     use BelongsToTrait;
     use HasOneTrait;
     use HasManyTrait;
+    use ObserverTrait;
 
     const INT          = 'int';
     const INTEGER      = self::INT;
@@ -50,6 +57,12 @@ class AbstractModel implements \JsonSerializable, \Serializable
 
     const CREATED_TIME_COLUMN_NAME  = 'created_time';
     const MODIFIED_TIME_COLUMN_NAME = 'modified_time';
+
+    protected static $globalEventListeners = [];
+    public static function setGlobalEventListeners(array $listeners)
+    {
+        static::$globalEventListeners = $listeners;
+    }
 
     /**
      * @var string
@@ -144,6 +157,7 @@ class AbstractModel implements \JsonSerializable, \Serializable
      */
     public function __construct($data = [], Collection $parentCollection = null)
     {
+        $this->addEventListeners(static::$globalEventListeners);
         $this->setData($data);
         $this->parentCollection = $parentCollection;
     }
@@ -425,6 +439,7 @@ class AbstractModel implements \JsonSerializable, \Serializable
      */
     protected function doInsert()
     {
+        $this->triggerEventListener('insert', [$this]);
         $data = $this->getDataForSave();
 
         # timestamp?
@@ -439,6 +454,8 @@ class AbstractModel implements \JsonSerializable, \Serializable
         $id = (int) $this->getConnectionManager()->getWriteConnection()->getLastInsertId();
         $this->data[$this->getPrimaryKey()] = $id;
 
+        $this->triggerEventListener('inserted', [$this]);
+
         return true;
     }
 
@@ -448,6 +465,8 @@ class AbstractModel implements \JsonSerializable, \Serializable
      */
     protected function doUpdate($force = false)
     {
+        $this->triggerEventListener('update', [$this]);
+
         $data = $this->getDataForSave();
 
         if (!$data && !$force) {
@@ -469,6 +488,8 @@ class AbstractModel implements \JsonSerializable, \Serializable
         }
 
         $this->table()->update($data)->where($this->getPrimaryKey() . ' = ' . $id)->run();
+
+        $this->triggerEventListener('updated', [$this]);
         return true;
     }
 
@@ -478,6 +499,8 @@ class AbstractModel implements \JsonSerializable, \Serializable
      */
     public function save($force = false)
     {
+        $this->triggerEventListener('save', [$this]);
+
         if ($this->exists()) {
             $result = $this->doUpdate($force);
         } else {
@@ -489,6 +512,7 @@ class AbstractModel implements \JsonSerializable, \Serializable
             $this->touchParents();
         }
 
+        $this->triggerEventListener('saved', [$this]);
         return $this;
     }
 
@@ -522,10 +546,13 @@ class AbstractModel implements \JsonSerializable, \Serializable
      */
     public function delete()
     {
+        $this->triggerEventListener('delete', [$this]);
+
         if ($id = $this->id()) {
             $this->table()->delete()->where($this->getPrimaryKey() . ' = ' . $id)->run();
         }
 
+        $this->triggerEventListener('deleted', [$this]);
         return $this;
     }
 
@@ -744,7 +771,7 @@ class AbstractModel implements \JsonSerializable, \Serializable
      * @param null $columns
      * @return Collection
      */
-    private function all($where = null, $params = null, $columns = null)
+    private function _all($where = null, $params = null, $columns = null)
     {
         $select = $this->table()->select();
 
@@ -771,7 +798,7 @@ class AbstractModel implements \JsonSerializable, \Serializable
      * @param null $params
      * @return null|AbstractModel
      */
-    private function first($where = null, $params = null)
+    private function _first($where = null, $params = null)
     {
         $select = $this->table()->select();
 
@@ -796,6 +823,154 @@ class AbstractModel implements \JsonSerializable, \Serializable
     }
 
     /**
+     * @param AbstractModel $model
+     * @return Relation\HasManySchema|HasManyThroughSchema
+     */
+    protected function getHasMayThroughSchemaByModel(AbstractModel $model)
+    {
+        $allHasManySchema = $this->getAllHasManySchema();
+
+        foreach ($allHasManySchema as $schema) {
+            $modelClassName = $schema->getModelClassName();
+            if ($schema instanceof HasManyThroughSchema && $model instanceof $modelClassName) {
+                return $schema;
+            }
+        }
+    }
+
+    protected function addRelation(AbstractModel $relation)
+    {
+        $schema = $this->getHasMayThroughSchemaByModel($relation);
+
+        if ($schema) {
+            $throughModelName = $schema->getThroughModelClassName();
+            $leftKey = $schema->getLeftForeignKey();
+            $rightKey = $schema->getRightForeignKey();
+            $leftKeyValue = $this->id();
+            $rightKeyValue = $relation->id();
+
+            $data = [$leftKey => $leftKeyValue, $rightKey => $rightKeyValue];
+            if (!$throughModelName::first($data)) {
+                $throughModelName::create($data)->save();
+            }
+
+            return $this;
+        }
+
+        throw new \InvalidArgumentException('Invalid relation');
+    }
+
+    protected function removeRelation(AbstractModel $relation)
+    {
+        $schema = $this->getHasMayThroughSchemaByModel($relation);
+        if ($schema) {
+            $throughModelName = $schema->getThroughModelClassName();
+            $leftKey = $schema->getLeftForeignKey();
+            $rightKey = $schema->getRightForeignKey();
+            $leftKeyValue = $this->id();
+            $rightKeyValue = $relation->id();
+
+            $data = [$leftKey => $leftKeyValue, $rightKey => $rightKeyValue];
+            if ($throughModel = $throughModelName::first($data)) {
+                $throughModel->delete();
+            }
+
+            return $this;
+        }
+
+        throw new \InvalidArgumentException('Invalid relation');
+    }
+
+    public function add($relations)
+    {
+        if ($relations instanceof AbstractModel) {
+            $relations = [$relations];
+        }
+
+        if (!is_array($relations) && !$relations instanceof Collection) {
+            $relations = [$relations];
+        }
+
+        $connection = $this->getConnectionManager()->getWriteConnection();
+        $connection->beginTransaction();
+
+        try {
+            foreach ($relations as $relation) {
+                $this->addRelation($relation);
+            }
+            $connection->commit();
+
+        } catch (\Exception $e) {
+            $connection->rollBack();
+            throw $e;
+        }
+
+        return $this;
+    }
+
+    public function remove($relations)
+    {
+        if ($relations instanceof AbstractModel) {
+            $relations = [$relations];
+        }
+
+        if (!is_array($relations) && !$relations instanceof Collection) {
+            $relations = [$relations];
+        }
+
+        $connection = $this->getConnectionManager()->getWriteConnection();
+        $connection->beginTransaction();
+
+        try {
+            foreach ($relations as $relation) {
+                $this->removeRelation($relation);
+            }
+            $connection->commit();
+
+        } catch (\Exception $e) {
+            $connection->rollBack();
+            throw $e;
+        }
+
+        return $this;
+    }
+
+    public function sync($relations)
+    {
+        if ($relations instanceof AbstractModel) {
+            $relations = [$relations];
+        }
+
+        if (!is_array($relations) && !$relations instanceof Collection) {
+            $relations = [$relations];
+        }
+
+        $connection = $this->getConnectionManager()->getWriteConnection();
+        $connection->beginTransaction();
+
+        try {
+            # remove non existing first
+            $ids = [];
+            foreach ($relations as $relation) {
+                $ids[] = $relation->id();
+            }
+
+            $this->remove($relation::all(sprintf('%s NOT IN(?)', $relation->getPrimaryKey()), $ids));
+
+            # and then add
+            $this->add($relations);
+
+            $connection->commit();
+
+        } catch (\Exception $e) {
+            $connection->rollBack();
+            throw $e;
+        }
+
+        return $this;
+    }
+
+    /**
      * @param $method
      * @param $args
      * @return mixed
@@ -804,7 +979,7 @@ class AbstractModel implements \JsonSerializable, \Serializable
     public static function __callStatic($method, $args)
     {
         if (in_array($method, ['all', 'first'])) {
-            return call_user_func_array([new static(), $method], $args);
+            return call_user_func_array([new static(), '_' . $method], $args);
         }
 
         throw new \BadMethodCallException('Call to undefined method ' . $method);

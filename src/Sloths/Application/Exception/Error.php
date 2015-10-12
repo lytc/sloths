@@ -2,7 +2,9 @@
 
 namespace Sloths\Application\Exception;
 
-class Error extends \Exception
+use Sloths\Http\Exception as HttpException;
+
+class Error extends HttpException
 {
 
 }

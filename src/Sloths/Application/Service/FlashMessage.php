@@ -2,7 +2,7 @@
 
 namespace Sloths\Application\Service;
 
-class FlashMessage implements \IteratorAggregate, ServiceInterface
+class FlashMessage implements \Countable, \IteratorAggregate, ServiceInterface
 {
     use ServiceTrait;
 
@@ -190,6 +190,11 @@ class FlashMessage implements \IteratorAggregate, ServiceInterface
     public function getErrors()
     {
         return $this->get(self::ERROR);
+    }
+
+    public function count()
+    {
+        return count($this->getAll());
     }
 
     public function getIterator()

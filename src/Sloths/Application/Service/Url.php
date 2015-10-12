@@ -22,6 +22,15 @@ class Url extends AbstractService
     }
 
     /**
+     * @param bool|true $full
+     * @return string
+     */
+    public function base($full = true)
+    {
+        return $this->getApplication()->getBaseUrl($full);
+    }
+
+    /**
      * @param array $overrideParamsQuery
      * @param bool $full
      * @return string
@@ -40,11 +49,12 @@ class Url extends AbstractService
     /**
      * @param string $path
      * @param array $queryParams
+     * @param bool $full
      * @return string
      */
-    public function to($path = '', array $queryParams = [])
+    public function to($path = '', array $queryParams = [], $full = true)
     {
-        $prefix = $this->getApplication()->getBaseUrl();
+        $prefix = $this->base($full);
 
         if (!$path) {
             $path = $prefix;
@@ -60,63 +70,69 @@ class Url extends AbstractService
     /**
      * @param AbstractModel $model
      * @param array $queryParams
+     * @param bool $full
      * @return string
      */
-    public function view(AbstractModel $model, array $queryParams = [])
+    public function view(AbstractModel $model, array $queryParams = [], $full = true)
     {
-        return $this->to(Inflector::dasherize($model->getTableName()) . '/' . $model->id(), $queryParams);
+        return $this->to(Inflector::dasherize($model->getTableName()) . '/' . $model->id(), $queryParams, $full);
     }
 
     /**
      * @param AbstractModel $model
      * @param array $queryParams
+     * @param bool $full
      * @return string
      */
-    public function edit(AbstractModel $model, array $queryParams = [])
+    public function edit(AbstractModel $model, array $queryParams = [], $full = true)
     {
-        return $this->to(Inflector::dasherize($model->getTableName()) . '/' . $model->id() . '/edit', $queryParams);
+        return $this->to(Inflector::dasherize($model->getTableName()) . '/' . $model->id() . '/edit', $queryParams, $full);
     }
 
     /**
      * @param AbstractModel $model
      * @param array $queryParams
+     * @param bool $full
      * @return string
      */
-    public function update(AbstractModel $model, array $queryParams = [])
+    public function update(AbstractModel $model, array $queryParams = [], $full = true)
     {
-        return $this->to(Inflector::dasherize($model->getTableName()) . '/' . $model->id(), $queryParams);
+        return $this->to(Inflector::dasherize($model->getTableName()) . '/' . $model->id(), $queryParams, $full);
     }
 
     /**
      * @param AbstractModel $model
      * @param array $queryParams
+     * @param bool $full
      * @return string
      */
-    public function delete(AbstractModel $model, array $queryParams = [])
+    public function delete(AbstractModel $model, array $queryParams = [], $full = true)
     {
-        return $this->to(Inflector::dasherize($model->getTableName()) . '/' . $model->id(), $queryParams);
+        return $this->to(Inflector::dasherize($model->getTableName()) . '/' . $model->id(), $queryParams, $full);
     }
 
     /**
      * @param Collection $collection
      * @param array $queryParams
+     * @param bool $full
      * @return string
      */
-    public function lists(Collection $collection, array $queryParams = [])
+    public function lists(Collection $collection, array $queryParams = [], $full = true)
     {
         $tableName = $collection->getModel()->getTableName();
-        return $this->to(Inflector::dasherize($tableName), $queryParams);
+        return $this->to(Inflector::dasherize($tableName), $queryParams, $full);
     }
 
     /**
      * @param Collection $collection
      * @param array $queryParams
+     * @param bool $full
      * @return string
      */
-    public function add(Collection $collection, array $queryParams = [])
+    public function add(Collection $collection, array $queryParams = [], $full = true)
     {
         $tableName = $collection->getModel()->getTableName();
-        return $this->to(Inflector::dasherize($tableName) . '/new', $queryParams);
+        return $this->to(Inflector::dasherize($tableName) . '/new', $queryParams, $full);
     }
 
     /**

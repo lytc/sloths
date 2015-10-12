@@ -178,7 +178,7 @@ class ConnectionManager
      */
     public static function bind($expr, $params)
     {
-        if (preg_match('/^[\w\.]+$/', $expr)) {
+        if (preg_match('/^[\w\.]+$/', $expr) || preg_match('/^`[\w\.]+`$/', $expr)) {
             $expr = $expr . ' = ?';
         }
 

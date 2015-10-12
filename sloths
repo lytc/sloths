@@ -1,4 +1,8 @@
 #!/usr/bin/env php
 <?php
 
-require __DIR__ . '/vendor/autoload.php';
+/* @var $application Sloths\Application\Application */
+$application = require getcwd() . '/src/application.php';
+
+$console = new \Sloths\Application\Console\Application($application);
+$console->run();

@@ -78,6 +78,9 @@ class Filter implements SqlInterface
                 if (is_numeric($k)) {
                     $result[] = $v;
                 } else {
+                    if (preg_match('/^\w+$/', $k)) {
+                        $k = "`$k`";
+                    }
                     $result[] = ConnectionManager::bind($k, $v);
                 }
             }

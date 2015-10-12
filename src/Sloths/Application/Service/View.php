@@ -11,7 +11,7 @@ class View extends \Sloths\View\View implements ServiceInterface
      */
     public function boot()
     {
-        $this->setDirectory($this->getApplication()->getPath('views'));
+        $this->setDirectory($this->getApplication()->getResourcePath('views'));
         return $this;
     }
 }

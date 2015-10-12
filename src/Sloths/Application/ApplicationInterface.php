@@ -8,8 +8,32 @@ use Sloths\Misc\ConfigurableInterface;
 use Sloths\Observer\ObserverInterface;
 use Sloths\Routing\Router;
 
+/**
+ * @property \Sloths\Application\Service\Authenticator          $authenticator
+ * @property \Sloths\Application\Service\CacheManager           $cacheManager
+ * @property \Sloths\Application\Service\Database               $database
+ * @property \Sloths\Application\Service\DateTime               $dateTime
+ * @property \Sloths\Application\Service\FlashMessage           $flashMessage
+ * @property \Sloths\Application\Service\FlashSession           $flashSession
+ * @property \Sloths\Application\Service\Mcrypt                 $mcrypt
+ * @property \Sloths\Application\Service\Migrator               $migrator
+ * @property \Sloths\Application\Service\Paginator              $paginator
+ * @property \Sloths\Application\Service\Password               $password
+ * @property \Sloths\Application\Service\Redirector             $redirector
+ * @property \Sloths\Application\Service\Session                $session
+ * @property \Sloths\Application\Service\Translator             $translator
+ * @property \Sloths\Application\Service\Url                    $url
+ * @property \Sloths\Application\Service\Validator              $validator
+ * @property \Sloths\Application\Service\View                   $view
+ * @property \Sloths\Application\Service\HtmlPurifier           $htmlPurifier
+ * @property \Sloths\Application\Service\Slugify                $slugify
+ * @property \Sloths\Application\Service\DebugBar               $debugBar
+ * @property \Sloths\Misc\Parameters                            $params
+ */
 interface ApplicationInterface extends ObserverInterface, ConfigurableInterface
 {
+    const VERSION = '5.0.0';
+
     /**
      * @return string
      */
@@ -20,6 +44,12 @@ interface ApplicationInterface extends ObserverInterface, ConfigurableInterface
      * @throws \InvalidArgumentException
      */
     public function setDirectory($directory);
+
+    /**
+     * @param string $directory
+     * @return $this
+     */
+    public function setResourceDirectory($directory);
 
     /**
      * @return string
@@ -34,8 +64,9 @@ interface ApplicationInterface extends ObserverInterface, ConfigurableInterface
 
     /**
      * @return string
+     * @param bool $full
      */
-    public function getBaseUrl();
+    public function getBaseUrl($full = true);
 
     /**
      * @param string $name

@@ -14,7 +14,27 @@ class ServiceManager
     /**
      * @var array
      */
-    protected $services = [];
+    protected $services = [
+        'authenticator'     => 'Sloths\Application\Service\Authenticator',
+        'cacheManager'      => 'Sloths\Application\Service\CacheManager',
+        'database'          => 'Sloths\Application\Service\Database',
+        'dateTime'          => 'Sloths\Application\Service\DateTime',
+        'flashMessage'      => 'Sloths\Application\Service\FlashMessage',
+        'flashSession'      => 'Sloths\Application\Service\FlashSession',
+        'mcrypt'            => 'Sloths\Application\Service\Mcrypt',
+        'migrator'          => 'Sloths\Application\Service\Migrator',
+        'paginator'         => 'Sloths\Application\Service\Paginator',
+        'password'          => 'Sloths\Application\Service\Password',
+        'redirector'        => 'Sloths\Application\Service\Redirector',
+        'session'           => 'Sloths\Application\Service\Session',
+        'translator'        => 'Sloths\Application\Service\Translator',
+        'url'               => 'Sloths\Application\Service\Url',
+        'validator'         => 'Sloths\Application\Service\Validator',
+        'view'              => 'Sloths\Application\Service\View',
+        'htmlPurifier'      => 'Sloths\Application\Service\HtmlPurifier',
+        'slugify'           => 'Sloths\Application\Service\Slugify',
+        'debugBar'          => 'Sloths\Application\Service\DebugBar',
+    ];
 
     /**
      * @var array
@@ -40,6 +60,14 @@ class ServiceManager
         }
 
         return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getAll()
+    {
+        return array_keys($this->services);
     }
 
     /**

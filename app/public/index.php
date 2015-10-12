@@ -1,17 +1,27 @@
 <?php
 
-require_once __DIR__ . '/../../vendor/autoload.php';
+/* @var $application Sloths\Application\Application */
 
-$moduleManager = new \Sloths\Application\ModuleManager();
+error_reporting(E_ALL);
 
-$moduleManager
-    ->setDirectory(__DIR__ . '/../src')
-    ->add('content', '/')
-    ->add('admin', '/admin')
-;
+$application = require __DIR__ . '/../src/application.php';
+$application->addEventListener('boot', function(\Sloths\Observer\Event $event, \Sloths\Application\Application $application) {
+    $request = $application->getRequest();
+    $requestPath = $request->getPath();
 
-$application = $moduleManager->resolve(function($application) {
+    $basePath = '/' . current(explode('/', ltrim($requestPath, '/')));
 
+    $map = [
+        '/admin'    => 'admin',
+        '/auth'     => 'auth'
+    ];
+
+    if (isset($map[$basePath])) {
+        $application
+            ->setResourceDirectory($map[$basePath])
+            ->setBaseUrl($basePath)
+        ;
+    }
 });
 
 $application->run();

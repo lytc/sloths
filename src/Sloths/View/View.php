@@ -4,6 +4,10 @@ namespace Sloths\View;
 
 use Sloths\View\Helper\HelperInterface;
 
+/**
+ *
+ * @method \Sloths\View\Helper\Assets assets
+ */
 class View
 {
     /**
@@ -15,6 +19,13 @@ class View
      * @var bool
      */
     protected $layout = false;
+
+    /**
+     * @var array
+     */
+    protected $helperNamespaces = [
+        'Sloths\View\Helper'
+    ];
 
     /**
      * @var array
@@ -84,6 +95,16 @@ class View
     }
 
     /**
+     * @param string $namespace
+     * @return $this
+     */
+    public function addHelperNamespace($namespace)
+    {
+        $this->helperNamespaces[] = $namespace;
+        return $this;
+    }
+
+    /**
      * @param array $helpers
      * @return $this
      */
@@ -119,17 +140,19 @@ class View
             return call_user_func_array($this->helpers[$method], $args);
         }
 
-        $helperClassName = 'Sloths\View\Helper\\' . ucfirst($method);
+        foreach ($this->helperNamespaces as $namespace) {
+            $helperClassName = $namespace . '\\' . ucfirst($method);
 
-        if (class_exists($helperClassName)) {
-            $helperClass = new $helperClassName();
+            if (class_exists($helperClassName)) {
+                $helperClass = new $helperClassName();
 
-            if ($helperClass instanceof HelperInterface) {
-                $helperClass->setView($this);
+                if ($helperClass instanceof HelperInterface) {
+                    $helperClass->setView($this);
+                }
+
+                $this->helpers[$method] = $helperClass;
+                return call_user_func_array($helperClass, $args);
             }
-
-            $this->helpers[$method] = $helperClass;
-            return call_user_func_array($helperClass, $args);
         }
 
         throw new \BadMethodCallException('Call to undefined helper ' . $method);

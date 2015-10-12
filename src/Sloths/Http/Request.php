@@ -108,7 +108,11 @@ class Request extends AbstractRequest
     public function getParamsPost()
     {
         if (!$this->paramsPost) {
-            $this->paramsPost = new Parameters($_POST?: []);
+            $params = $_POST?: [];
+            if ($this->getOriginalMethod() == 'PUT') {
+                parse_str(file_get_contents('php://input'), $params);
+            }
+            $this->paramsPost = new Parameters($params);
         }
 
         return $this->paramsPost;
@@ -220,6 +224,21 @@ class Request extends AbstractRequest
     }
 
     /**
+     * @return string
+     */
+    public function getBaseUrl()
+    {
+        $url = $this->getScheme() . '://' . $this->getHost();
+        $port = $this->getPort();
+
+        if ($port != 80 && $port != 443) {
+            $url .= ':' . $port;
+        }
+
+        return $url;
+    }
+
+    /**
      * @param bool $full
      * @return string
      */
@@ -228,12 +247,7 @@ class Request extends AbstractRequest
         $url = '';
 
         if ($full) {
-            $url = $this->getScheme() . '://' . $this->getHost();
-            $port = $this->getPort();
-
-            if ($port != 80 && $port != 443) {
-                $url .= ':' . $port;
-            }
+            $url = $this->getBaseUrl();
         }
 
 

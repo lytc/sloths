@@ -3,9 +3,12 @@
 namespace Sloths\Db;
 
 use PDO;
+use Sloths\Observer\ObserverTrait;
 
 class Connection
 {
+    use ObserverTrait;
+
     /**
      * @var string
      */
@@ -29,7 +32,8 @@ class Connection
         PDO::ATTR_ERRMODE               => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_ORACLE_NULLS          => PDO::NULL_NATURAL,
 //        PDO::ATTR_STRINGIFY_FETCHES     => false,
-//        PDO::ATTR_EMULATE_PREPARES      => false
+//        PDO::ATTR_EMULATE_PREPARES      => false,
+        PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES 'utf8'"
     ];
 
     /**
@@ -67,6 +71,39 @@ class Connection
     }
 
     /**
+     * @return string
+     */
+    public function getDsn()
+    {
+        return $this->dsn;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDbName()
+    {
+        preg_match('/dbname=([^;]+);/', $this->getDsn(), $matches);
+        return $matches[1];
+    }
+
+    /**
+     * @return string
+     */
+    public function getUsername()
+    {
+        return $this->username;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPassword()
+    {
+        return $this->password;
+    }
+
+    /**
      * @return array
      */
     public function getDefaultOptions()
@@ -98,11 +135,24 @@ class Connection
     }
 
     /**
+     * @param PDO $pdo
+     * @return $this
+     */
+    public function setPdo(PDO $pdo)
+    {
+        $this->pdo = $pdo;
+        return $this;
+    }
+
+    /**
      * @param $sql
      * @return int
      */
     public function exec($sql)
     {
+        $this->triggerEventListener('run', [$sql]);
+        $this->triggerEventListener('exec', [$sql]);
+
         return $this->getPdo()->exec($sql);
     }
 
@@ -112,6 +162,9 @@ class Connection
      */
     public function query($sql)
     {
+        $this->triggerEventListener('run', [$sql]);
+        $this->triggerEventListener('query', [$sql]);
+
         return $this->getPdo()->query($sql);
     }
 

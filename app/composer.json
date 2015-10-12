@@ -1,11 +1,14 @@
 {
-  "repositories": [
-    {
-      "type":"vcs",
-      "url":"/Users/lytc/Projects/lytc/sloths-framework"
+  "autoload": {
+    "psr-4": {
+      "Application\\Model\\": "src/_shared/models",
+      "Application\\Service\\": "src/_shared/services",
+      "Application\\View\\Helper\\": "src/_shared/views/helpers"
     }
-  ],
-  "require":{
-    "lytc/sloths":"dev-feature/5.x"
+  },
+  "require-dev": {
+  },
+  "require": {
+    "ezyang/htmlpurifier": "^4.7"
   }
 }

@@ -91,8 +91,12 @@ trait BelongsToTrait
             $foreignKeyIds = array_unique($foreignKeyIds);
             $foreignKeyIds = array_diff($foreignKeyIds, [null]);
 
-            $select = $model->table()->select()->where($tableName . '.' . $primaryKeyColumn . ' IN (' . implode(', ', $foreignKeyIds) . ')');
-            $rows = $select->all();
+            if ($foreignKeyIds) {
+                $select = $model->table()->select()->where($tableName . '.' . $primaryKeyColumn . ' IN (' . implode(', ', $foreignKeyIds) . ')');
+                $rows = $select->all();
+            } else {
+                $rows = [];
+            }
 
             $pairs = ArrayUtils::column($rows, null, $primaryKeyColumn);
             foreach ($pairs as &$item) {
@@ -113,7 +117,7 @@ trait BelongsToTrait
             return isset($pairs[$selfForeignKeyValue])? $pairs[$selfForeignKeyValue] : null;
 
         } else {
-            return $model->first($tableName . '.' . $primaryKeyColumn . ' = ' . $this->get($foreignKeyColumn));
+            return $model->_first($tableName . '.' . $primaryKeyColumn . ' = ' . $this->get($foreignKeyColumn));
         }
     }
 }

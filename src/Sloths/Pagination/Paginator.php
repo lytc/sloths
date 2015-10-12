@@ -111,6 +111,11 @@ class Paginator implements \IteratorAggregate
         return $this->getAdapter()->count();
     }
 
+    public function isEmpty()
+    {
+        return $this->getTotalItemCount() == 0;
+    }
+
     /**
      * @return int
      */

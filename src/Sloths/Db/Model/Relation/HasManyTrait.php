@@ -100,7 +100,7 @@ trait HasManyTrait
     {
         $model          = $schema->getModel();
         $foreignKey     = $schema->getForeignKey();
-        $collection     = $model->all();
+        $collection     = $model->_all();
         $selfId         = $this->id();
         $refTableName   = $model->getTableName();
 
@@ -150,7 +150,7 @@ trait HasManyTrait
         $leftFK             = $schema->getLeftForeignKey();
         $rightFK            = $schema->getRightForeignKey();
 
-        $collection = $model->all()->select($throughTableName . '.' . $leftFK);
+        $collection = $model::all()->select($throughTableName . '.' . $leftFK);
 
         $collection->join($throughTableName, function($join)
         use ($throughTableName, $leftFK, $rightFK, $collection, $name, $model, $throughModel, $cache) {

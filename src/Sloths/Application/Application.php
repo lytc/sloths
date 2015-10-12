@@ -17,6 +17,7 @@ use Sloths\Misc\Parameters;
 use Sloths\Observer\ObserverTrait;
 use Sloths\Routing\Router;
 use Sloths\Application\Exception\Pass;
+use Symfony\Component\Finder\Finder;
 
 class Application implements ApplicationInterface
 {
@@ -31,6 +32,11 @@ class Application implements ApplicationInterface
      * @var string
      */
     protected $directory;
+
+    /**
+     * @var callable
+     */
+    protected $resourceDirectory;
 
     /**
      * @var string
@@ -201,11 +207,23 @@ class Application implements ApplicationInterface
     }
 
     /**
+     * @param bool $full
      * @return string
      */
-    public function getBaseUrl()
+    public function getBaseUrl($full = true)
     {
-        return $this->baseUrl;
+        $baseUrl = $this->baseUrl;
+        if ($full) {
+            if (!preg_match('/^https?::/', $baseUrl)) {
+                $baseUrl = $this->getRequest()->getBaseUrl() . $baseUrl;
+            }
+        } else {
+            if (preg_match('/^https?::/', $baseUrl)) {
+                $baseUrl = parse_url($baseUrl, PHP_URL_PATH);
+            }
+        }
+
+        return rtrim($baseUrl, '/');
     }
 
     /**
@@ -224,6 +242,24 @@ class Application implements ApplicationInterface
         $this->directory = $directory;
 
         return $this;
+    }
+
+    /**
+     * @param string $directory
+     * @return $this
+     */
+    public function setResourceDirectory($directory)
+    {
+        $this->resourceDirectory = $directory;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getResourceDirectory()
+    {
+        return $this->resourceDirectory;
     }
 
     /**
@@ -271,6 +307,11 @@ class Application implements ApplicationInterface
         }
 
         return $this->getDirectory() . '/' . $name;
+    }
+
+    public function getResourcePath($name)
+    {
+        return $this->getDirectory() . '/' . $this->getResourceDirectory() . '/' . $name;
     }
 
     /**
@@ -355,7 +396,7 @@ class Application implements ApplicationInterface
     {
         if (!$this->serviceManager) {
             $this->serviceManager = new ServiceManager($this);
-            $this->boot();
+//            $this->boot();
         }
 
         return $this->serviceManager;
@@ -450,63 +491,40 @@ class Application implements ApplicationInterface
     /**
      *
      */
-    protected function boot()
+    public function boot()
     {
         if (!$this->booted) {
+            $this->triggerEventListener('boot', [$this]);
+
+            $this->getConfigLoader()->addDirectories($this->getResourcePath('config'));
+
             if (!($env = $this->getEnv())) {
-                $this->setEnv(static::DEFAULT_ENV);
+                $this->setEnv(getenv('SLOTHS_ENV')?: static::DEFAULT_ENV);
             }
 
             $this->getConfigLoader()->apply('application', $this);
+
+            $this->loadRoutes();
+
             $this->booted = true;
+            $this->triggerEventListener('booted', [$this]);
         }
     }
 
-    /**
-     * @return bool|string
-     * @throws \RuntimeException
-     */
-    protected function processAutoLoadRoutes()
+    protected function loadRoutes()
     {
-        $routesPath = $this->getPath('routes');
+        $routesPath = $this->getResourcePath('routes');
 
-        $request = $this->getRequest();
-        $path = $request->getPath();
+        $finder = new Finder();
+        $files = $finder->in($routesPath)->files()->name('*.php');
 
-        if ($baseUrl = $this->getBaseUrl()) {
-            $path = '/' . trim(substr($path, strlen(parse_url($baseUrl, PHP_URL_PATH))), '/');
+        foreach ($files as $file) {
+            /* @var $file \Symfony\Component\Finder\SplFileInfo */
+            $basePath = '/' . substr($file->getRelativePathname(), 0, -4);
+            $this->getRouter()->setBasePath($this->getBaseUrl(false) . ($basePath != '/' . $this->defaultRouteGroupName? $basePath : '/'));
+
+            require $file->getRealPath();
         }
-
-        $parts = explode('/', $path);
-        array_shift($parts);
-
-        $len = count($parts);
-
-        for ($i = 0; $i < $len; $i++) {
-            $leftParts = array_slice($parts, 0, $len - $i);
-            $rightParts = $i != 0? array_slice($parts, -$i) : [];
-
-            $routeFile = $routesPath . '/' . implode('/', $leftParts) . '.php';
-
-            if (is_file($routeFile)) {
-                if (0 !== strpos(realpath(pathinfo($routeFile, PATHINFO_DIRNAME)), $routesPath)) {
-                    break;
-                }
-
-                $path = '/' . implode('/', $rightParts);
-                require $routeFile;
-                return $path;
-            }
-        }
-
-        $routeFile = $routesPath . '/' . $this->defaultRouteGroupName . '.php';
-
-        if (is_file($routeFile)) {
-            require $routeFile;
-            return $path;
-        }
-
-        return $path;
     }
 
     /**
@@ -514,6 +532,8 @@ class Application implements ApplicationInterface
      */
     public function send()
     {
+        $this->triggerEventListener('send', [$this]);
+
         $response = $this->getResponse();
 
         $headers = $response->getHeaders();
@@ -542,6 +562,8 @@ class Application implements ApplicationInterface
 
         echo $body;
 
+        $this->triggerEventListener('sent', [$this]);
+
         return $this;
     }
 
@@ -555,32 +577,31 @@ class Application implements ApplicationInterface
     protected function resolveRequest()
     {
         $method = $this->getRequest()->getMethod();
+        $path = $this->getRequest()->getPath();
 
-        if ($path = $this->processAutoLoadRoutes()) {
-            foreach ($this->getRouter() as $route) {
-                try {
-                    $params = $route->match($method, $path);
-                    if (!is_array($params)) {
-                        continue;
-                    }
-
-                    $callback = $route->getCallback();
-
-                    $result = call_user_func_array($callback, $params);
-
-                    if ($result instanceof ResponseInterface) {
-                        return $this->setResponse($result);
-                    }
-
-                    if ($result instanceof RequestInterface) {
-                        $this->setRequest($result);
-                        return $this->resolveRequest();
-                    }
-
-                    return $this->getResponse()->setBody($result);
-                } catch (Pass $e) {
-
+        foreach ($this->getRouter() as $route) {
+            try {
+                $params = $route->match($method, $path);
+                if (!is_array($params)) {
+                    continue;
                 }
+
+                $callback = $route->getCallback();
+
+                $result = call_user_func_array($callback, $params);
+
+                if ($result instanceof ResponseInterface) {
+                    return $this->setResponse($result);
+                }
+
+                if ($result instanceof RequestInterface) {
+                    $this->setRequest($result);
+                    return $this->resolveRequest();
+                }
+
+                return $this->getResponse()->setBody($result);
+            } catch (Pass $e) {
+
             }
         }
 

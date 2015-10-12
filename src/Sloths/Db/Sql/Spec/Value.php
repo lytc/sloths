@@ -32,7 +32,7 @@ class Value implements SqlInterface
 
         $sets = [];
         foreach ($values as $column => $value) {
-            $sets[] = $column . ' = ' . $value;
+            $sets[] = "`$column`" . ' = ' . $value;
         }
 
         $result = implode(', ', $sets);

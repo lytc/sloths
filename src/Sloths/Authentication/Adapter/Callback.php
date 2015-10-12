@@ -24,7 +24,7 @@ class Callback extends AbstractAdapter
      */
     public function authenticate()
     {
-        $result = call_user_func($this->callback, $this, $this->identity, $this->credential);
+        $result = call_user_func($this->callback, $this->identity, $this->credential);
 
         if ($result instanceof Result) {
             return $result;

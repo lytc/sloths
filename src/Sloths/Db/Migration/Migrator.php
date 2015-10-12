@@ -77,6 +77,14 @@ class Migrator
     }
 
     /**
+     * @return string
+     */
+    public function getDirectory()
+    {
+        return $this->directory;
+    }
+
+    /**
      * @param $table
      * @return $this
      */
@@ -84,6 +92,11 @@ class Migrator
     {
         $this->table = $table;
         return $this;
+    }
+
+    public function getTable()
+    {
+        return $this->table;
     }
 
     /**
@@ -97,12 +110,20 @@ class Migrator
     }
 
     /**
+     * @return string
+     */
+    public function getNamespace()
+    {
+        return $this->namespace;
+    }
+
+    /**
      * @return array
      */
     public function listMigrations()
     {
         $migrations = [];
-
+        $migratedVersions = $this->listMigratedVersion();
         $dir = dir($this->directory);
 
         while (false !== ($f = $dir->read())) {
@@ -113,10 +134,11 @@ class Migrator
             preg_match('/^(\d+)\-(.*)\.php$/', $f, $matches);
             list(, $version, $className) = $matches;
 
-                $migrations[$version] = [
+            $migrations[$version] = [
                 'version'   => $version,
-                'className' => $this->namespace . $className,
-                'file'      => $this->directory . '/' . $f
+                'className' => $this->namespace . '\\' . $className,
+                'file'      => $this->directory . '/' . $f,
+                'migrated'  => in_array($version, $migratedVersions)
             ];
         }
 
@@ -140,6 +162,14 @@ class Migrator
     }
 
     /**
+     * @return int
+     */
+    public function getMigratedCount()
+    {
+        return count($this->listMigratedVersion());
+    }
+
+    /**
      * @return array
      */
     public function listMigrated()
@@ -155,13 +185,24 @@ class Migrator
         return ArrayUtils::except($this->listMigrations(), $this->listMigratedVersion());
     }
 
-    public function getLastMigrated()
+    /**
+     * @return string
+     */
+    public function getLastMigratedVersion()
     {
         $version = $this->getConnection()
             ->query("SELECT `version` FROM `{$this->table}` ORDER BY `version` DESC LIMIT 1")
             ->fetchColumn();
 
-        if ($version) {
+        return $version;
+    }
+
+    /**
+     * @return \Sloths\Db\Migration\MigrationInterface
+     */
+    public function getLastMigrated()
+    {
+        if ($version = $this->getLastMigratedVersion()) {
             $migrations = $this->listMigrations();
             return $migrations[$version];
         }
@@ -193,27 +234,46 @@ class Migrator
     }
 
     /**
+     * - 1 will rollback all migrations
+     * @param int $steps
      * @return bool|array
      */
-    public function rollback()
+    public function rollback($steps = 1)
     {
-        $lastMigrated = $this->getLastMigrated();
+        if ($steps == -1) {
+            $steps = $this->getMigratedCount();
+        }
 
-        if ($lastMigrated) {
-            $this->triggerEventListener('rollback', [$lastMigrated]);
+        for ($i = 0; $i < $steps; $i++) {
+            $lastMigrated = $this->getLastMigrated();
 
-            require_once $lastMigrated['file'];
-            $migrationClass = new $lastMigrated['className'];
+            if ($lastMigrated) {
+                $this->triggerEventListener('rollback', [$lastMigrated]);
 
-            $migrationClass->setConnection($this->getConnection());
-            $migrationClass->down();
+                require_once $lastMigrated['file'];
+                $migrationClass = new $lastMigrated['className'];
 
-            $version = $lastMigrated['version'];
-            $this->getConnection()->exec("DELETE FROM `{$this->table}` WHERE `version` = '{$version}'");
+                $migrationClass->setConnection($this->getConnection());
+                $migrationClass->down();
 
-            $this->triggerEventListener('rolledback', [$lastMigrated]);
+                $version = $lastMigrated['version'];
+                $this->getConnection()->exec("DELETE FROM `{$this->table}` WHERE `version` = '{$version}'");
+
+                $this->triggerEventListener('rolledback', [$lastMigrated]);
+            }
         }
 
         return $lastMigrated;
+    }
+
+    /**
+     * @return $this
+     */
+    public function reset()
+    {
+        $this->rollback(-1);
+        $this->migrate();
+
+        return $this;
     }
 }

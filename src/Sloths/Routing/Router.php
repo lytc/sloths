@@ -11,8 +11,30 @@ class Router implements \IteratorAggregate
      */
     protected $routes = [];
 
+    /**
+     * @var string
+     */
+    protected $basePath = '';
+
     public function __construct()
     {
+    }
+
+    /**
+     * @return string
+     */
+    public function getBasePath()
+    {
+        return $this->basePath;
+    }
+
+    /**
+     * @param string $basePath
+     */
+    public function setBasePath($basePath)
+    {
+        $this->basePath = rtrim($basePath, '/');
+        return $this;
     }
 
     /**
@@ -40,6 +62,9 @@ class Router implements \IteratorAggregate
      */
     public function map($methods, $pattern, callable $callback)
     {
+        $pattern = $this->getBasePath() . '/' . ltrim($pattern, '/');
+        $pattern = rtrim($pattern, '/')?: '/';
+
         return $this->add(new Route($methods, $pattern, $callback));
     }
 

@@ -27,7 +27,7 @@ class Flash
     /**
      * @param array $data
      */
-    public function __construct(array &$data)
+    public function __construct(array &$data = [])
     {
         $this->currentData = $data;
         $this->nextData = &$data;
