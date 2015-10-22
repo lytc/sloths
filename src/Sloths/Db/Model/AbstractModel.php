@@ -694,6 +694,10 @@ class AbstractModel implements \JsonSerializable, \Serializable
      */
     public function __call($method, $args)
     {
+        if ('all' == $method || 'first' == $method) {
+            return static::__callStatic($method, $args);
+        }
+
         $result = $this->getRelation($method, false, $success);
         if ($success) {
             return $result;

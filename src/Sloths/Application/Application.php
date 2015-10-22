@@ -18,6 +18,7 @@ use Sloths\Observer\ObserverTrait;
 use Sloths\Routing\Router;
 use Sloths\Application\Exception\Pass;
 use Symfony\Component\Finder\Finder;
+use Symfony\Component\Finder\SplFileInfo;
 
 class Application implements ApplicationInterface
 {
@@ -517,6 +518,10 @@ class Application implements ApplicationInterface
 
         $finder = new Finder();
         $files = $finder->in($routesPath)->files()->name('*.php');
+
+        $files->sort(function(SplFileInfo $a, SplFileInfo $b) {
+            return strlen($a->getRelativePath()) > strlen($b->getRelativePath());
+        });
 
         foreach ($files as $file) {
             /* @var $file \Symfony\Component\Finder\SplFileInfo */
