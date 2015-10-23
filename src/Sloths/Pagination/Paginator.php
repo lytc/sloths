@@ -188,8 +188,41 @@ class Paginator implements \IteratorAggregate
     /**
      * @return \Traversable
      */
-    public function getIterator()
+    public function getItems()
     {
         return $this->getAdapter()->getRange($this->getFromIndex(), $this->getItemCountPerPage());
+    }
+
+    /**
+     * @return \Traversable
+     */
+    public function getIterator()
+    {
+        return $this->getItems();
+    }
+
+    /**
+     * @return array
+     */
+    public function getInfo()
+    {
+        $totalPage = $this->getTotalPages();
+        $prev = $this->getPrevPageNumber();
+        $next = $this->getNextPageNumber();
+
+        return [
+            'totalItem'             => $this->getTotalItemCount(),
+            'firstPageInRange'      => $this->getFirstPageInRange(),
+            'lastPageInRange'       => $this->getLastPageInRange(),
+            'from'                  => $this->getFromIndex(),
+            'to'                    => $this->getToIndex(),
+            'totalPage'             => $totalPage,
+            'currentPage'           => $this->getCurrentPage(),
+            'itemCountPerPage'      => $this->getItemCountPerPage(),
+            'first'                 => 1,
+            'last'                  => $totalPage,
+            'prev'                  => $prev > 0? $prev : null,
+            'next'                  => $next <= $totalPage? $next : null,
+        ];
     }
 }
