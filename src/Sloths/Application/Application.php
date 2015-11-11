@@ -95,30 +95,9 @@ class Application implements ApplicationInterface
     protected $defaultRouteGroupName = 'index';
 
     /**
-     * @var ModuleManager
-     */
-    protected $moduleManager;
-
-    /**
      * @var bool
      */
     protected $booted = false;
-
-    /**
-     * @param ModuleManager $moduleManager
-     */
-    public function __construct(ModuleManager $moduleManager = null)
-    {
-        $this->moduleManager = $moduleManager;
-    }
-
-    /**
-     * @return ModuleManager
-     */
-    public function getModuleManager()
-    {
-        return $this->moduleManager;
-    }
 
     /**
      * @param string $name
@@ -224,7 +203,7 @@ class Application implements ApplicationInterface
             }
         }
 
-        return rtrim($baseUrl, '/');
+        return rtrim($baseUrl, '/')?: '/';
     }
 
     /**
@@ -516,6 +495,10 @@ class Application implements ApplicationInterface
     {
         $routesPath = $this->getResourcePath('routes');
 
+        if (!is_dir($routesPath)) {
+            return;
+        }
+
         $finder = new Finder();
         $files = $finder->in($routesPath)->files()->name('*.php');
 
@@ -526,7 +509,9 @@ class Application implements ApplicationInterface
         foreach ($files as $file) {
             /* @var $file \Symfony\Component\Finder\SplFileInfo */
             $basePath = '/' . substr($file->getRelativePathname(), 0, -4);
-            $this->getRouter()->setBasePath($this->getBaseUrl(false) . ($basePath != '/' . $this->defaultRouteGroupName? $basePath : '/'));
+            $basePath = $this->getBaseUrl(false) . ($basePath != '/' . $this->defaultRouteGroupName? $basePath : '/');
+            $basePath = '/' . ltrim($basePath, '/');
+            $this->getRouter()->setBasePath($basePath);
 
             require $file->getRealPath();
         }

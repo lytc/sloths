@@ -117,7 +117,7 @@ trait BelongsToTrait
             return isset($pairs[$selfForeignKeyValue])? $pairs[$selfForeignKeyValue] : null;
 
         } else {
-            return $model->_first($tableName . '.' . $primaryKeyColumn . ' = ' . $this->get($foreignKeyColumn));
+            return $model::first($tableName . '.' . $primaryKeyColumn . ' = ' . $this->get($foreignKeyColumn));
         }
     }
 }

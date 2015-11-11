@@ -2,6 +2,7 @@
 
 namespace SlothsTest\Pagination;
 
+use Sloths\Pagination\Adapter\ArrayAdapter;
 use SlothsTest\TestCase;
 use Sloths\Pagination\Paginator;
 
@@ -120,5 +121,53 @@ class PaginatorTest extends TestCase
                 ]
             ]
         ];
+    }
+
+    public function testIsEmpty()
+    {
+        $paginator = $this->getMock('Sloths\Pagination\Paginator', ['getTotalItemCount'], [], '', false);
+        $paginator->expects($this->once())->method('getTotalItemCount')->willReturn(0);
+        $this->assertTrue($paginator->isEmpty());
+    }
+
+    public function testGetItems()
+    {
+        $adapter = $this->getMock('Sloths\Pagination\Adapter\AdapterInterface');
+        $adapter->expects($this->once())->method('getRange')->with(0, 10)->willReturn('foo');
+
+        $paginator = new Paginator($adapter);
+        $paginator->setItemCountPerPage(10);
+        $this->assertSame('foo', $paginator->getItems());
+    }
+
+    public function testGetIterator()
+    {
+        $paginator = $this->getMock('Sloths\Pagination\Paginator', ['getItems'], [], '', false);
+        $paginator->expects($this->once())->method('getItems')->willReturn('foo');
+
+        $this->assertSame('foo', $paginator->getIterator());
+    }
+
+    public function testGetInfo()
+    {
+        $adapter = new ArrayAdapter(range(1, 100000));
+        $paginator = new Paginator($adapter);
+
+        $expected = [
+            'totalItem'             => 100000,
+            'firstPageInRange'      => 1,
+            'lastPageInRange'       => 10,
+            'from'                  => 0,
+            'to'                    => 50,
+            'totalPage'             => 2000,
+            'currentPage'           => 1,
+            'itemCountPerPage'      => 50,
+            'first'                 => 1,
+            'last'                  => 2000,
+            'prev'                  => null,
+            'next'                  => 2
+        ];
+
+        $this->assertSame($expected, $paginator->getInfo());
     }
 }

@@ -231,8 +231,10 @@ class ApplicationTest extends TestCase
     public function testRunShouldTriggerEventBeforeAndAfterAndNotFound()
     {
         $application = $this->getMock('Sloths\Application\Application', ['triggerEventListener', 'notFound']);
-        $application->expects($this->at(0))->method('triggerEventListener')->with('before');
-        $application->expects($this->at(1))->method('triggerEventListener')->with('after');
+        $application->expects($this->at(0))->method('triggerEventListener')->with('boot');
+        $application->expects($this->at(1))->method('triggerEventListener')->with('booted');
+        $application->expects($this->at(2))->method('triggerEventListener')->with('before');
+        $application->expects($this->at(3))->method('triggerEventListener')->with('after');
         $application->expects($this->once())->method('notFound');
         $application->run();
     }
@@ -372,7 +374,7 @@ class ApplicationTest extends TestCase
         $application = new Application();
         $application->setBaseUrl($baseUrl);
 
-        $this->assertSame($expected, $application->getBaseUrl());
+        $this->assertSame($expected, $application->getBaseUrl(false));
     }
 
     public function dataProviderTestBaseUrl()
@@ -395,7 +397,7 @@ class ApplicationTest extends TestCase
         $this->expectOutputString("$requestMethod $requestPath");
 
         $application = new Application();
-        $application->setDirectory(__DIR__ . '/fixtures/application');
+        $application->setResourceDirectory(__DIR__ . '/fixtures/application');
         $application->getRequest()->setMethod($requestMethod)->setPath($requestPath);
         $application->run();
     }

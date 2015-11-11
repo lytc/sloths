@@ -20,4 +20,14 @@ class PasswordTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($password->verify('foo', 'bar'));
         $this->assertTrue($password->needsRehash('foo'));
     }
+
+    /**
+     * @expectedException \DomainException
+     *
+     */
+    public function testGetAdapterShouldThrowExceptionIfHasNoAdapterAndStrictFlag()
+    {
+        $password = new Password();
+        $password->getAdapter();
+    }
 }

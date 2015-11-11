@@ -50,26 +50,29 @@ class UrlTest extends TestCase
         ];
     }
 
-//    public function testUrlToModel()
-//    {
-//        $url = $this->getMock('Sloths\Application\Service\Url', ['to']);
-//        $url->expects($this->at(0))->method('to')->with('posts/1');
-//        $url->expects($this->at(1))->method('to')->with('posts/1/edit');
-//        $url->expects($this->at(2))->method('to')->with('posts/1');
-//        $url->expects($this->at(3))->method('to')->with('posts/1');
-//        $url->expects($this->at(4))->method('to')->with('posts');
-//        $url->expects($this->at(5))->method('to')->with('posts/new');
-//
-//        $post = new Post(['id' => 1]);
-//        $posts = Post::all();
-//
-//        $url->view($post);
-//        $url->edit($post);
-//        $url->update($post);
-//        $url->delete($post);
-//        $url->lists($posts);
-//        $url->add($posts);
-//    }
+    public function testUrlToModelAndCollection()
+    {
+        $url = $this->getMock('Sloths\Application\Service\Url', ['to']);
+        $url->expects($this->at(0))->method('to')->with('posts/1');
+        $url->expects($this->at(1))->method('to')->with('posts/1/edit');
+        $url->expects($this->at(2))->method('to')->with('posts/1');
+        $url->expects($this->at(3))->method('to')->with('posts/1');
+        $url->expects($this->at(4))->method('to')->with('posts');
+        $url->expects($this->at(5))->method('to')->with('posts/new');
+
+        $model = $this->getMock('Sloths\Db\Model\AbstractModel', ['getTableName' ,'id']);
+        $model->expects($this->any())->method('getTableName')->willReturn('posts');
+        $model->expects($this->any())->method('id')->willReturn('1');
+
+        $collection = $this->getMockForAbstractClass('Sloths\Db\Model\Collection', [[], $model]);
+
+        $url->view($model);
+        $url->edit($model);
+        $url->update($model);
+        $url->delete($model);
+        $url->lists($collection);
+        $url->add($collection);
+    }
 
     public function test__toString()
     {

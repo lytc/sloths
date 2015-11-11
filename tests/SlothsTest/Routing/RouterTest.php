@@ -22,12 +22,12 @@ class RouterTest extends TestCase
     public function testMap()
     {
         $router = new Router();
-        $router->map(RequestInterface::METHOD_POST, 'pattern', $callback = function() {});
+        $router->map(RequestInterface::METHOD_POST, '/pattern', $callback = function() {});
 
         $route = $router->getRoutes()[0];
 
         $this->assertSame([ RequestInterface::METHOD_POST], $route->getMethods());
-        $this->assertSame('pattern', $route->getPattern());
+        $this->assertSame('/pattern', $route->getPattern());
         $this->assertSame($callback, $route->getCallback());
     }
 

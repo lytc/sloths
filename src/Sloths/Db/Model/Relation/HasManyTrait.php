@@ -100,7 +100,7 @@ trait HasManyTrait
     {
         $model          = $schema->getModel();
         $foreignKey     = $schema->getForeignKey();
-        $collection     = $model->_all();
+        $collection     = $model::all();
         $selfId         = $this->id();
         $refTableName   = $model->getTableName();
 

@@ -27,7 +27,7 @@ class FilterTest extends TestCase
             })
         ;
 
-        $expected = "(c1 = 'c1') AND (c2 = 'c2') OR (c3 = 'c3' AND c4 = 'c4' AND c5 = 'c5') AND ((c6 = 'c6') AND (c7 = 'c7') OR (c8 = 'c8'))";
+        $expected = "(c1 = 'c1') AND (c2 = 'c2') OR (c3 = 'c3' AND c4 = 'c4' AND `c5` = 'c5') AND ((c6 = 'c6') AND (c7 = 'c7') OR (`c8` = 'c8'))";
         $this->assertSame($expected, $filter->toString());
 
         $filter->reset();

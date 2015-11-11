@@ -21,7 +21,7 @@ class UpdateTest extends TestCase
             ->limit(10)
         ;
 
-        $expected = "UPDATE users SET name = 'name', email = 'email' WHERE (id IN (1, 2)) ORDER BY id LIMIT 10";
+        $expected = "UPDATE users SET `name` = 'name', `email` = 'email' WHERE (id IN (1, 2)) ORDER BY id LIMIT 10";
         $this->assertSame($expected, $update->toString());
     }
 }

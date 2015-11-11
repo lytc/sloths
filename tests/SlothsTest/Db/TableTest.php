@@ -38,15 +38,15 @@ class TableTest extends TestCase
 
         $insert = $table->insert(['name' => 'foo']);
         $this->assertSame($writeConnection, $insert->getConnection());
-        $this->assertSame("INSERT INTO users SET name = 'foo'", $insert->toString());
+        $this->assertSame("INSERT INTO users SET `name` = 'foo'", $insert->toString());
 
         $update = $table->update(['name' => 'foo']);
         $this->assertSame($writeConnection, $update->getConnection());
-        $this->assertSame("UPDATE users SET name = 'foo'", $update->toString());
+        $this->assertSame("UPDATE users SET `name` = 'foo'", $update->toString());
 
         $delete = $table->delete('id', 1);
         $this->assertSame($writeConnection, $delete->getConnection());
-        $this->assertSame("DELETE FROM users WHERE (id = 1)", $delete->toString());
+        $this->assertSame("DELETE FROM users WHERE (`id` = 1)", $delete->toString());
     }
 
     /**

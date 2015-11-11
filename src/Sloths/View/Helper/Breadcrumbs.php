@@ -24,10 +24,24 @@ class Breadcrumbs extends AbstractHelper
     }
 
     /**
+     * @param string $template
+     * @return $this
+     */
+    public function setTemplate($template)
+    {
+        $this->template = $template;
+        return $this;
+    }
+
+    /**
      * @return string
      */
     public function getTemplate()
     {
+        if ($this->template) {
+            $this->setTemplate(__DIR__ . '/resources/breadcrumbs.html.php');
+        }
+
         return $this->template;
     }
 
@@ -68,23 +82,9 @@ class Breadcrumbs extends AbstractHelper
         return $this;
     }
 
-    /**
-     * @param string $template
-     * @return $this
-     */
-    public function setTemplate($template)
-    {
-        $this->template = $template;
-        return $this;
-    }
-
     public function render()
     {
         $template = $this->getTemplate();
-
-        if (!$template) {
-            $template = __DIR__ . '/resources/breadcrumbs.html.php';
-        }
 
         return $this->getView()->partial($template, ['elements' => $this->getElements()]);
     }

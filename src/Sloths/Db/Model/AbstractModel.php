@@ -782,7 +782,7 @@ class AbstractModel implements \JsonSerializable, \Serializable
         if ($where) {
             if (is_numeric($where)) {
                 $select->where($this->getPrimaryKey() . ' = ' . $where);
-            } elseif (is_array($where) && ArrayUtils::hasOnlyInts($where)) {
+            } elseif (is_array($where) && ArrayUtils::hasOnlyInts($where) && ArrayUtils::hasOnlyInts(array_keys($where))) {
                 $select->where($this->getPrimaryKey() . ' IN (' . implode(', ', $where ) . ')');
             } else {
                 call_user_func_array([$select, 'where'], func_get_args());

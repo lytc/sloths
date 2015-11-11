@@ -23,7 +23,7 @@ class SetTest extends TestCase
     public function dataProvider()
     {
         return [
-            ["SET foo = 'bar', bar = 'baz'", ['foo' => 'bar', 'bar' => 'baz']],
+            ["SET `foo` = 'bar', `bar` = 'baz'", ['foo' => 'bar', 'bar' => 'baz']],
         ];
     }
 }

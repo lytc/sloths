@@ -22,7 +22,7 @@ class MigratorTest extends TestCase
             ->willReturn(['20140901000000']);
 
         $pdo = $this->getMock('mockpdo', ['query']);
-        $pdo->expects($this->exactly(2))
+        $pdo->expects($this->atLeast(2))
             ->method('query')
             ->with("SELECT `version` FROM `migrations`")
             ->willReturn($stmt);
@@ -43,8 +43,9 @@ class MigratorTest extends TestCase
         $expectedMigrated = [
             '20140901000000' => [
                 'version' => '20140901000000',
-                'className' => 'MigrationStub\Foo',
-                'file' => $directory . '/20140901000000-Foo.php'
+                'className' => 'MigrationStub\\\Foo',
+                'file' => $directory . '/20140901000000-Foo.php',
+                'migrated' => true
             ],
         ];
 
@@ -52,8 +53,9 @@ class MigratorTest extends TestCase
         $expectedPending = [
             '20140901000001' => [
                 'version' => '20140901000001',
-                'className' => 'MigrationStub\Bar',
-                'file' => $directory . '/20140901000001-Bar.php'
+                'className' => 'MigrationStub\\\Bar',
+                'file' => $directory . '/20140901000001-Bar.php',
+                'migrated' => false
             ]
         ];
 
@@ -66,38 +68,10 @@ class MigratorTest extends TestCase
 
     public function testLastMigrated()
     {
-        $directory = __DIR__ . '/fixtures/migrations';
-
-        $stmt = $this->getMock('stmt', ['fetchColumn']);
-        $stmt->expects($this->once())
-            ->method('fetchColumn')
-            ->willReturn('20140901000000');
-
-        $pdo = $this->getMock('mockpdo', ['query']);
-        $pdo->expects($this->exactly(1))
-            ->method('query')
-            ->with("SELECT `version` FROM `migrations` ORDER BY `version` DESC LIMIT 1")
-            ->willReturn($stmt);
-
-        $connection = $this->getMock('Sloths\Db\Connection', ['getPdo'], ['dsn']);
-        $connection->expects($this->atLeast(1))->method('getPdo')->willReturn($pdo);
-
-        $connectionManager = new ConnectionManager();
-        $connectionManager->setConnection($connection);
-
-        $migrator = new Migrator();
-        $migrator
-            ->setDirectory($directory)
-            ->setNamespace('MigrationStub\\')
-            ->setConnectionManager($connectionManager)
-        ;
-
-        $expected = [
-            'version' => '20140901000000',
-            'className' => 'MigrationStub\Foo',
-            'file' => $directory . '/20140901000000-Foo.php'
-        ];
-        $this->assertSame($expected, $migrator->getLastMigrated());
+        $migrator = $this->getMock('\Sloths\Db\Migration\Migrator', ['getLastMigratedVersion', 'listMigrations']);
+        $migrator->expects($this->once())->method('getLastMigratedVersion')->willReturn('foo');
+        $migrator->expects($this->once())->method('listMigrations')->willReturn(['foo' => 'bar']);
+        $this->assertSame('bar', $migrator->getLastMigrated());
     }
 
     public function testMigrate()

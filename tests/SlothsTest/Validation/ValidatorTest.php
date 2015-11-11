@@ -177,4 +177,14 @@ class ValidatorTest extends TestCase
             'foo' => 'message translated'
         ], $validator->getMessages());
     }
+
+    public function testGetAndSetTranslator()
+    {
+        $translator = $this->getMock('Sloths\Translation\TranslatorInterface');
+
+        $validator = new Validator();
+        $validator->setTranslator($translator);
+
+        $this->assertSame($translator, $validator->getTranslator());
+    }
 }

@@ -4,9 +4,7 @@ namespace Sloths\Application\Console\Command\Db;
 
 use Sloths\Application\Console\Command\Command;
 use Sloths\Db\Connection;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
 

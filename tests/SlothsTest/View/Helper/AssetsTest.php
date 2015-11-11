@@ -7,13 +7,13 @@ use SlothsTest\TestCase;
 
 /**
  * @covers Sloths\View\Helper\Assets
- * @covers Sloths\View\Helper\AssertGroup
  */
 class AssetsTest extends TestCase
 {
     public function testIsExternalSource()
     {
         $assets = new Assets();
+        $this->assertTrue($assets->isExternalSource('http://example.com/foo.js'));
         $this->assertTrue($assets->isExternalSource('//example.com/foo.js'));
         $this->assertFalse($assets->isExternalSource('/foo.js'));
     }

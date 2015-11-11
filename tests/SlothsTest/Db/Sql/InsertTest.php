@@ -16,7 +16,7 @@ class InsertTest extends TestCase
         $insert->table('users');
         $insert->values(['username' => 'Ly Tran', 'email' => 'lytc@example.com']);
 
-        $expected = "INSERT INTO users SET username = 'Ly Tran', email = 'lytc@example.com'";
+        $expected = "INSERT INTO users SET `username` = 'Ly Tran', `email` = 'lytc@example.com'";
         $this->assertSame($expected, $insert->toString());
     }
 }

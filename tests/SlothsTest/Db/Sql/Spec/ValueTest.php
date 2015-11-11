@@ -23,7 +23,7 @@ class ValueTest extends TestCase
     public function dataProvider()
     {
         return [
-            ["foo = 'bar', bar = 'baz'", ['foo' => 'bar', 'bar' => 'baz']],
+            ["`foo` = 'bar', `bar` = 'baz'", ['foo' => 'bar', 'bar' => 'baz']],
         ];
     }
 }

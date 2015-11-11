@@ -517,9 +517,9 @@ class AbstractModelTest extends TestCase
             [[1], "SELECT posts.id, posts.title, posts.created_time, posts.modified_time FROM posts WHERE (id = 1)"],
             [[[1, 2]], "SELECT posts.id, posts.title, posts.created_time, posts.modified_time FROM posts WHERE (id IN (1, 2))"],
             [["name = 'foo'"], "SELECT posts.id, posts.title, posts.created_time, posts.modified_time FROM posts WHERE (name = 'foo')"],
-            [['name', 'foo'], "SELECT posts.id, posts.title, posts.created_time, posts.modified_time FROM posts WHERE (name = 'foo')"],
+            [['name', 'foo'], "SELECT posts.id, posts.title, posts.created_time, posts.modified_time FROM posts WHERE (`name` = 'foo')"],
             [['id > ?', 10], "SELECT posts.id, posts.title, posts.created_time, posts.modified_time FROM posts WHERE (id > 10)"],
-            [[['name' => 'foo', 'id > ?' => 10]], "SELECT posts.id, posts.title, posts.created_time, posts.modified_time FROM posts WHERE (name = 'foo' AND id > 10)"],
+            [[['name' => 'foo', 'id > ?' => 10]], "SELECT posts.id, posts.title, posts.created_time, posts.modified_time FROM posts WHERE (`name` = 'foo' AND id > 10)"],
         ];
     }
 
