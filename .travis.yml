@@ -19,6 +19,7 @@ after_script:
 matrix:
   fast_finish: true
   allow_failures:
-    - php: nightly
-    - php: hhvm
-    - php: hhvm
+    php:
+      - nightly
+      - '7'
+      - hhvm
