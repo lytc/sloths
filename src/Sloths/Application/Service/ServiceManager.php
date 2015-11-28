@@ -31,9 +31,7 @@ class ServiceManager
         'url'               => 'Sloths\Application\Service\Url',
         'validator'         => 'Sloths\Application\Service\Validator',
         'view'              => 'Sloths\Application\Service\View',
-        'htmlPurifier'      => 'Sloths\Application\Service\HtmlPurifier',
         'slugify'           => 'Sloths\Application\Service\Slugify',
-        'debugBar'          => 'Sloths\Application\Service\DebugBar',
     ];
 
     /**

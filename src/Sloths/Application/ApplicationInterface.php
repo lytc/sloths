@@ -25,9 +25,7 @@ use Sloths\Routing\Router;
  * @property \Sloths\Application\Service\Url                    $url
  * @property \Sloths\Application\Service\Validator              $validator
  * @property \Sloths\Application\Service\View                   $view
- * @property \Sloths\Application\Service\HtmlPurifier           $htmlPurifier
  * @property \Sloths\Application\Service\Slugify                $slugify
- * @property \Sloths\Application\Service\DebugBar               $debugBar
  * @property \Sloths\Misc\Parameters                            $params
  */
 interface ApplicationInterface extends ObserverInterface, ConfigurableInterface

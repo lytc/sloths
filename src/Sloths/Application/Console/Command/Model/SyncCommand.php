@@ -86,6 +86,8 @@ class SyncCommand extends Command
             $this->getHasManyPropertyGenerator($table, $dbName, $connection, $docBlockGenerator)
         );
 
+        is_dir($directory . '/Base') || mkdir($directory . '/Base', 0777, true);
+
         $fileGenerator = new FileGenerator();
         $fileGenerator->setClass($classGenerator);
         $file = $directory . '/Base/' . $abstractClassName . '.php';
@@ -96,7 +98,6 @@ class SyncCommand extends Command
         # generate model class
         $file = $directory . '/' . $className . '.php';
         if (!is_file($file)) {
-            is_dir($directory) || mkdir($directory, 0777, true);
 
             $classGenerator = new ClassGenerator();
             $classGenerator
