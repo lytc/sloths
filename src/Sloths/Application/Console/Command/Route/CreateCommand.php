@@ -115,7 +115,8 @@ $this->post('/', function(){
     ${$nameSingular} = {$modelName}::create($data);
     ${$nameSingular}->save();
 
-    return ${$nameSingular};
+    $this->flashMessage->success(sprintf('{$nameTitleize} "%s" has been created', $this->view->e(${$nameSingular}->name)));
+    return ['redirectTo' => $this->url->edit(${$nameSingular})];
 });
 
 $this->get('/::id/edit', function($id){
@@ -148,7 +149,7 @@ $this->put('/::id', function($id){
     ${$nameSingular}->setData($data);
     ${$nameSingular}->save();
 
-    return ${$nameSingular};
+    return ['messages' => sprintf('{$nameTitleize} "%s" has been updated', $this->view->e(${$nameSingular}->name))];
 });
 
 $this->delete('/::id', function($id){
@@ -159,7 +160,8 @@ $this->delete('/::id', function($id){
 
     ${$nameSingular}->delete();
 
-    return ${$nameSingular};
+    $this->flashMessage->success(sprintf('{$nameTitleize} "%s" has been removed', $this->view->e(${$nameSingular}->name)));
+    $this->redirector->back();
 });
 
 EOT;
@@ -198,11 +200,12 @@ EOT;
                 $name = str_replace('/', '-', $path);
                 $name = Inflector::camelize($name);
                 $nameSingular = Inflector::singularize($name);
+                $nameTitleize = Inflector::titleize($nameSingular);
                 $modelName = ucfirst($nameSingular);
 
                 $fileContent = str_replace(
-                    ['{$path}', '{$name}', '{$nameSingular}', '{$modelName}'],
-                    [$path, $name, $nameSingular, $modelName],
+                    ['{$path}', '{$name}', '{$nameSingular}', '{$nameTitleize}', '{$modelName}'],
+                    [$path, $name, $nameSingular, $nameTitleize, $modelName],
                     $this->scaffoldTemplate
                 );
             }elseif ($isRestFul) {

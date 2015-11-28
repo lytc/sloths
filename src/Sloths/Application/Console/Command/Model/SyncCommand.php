@@ -96,6 +96,8 @@ class SyncCommand extends Command
         # generate model class
         $file = $directory . '/' . $className . '.php';
         if (!is_file($file)) {
+            is_dir($directory) || mkdir($directory, 0777, true);
+
             $classGenerator = new ClassGenerator();
             $classGenerator
                 ->setNamespaceName('Application\\Model')
