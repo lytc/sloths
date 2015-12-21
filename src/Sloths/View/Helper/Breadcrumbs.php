@@ -38,7 +38,7 @@ class Breadcrumbs extends AbstractHelper
      */
     public function getTemplate()
     {
-        if ($this->template) {
+        if (!$this->template) {
             $this->setTemplate(__DIR__ . '/resources/breadcrumbs.html.php');
         }
 
